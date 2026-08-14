@@ -1502,7 +1502,7 @@ export default function GardenDesigner() {
         .gdw-panel h2{font-family:'Fraunces',serif;font-size:17px;margin:0 0 12px 0;display:flex;align-items:center;gap:8px;color:var(--ink);}
         .gdw-row{display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap;}
         .gdw-label{font-size:12px;color:#5b5342;text-transform:uppercase;letter-spacing:.04em;width:100%;margin-bottom:4px;}
-        .gdw-inp{width:64px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:13px;background:#fff;}
+        .gdw-inp{width:64px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:13px;background:#fff;min-height:34px;}
         .gdw-inp.wide{width:100%;}
         .gdw-btn{border:1px solid var(--line);background:#fff;border-radius:6px;padding:6px 10px;font-size:12.5px;cursor:pointer;color:var(--ink);font-family:'Inter',sans-serif;}
         .gdw-btn:hover{border-color:var(--leaf);}
@@ -1568,10 +1568,16 @@ export default function GardenDesigner() {
           .gdw-title{font-size:24px;}
           .gdw-sub{font-size:13px;margin-bottom:16px;}
           .gdw-panel{padding:14px 14px;}
-          .gdw-canvaswrap,.gdw-bom{padding:14px 12px;}
-          .gdw-btn{padding:8px 11px;font-size:13px;min-height:34px;}
+          .gdw-canvaswrap,.gdw-bom{padding:12px 10px;}
+          .gdw-btn{padding:8px 11px;font-size:13px;min-height:40px;}
+          .gdw-tab{min-height:40px;}
+          .gdw-inp{min-height:42px;font-size:16px;}
+          .gdw-loadname{min-height:40px;}
           .gdw-three{height:320px;}
-          table.gdw-table{font-size:12px;}
+          table.gdw-table{font-size:11.5px;min-width:0;table-layout:fixed;width:100%;}
+          table.gdw-table td{padding:4px 3px;vertical-align:top;}
+          table.gdw-table td:first-child{overflow-wrap:anywhere;}
+          table.gdw-table td.num{font-size:11px;}
         }
         @media print{
           .gdw-noprint{display:none !important;}
