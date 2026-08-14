@@ -168,28 +168,72 @@ function plantDots(width, length, isL, verts) {
 // with their "width" running along the wall and "length" as the inward depth.
 function placeRing(bedsList, x0, y0, x1, y1, gap) {
   const segs = [
-    { type: "top", length: x1 - x0, start: { x: x0, y: y0 } },
-    { type: "right", length: y1 - y0, start: { x: x1, y: y0 } },
-    { type: "bottom", length: x1 - x0, start: { x: x1, y: y1 } },
-    { type: "left", length: y1 - y0, start: { x: x0, y: y1 } },
+    { type: "top", length: x1 - x0, start: { x: x0, y: y0 }, cursor: 0 },
+    { type: "right", length: y1 - y0, start: { x: x1, y: y0 }, cursor: 0 },
+    { type: "bottom", length: x1 - x0, start: { x: x1, y: y1 }, cursor: 0 },
+    { type: "left", length: y1 - y0, start: { x: x0, y: y1 }, cursor: 0 },
   ];
-  let segIdx = 0, cursor = 0, overflow = false;
+  let segIdx = 0;
   const placed = [];
+  const overflowBeds = [];
   bedsList.forEach((bed) => {
-    const along = bed.width + gap;
-    let attempts = 0;
-    while (cursor + bed.width > segs[segIdx].length && attempts < 4) { segIdx = (segIdx + 1) % 4; cursor = 0; attempts++; }
-    if (attempts >= 4) overflow = true;
-    const seg = segs[segIdx];
-    let x, y, rotated;
-    if (seg.type === "top") { x = seg.start.x + cursor; y = seg.start.y; rotated = false; }
-    else if (seg.type === "bottom") { x = seg.start.x - cursor - bed.width; y = seg.start.y - bed.length; rotated = false; }
-    else if (seg.type === "right") { x = seg.start.x - bed.length; y = seg.start.y + cursor; rotated = true; }
-    else { x = seg.start.x; y = seg.start.y - cursor - bed.width; rotated = true; }
-    placed.push({ ...bed, x, y, rotated });
-    cursor += along;
+    let placedOnWall = false;
+    for (let attempts = 0; attempts < segs.length; attempts++) {
+      const tryIdx = (segIdx + attempts) % segs.length;
+      const seg = segs[tryIdx];
+      if (seg.cursor + bed.width > seg.length) continue;
+      let x, y, rotated;
+      if (seg.type === "top") { x = seg.start.x + seg.cursor; y = seg.start.y; rotated = false; }
+      else if (seg.type === "bottom") { x = seg.start.x - seg.cursor - bed.width; y = seg.start.y - bed.length; rotated = false; }
+      else if (seg.type === "right") { x = seg.start.x - bed.length; y = seg.start.y + seg.cursor; rotated = true; }
+      else { x = seg.start.x; y = seg.start.y - seg.cursor - bed.width; rotated = true; }
+      placed.push({ ...bed, x, y, rotated });
+      seg.cursor += bed.width + gap;
+      segIdx = tryIdx;
+      placedOnWall = true;
+      break;
+    }
+    if (!placedOnWall) overflowBeds.push(bed);
   });
-  return { placed, overflow };
+  return { placed, overflow: overflowBeds.length > 0, overflowBeds };
+}
+
+function DraftNumberInput({ value, onCommit, min, max, step, integer = false, className, style }) {
+  const [text, setText] = useState(String(value ?? ""));
+  const isFocusedRef = useRef(false);
+  useEffect(() => {
+    if (!isFocusedRef.current) setText(String(value ?? ""));
+  }, [value]);
+  function commitText() {
+    const trimmed = text.trim();
+    if (!trimmed) { setText(String(value ?? "")); return; }
+    const parsed = Number(trimmed);
+    if (!Number.isFinite(parsed)) { setText(String(value ?? "")); return; }
+    let next = parsed;
+    if (integer) next = Math.round(next);
+    if (min !== undefined) next = Math.max(min, next);
+    if (max !== undefined) next = Math.min(max, next);
+    onCommit(next);
+    setText(String(next));
+  }
+  return (
+    <input
+      type="number"
+      min={min}
+      max={max}
+      step={step}
+      className={className}
+      style={style}
+      value={text}
+      onFocus={(e) => { isFocusedRef.current = true; e.target.select(); }}
+      onBlur={() => { isFocusedRef.current = false; commitText(); }}
+      onChange={(e) => setText(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") e.currentTarget.blur();
+        if (e.key === "Escape") { setText(String(value ?? "")); e.currentTarget.blur(); }
+      }}
+    />
+  );
 }
 
 // Given a wall's length and the gates that fall on it, returns the fence-line
@@ -228,6 +272,7 @@ export default function GardenDesigner() {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [saveStatus, setSaveStatus] = useState("");
   const [saveStatusType, setSaveStatusType] = useState("ok"); // 'ok' | 'warn' | 'error'
+  const [arrangeStatus, setArrangeStatus] = useState("");
   const [filePanel, setFilePanel] = useState(null); // null | 'export' | 'import'
   const [exportText, setExportText] = useState("");
   const [importText, setImportText] = useState("");
@@ -367,9 +412,9 @@ export default function GardenDesigner() {
         {t.circle ? (
           <div className="gdw-row">
             <span style={{ fontSize: 11, color: "#6b6350" }}>Spread (ft)</span>
-            <input type="number" min={1} step={0.5} className="gdw-inp" value={l.width} onChange={(e) => { const v = Number(e.target.value) || 1; updateLandscape(l.id, { width: v, length: v }); }} />
+            <DraftNumberInput min={1} step={0.5} className="gdw-inp" value={l.width} onCommit={(v) => updateLandscape(l.id, { width: v, length: v })} />
             <span style={{ fontSize: 12 }}>qty</span>
-            <input type="number" min={1} className="gdw-inp" style={{ width: 44 }} value={l.qty} onChange={(e) => updateLandscape(l.id, { qty: Number(e.target.value) || 1 })} />
+            <DraftNumberInput min={1} integer className="gdw-inp" style={{ width: 44 }} value={l.qty} onCommit={(v) => updateLandscape(l.id, { qty: v })} />
           </div>
         ) : l.type === "arch" ? (
           <>
@@ -416,7 +461,7 @@ export default function GardenDesigner() {
               {[3, 4, 5, 6, 8].map((w) => (
                 <button key={w} className={`gdw-btn ${l.width === w ? "active" : ""}`} style={{ padding: "3px 8px", fontSize: 11 }} onClick={() => updateLandscape(l.id, { width: w })}>{w} ft</button>
               ))}
-              <input type="number" min={1} step={0.5} className="gdw-inp" style={{ width: 44 }} value={l.width} onChange={(e) => updateLandscape(l.id, { width: Number(e.target.value) || 1 })} />
+              <DraftNumberInput min={1} step={0.5} className="gdw-inp" style={{ width: 44 }} value={l.width} onCommit={(v) => updateLandscape(l.id, { width: v })} />
             </div>
             <div className="gdw-row">
               <span style={{ fontSize: 11, color: "#6b6350" }}>Height</span>
@@ -429,7 +474,7 @@ export default function GardenDesigner() {
               {[1, 2, 3, 4].map((wd) => (
                 <button key={wd} className={`gdw-btn ${l.length === wd ? "active" : ""}`} style={{ padding: "3px 8px", fontSize: 11 }} onClick={() => updateLandscape(l.id, { length: wd })}>{wd} ft</button>
               ))}
-              <input type="number" min={0.5} step={0.5} className="gdw-inp" style={{ width: 44 }} value={l.length} onChange={(e) => updateLandscape(l.id, { length: Number(e.target.value) || 0.5 })} />
+              <DraftNumberInput min={0.5} step={0.5} className="gdw-inp" style={{ width: 44 }} value={l.length} onCommit={(v) => updateLandscape(l.id, { length: v })} />
               <button className="gdw-btn" style={{ padding: "3px 8px", fontSize: 11 }} onClick={() => updateLandscape(l.id, { width: l.length, length: l.width })} title="Swap the span and path-width values">⇄ Swap</button>
             </div>
             <div className="gdw-note" style={{ margin: "4px 0 0 0" }}>Drag it so each end sits inside a bed on either side of the path — the arch spans the gap between them. Need a second one for a different pair of beds? Click "+ Tunnel Trellis" again — each one is placed and priced separately.</div>
@@ -437,13 +482,13 @@ export default function GardenDesigner() {
         ) : (
           <div className="gdw-row">
             <span style={{ fontSize: 11, color: "#6b6350" }}>Size (ft)</span>
-            <input type="number" min={0.5} step={0.5} className="gdw-inp" style={{ width: 48 }} value={l.width} onChange={(e) => updateLandscape(l.id, { width: Number(e.target.value) || 0.5 })} />
+            <DraftNumberInput min={0.5} step={0.5} className="gdw-inp" style={{ width: 48 }} value={l.width} onCommit={(v) => updateLandscape(l.id, { width: v })} />
             <span>×</span>
-            <input type="number" min={0.5} step={0.5} className="gdw-inp" style={{ width: 48 }} value={l.length} onChange={(e) => updateLandscape(l.id, { length: Number(e.target.value) || 0.5 })} />
+            <DraftNumberInput min={0.5} step={0.5} className="gdw-inp" style={{ width: 48 }} value={l.length} onCommit={(v) => updateLandscape(l.id, { length: v })} />
             {t.unit === "ea" && (
               <>
                 <span style={{ fontSize: 12 }}>qty</span>
-                <input type="number" min={1} className="gdw-inp" style={{ width: 44 }} value={l.qty} onChange={(e) => updateLandscape(l.id, { qty: Number(e.target.value) || 1 })} />
+                <DraftNumberInput min={1} integer className="gdw-inp" style={{ width: 44 }} value={l.qty} onCommit={(v) => updateLandscape(l.id, { qty: v })} />
               </>
             )}
           </div>
@@ -670,18 +715,31 @@ export default function GardenDesigner() {
     });
     const inset = Math.min(perimeterInset, enclosure.width / 2 - 0.5, enclosure.length / 2 - 0.5);
     const ringX0 = inset, ringY0 = inset, ringX1 = enclosure.width - inset, ringY1 = enclosure.length - inset;
-    const ringResult = taggedRing.length ? placeRing(taggedRing, ringX0, ringY0, ringX1, ringY1, gap) : { placed: [] };
+    const ringResult = taggedRing.length ? placeRing(taggedRing, ringX0, ringY0, ringX1, ringY1, gap) : { placed: [], overflowBeds: [] };
     const ringDepth = taggedRing.length ? Math.max(0, ...ringResult.placed.map((b) => b.length)) : 0;
     const cx0 = taggedRing.length ? ringX0 + ringDepth + gap : margin;
     const cy0 = taggedRing.length ? ringY0 + ringDepth + gap : margin;
     const cx1 = taggedRing.length ? ringX1 - ringDepth - gap : enclosure.width - margin;
+    const cy1 = taggedRing.length ? ringY1 - ringDepth - gap : enclosure.length - margin;
     const innerW = Math.max(cx1 - cx0, 1);
+    const innerH = Math.max(cy1 - cy0, 1);
     let cursorX = cx0, cursorY = cy0, rowH = 0;
     // patios keep their own manually-placed positions — auto-arrange only affects beds
     const placedCenter = [];
-    taggedCenter.forEach((bed) => {
+    const centerQueue = [...taggedCenter, ...(ringResult.overflowBeds || [])];
+    let packedCount = 0;
+    centerQueue.forEach((bed) => {
       if (cursorX + bed.width > cx0 + innerW) { cursorX = cx0; cursorY += rowH + 2; rowH = 0; }
-      placedCenter.push({ ...bed, x: cursorX, y: cursorY, rotated: false });
+      let placeX = cursorX;
+      let placeY = cursorY;
+      if (placeY + bed.length > cy0 + innerH) {
+        packedCount += 1;
+        placeX = cx0;
+        placeY = cy0 + innerH - bed.length;
+      }
+      placeX = Math.max(0, Math.min(placeX, enclosure.width - bed.width));
+      placeY = Math.max(0, Math.min(placeY, enclosure.length - bed.length));
+      placedCenter.push({ ...bed, x: placeX, y: placeY, rotated: false });
       cursorX += bed.width + 2;
       rowH = Math.max(rowH, bed.length);
     });
@@ -690,6 +748,14 @@ export default function GardenDesigner() {
       const mine = allPlaced.filter((p) => p.bedId === b.id).sort((a, c) => a.idx - c.idx).map((p) => ({ x: round1(p.x), y: round1(p.y), rotated: !!p.rotated }));
       return mine.length ? { ...b, positions: mine } : b;
     }));
+    if (ringResult.overflowBeds && ringResult.overflowBeds.length) {
+      const packedNote = packedCount > 0
+        ? ` Center zone was full too, so ${packedCount} bed${packedCount === 1 ? "" : "s"} were packed to stay inside the enclosure.`
+        : "";
+      setArrangeStatus(`Perimeter ring is full — ${ringResult.overflowBeds.length} bed${ringResult.overflowBeds.length === 1 ? "" : "s"} were moved to the center zone.${packedNote}`);
+    } else {
+      setArrangeStatus("");
+    }
   }
   useEffect(() => { autoArrange(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
   useEffect(() => { refreshReports(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
@@ -1618,9 +1684,9 @@ export default function GardenDesigner() {
               </div>
               <div className="gdw-label">Custom width × length (ft)</div>
               <div className="gdw-row">
-                <input type="number" min={4} className="gdw-inp" value={enclosure.width} onChange={(e) => setEnclosure((s) => ({ ...s, width: Math.max(Number(e.target.value) || 0, 4) }))} />
+                <DraftNumberInput min={4} className="gdw-inp" value={enclosure.width} onCommit={(v) => setEnclosure((s) => ({ ...s, width: v }))} />
                 <span>×</span>
-                <input type="number" min={4} className="gdw-inp" value={enclosure.length} onChange={(e) => setEnclosure((s) => ({ ...s, length: Math.max(Number(e.target.value) || 0, 4) }))} />
+                <DraftNumberInput min={4} className="gdw-inp" value={enclosure.length} onCommit={(v) => setEnclosure((s) => ({ ...s, length: v }))} />
               </div>
               <div className="gdw-label">Fence height</div>
               <div className="gdw-row">
@@ -1653,9 +1719,9 @@ export default function GardenDesigner() {
                     </div>
                     <div className="gdw-row">
                       <span style={{ fontSize: 11, color: "#6b6350" }}>Width</span>
-                      <input type="number" min={2} step={0.5} className="gdw-inp" style={{ width: 48 }} value={g.width} onChange={(e) => updateGate(g.id, { width: Number(e.target.value) || 2 })} />
+                      <DraftNumberInput min={2} step={0.5} className="gdw-inp" style={{ width: 48 }} value={g.width} onCommit={(v) => updateGate(g.id, { width: v })} />
                       <span style={{ fontSize: 11, color: "#6b6350" }}>Offset from corner</span>
-                      <input type="number" min={0} step={0.5} className="gdw-inp" style={{ width: 48 }} value={g.offset} onChange={(e) => updateGate(g.id, { offset: Number(e.target.value) || 0 })} />
+                      <DraftNumberInput min={0} step={0.5} className="gdw-inp" style={{ width: 48 }} value={g.offset} onCommit={(v) => updateGate(g.id, { offset: v })} />
                       <span style={{ fontSize: 11, color: "#8a8065" }}>of {wl} ft wall</span>
                     </div>
                   </div>
@@ -1670,7 +1736,7 @@ export default function GardenDesigner() {
               <h2><Sprout size={16} /> Raised Beds</h2>
               <div className="gdw-label">Perimeter bed setback: beds marked "Perimeter" sit this far inside the fence</div>
               <div className="gdw-row">
-                <input type="number" min={1} step={0.5} className="gdw-inp" value={perimeterInset} onChange={(e) => setPerimeterInset(Math.max(Number(e.target.value) || 1, 1))} />
+                <DraftNumberInput min={1} step={0.5} className="gdw-inp" value={perimeterInset} onCommit={(v) => setPerimeterInset(v)} />
                 <span style={{ fontSize: 12 }}>ft</span>
               </div>
               <div className="gdw-label">Default wall height for new beds: {courses} courses of 2×12 ≈ {bedWallHeightFt} ft</div>
@@ -1713,11 +1779,11 @@ export default function GardenDesigner() {
                     </div>
                     <div className="gdw-row">
                       <span style={{ fontSize: 11, width: "100%", color: "#6b6350" }}>{b.shape === "L" ? "Outer bounding box (ft)" : "Size (ft)"}</span>
-                      <input type="number" min={0.5} step={0.5} className="gdw-inp" style={{ width: 48 }} value={b.width} onChange={(e) => updateBed(b.id, { width: Number(e.target.value) || 0.5 })} />
+                      <DraftNumberInput min={0.5} step={0.5} className="gdw-inp" style={{ width: 48 }} value={b.width} onCommit={(v) => updateBed(b.id, { width: v })} />
                       <span>×</span>
-                      <input type="number" min={0.5} step={0.5} className="gdw-inp" style={{ width: 48 }} value={b.length} onChange={(e) => updateBed(b.id, { length: Number(e.target.value) || 0.5 })} />
+                      <DraftNumberInput min={0.5} step={0.5} className="gdw-inp" style={{ width: 48 }} value={b.length} onCommit={(v) => updateBed(b.id, { length: v })} />
                       <span style={{ fontSize: 12 }}>qty</span>
-                      <input type="number" min={1} className="gdw-inp" style={{ width: 40 }} value={b.qty} onChange={(e) => updateBed(b.id, { qty: Number(e.target.value) || 1 })} />
+                      <DraftNumberInput min={1} integer className="gdw-inp" style={{ width: 40 }} value={b.qty} onCommit={(v) => updateBed(b.id, { qty: v })} />
                     </div>
                     <div className="gdw-row" style={{ marginTop: 4 }}>
                       <span style={{ fontSize: 11, color: "#6b6350" }}>Wall height</span>
@@ -1737,9 +1803,9 @@ export default function GardenDesigner() {
                         {b.shape === "L" && (
                           <div className="gdw-row">
                             <span style={{ fontSize: 11, width: "100%", color: "#6b6350" }}>Notch to remove (ft) &amp; corner — as seen on screen, even when rotated</span>
-                            <input type="number" min={0.5} step={0.5} className="gdw-inp" style={{ width: 44 }} value={b.notchWidth} onChange={(e) => updateBed(b.id, { notchWidth: Math.min(Number(e.target.value) || 0.5, b.width - 0.5) })} />
+                            <DraftNumberInput min={0.5} max={Math.max(b.width - 0.5, 0.5)} step={0.5} className="gdw-inp" style={{ width: 44 }} value={b.notchWidth} onCommit={(v) => updateBed(b.id, { notchWidth: v })} />
                             <span>×</span>
-                            <input type="number" min={0.5} step={0.5} className="gdw-inp" style={{ width: 44 }} value={b.notchDepth} onChange={(e) => updateBed(b.id, { notchDepth: Math.min(Number(e.target.value) || 0.5, b.length - 0.5) })} />
+                            <DraftNumberInput min={0.5} max={Math.max(b.length - 0.5, 0.5)} step={0.5} className="gdw-inp" style={{ width: 44 }} value={b.notchDepth} onCommit={(v) => updateBed(b.id, { notchDepth: v })} />
                             <select className="gdw-inp" value={b.notchCorner} onChange={(e) => updateBed(b.id, { notchCorner: e.target.value })}>
                               <option value="top-right">top-right</option>
                               <option value="top-left">top-left</option>
@@ -1815,9 +1881,9 @@ export default function GardenDesigner() {
                     </div>
                     <div className="gdw-row">
                       <span style={{ fontSize: 11, width: "100%", color: "#6b6350" }}>Size (ft)</span>
-                      <input type="number" min={4} className="gdw-inp" style={{ width: 48 }} value={patio.width} onChange={(e) => updatePatio(patio.id, { width: Number(e.target.value) || 4 })} />
+                      <DraftNumberInput min={4} className="gdw-inp" style={{ width: 48 }} value={patio.width} onCommit={(v) => updatePatio(patio.id, { width: v })} />
                       <span>×</span>
-                      <input type="number" min={4} className="gdw-inp" style={{ width: 48 }} value={patio.length} onChange={(e) => updatePatio(patio.id, { length: Number(e.target.value) || 4 })} />
+                      <DraftNumberInput min={4} className="gdw-inp" style={{ width: 48 }} value={patio.length} onCommit={(v) => updatePatio(patio.id, { length: v })} />
                     </div>
                     <div className="gdw-label">Surface</div>
                     <div className="gdw-row">
@@ -1882,7 +1948,7 @@ export default function GardenDesigner() {
               <h2><Leaf size={16} /> Landscaping (outside the fence)</h2>
               <div className="gdw-label">Yard margin shown/usable around the fence</div>
               <div className="gdw-row">
-                <input type="number" min={2} step={1} className="gdw-inp" value={yardMargin} onChange={(e) => setYardMargin(Math.max(Number(e.target.value) || 2, 2))} />
+                <DraftNumberInput min={2} step={1} integer className="gdw-inp" value={yardMargin} onCommit={(v) => setYardMargin(v)} />
                 <span style={{ fontSize: 12 }}>ft — the patio above can also be dragged out here</span>
               </div>
               <div className="gdw-note" style={{ margin: "0 0 10px 0" }}>Add trees, shrubs, flower beds, mulch borders, sod, or a walkway, then drag them into place in the yard around your garden.</div>
@@ -1927,7 +1993,7 @@ export default function GardenDesigner() {
                   {Object.keys(prices).map((k) => (
                     <React.Fragment key={k}>
                       <div>{k}</div>
-                      <input className="gdw-inp" type="number" step="0.5" value={prices[k]} onChange={(e) => setPrice(k, e.target.value)} />
+                      <DraftNumberInput className="gdw-inp" min={0} step={0.5} value={prices[k]} onCommit={(v) => setPrice(k, v)} />
                     </React.Fragment>
                   ))}
                 </div>
@@ -1949,6 +2015,7 @@ export default function GardenDesigner() {
               {viewMode === "2d" ? (
                 <>
               <p className="gdw-note gdw-noprint" style={{ margin: "0 0 8px 0" }}>Drag to place freely — beds, patios, and landscaping can all go outside the fence, into the surrounding yard. Click an item to select it, then use the arrow buttons below (or keyboard arrows) to nudge it. Click empty ground or press Esc to deselect. Click the ↻ badge to rotate a bed 90°.</p>
+              {arrangeStatus && <p className="gdw-note gdw-noprint" style={{ margin: "0 0 8px 0", color: "#8A5A0A" }}>{arrangeStatus}</p>}
               <svg ref={svgRef} className="gdw-svg" viewBox={`${-1 - yardMargin} ${-1 - yardMargin} ${enclosure.width + 2 + 2 * yardMargin} ${enclosure.length + 2 + 2 * yardMargin}`}>
                 <rect x={-yardMargin} y={-yardMargin} width={enclosure.width + 2 * yardMargin} height={enclosure.length + 2 * yardMargin} fill="#8FBF6E" onClick={() => setSelected(null)} />
                 <rect x={0} y={0} width={enclosure.width} height={enclosure.length} fill="#EFE9D6" onClick={() => setSelected(null)} />
