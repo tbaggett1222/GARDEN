@@ -1,0 +1,64 @@
+{
+  "enclosure": { "width": 16, "length": 20 },
+  "fenceHeight": 6,
+  "postSpacing": 7,
+  "gates": [
+    { "id": 1, "wall": "bottom", "offset": 6.3, "width": 3.5 }
+  ],
+  "courses": 3,
+  "beds": [
+    {
+      "id": 1,
+      "label": "Chef Bed 1",
+      "width": 4,
+      "length": 8,
+      "qty": 1,
+      "courses": 3,
+      "shape": "rect",
+      "zone": "center",
+      "trellis": true,
+      "trellisHeight": 8,
+      "trellisSide": "length",
+      "positions": [{ "x": 0.8, "y": 1.2, "rotated": false }]
+    },
+    {
+      "id": 2,
+      "label": "Chef Bed 2",
+      "width": 4,
+      "length": 8,
+      "qty": 1,
+      "courses": 3,
+      "shape": "rect",
+      "zone": "center",
+      "trellis": true,
+      "trellisHeight": 8,
+      "trellisSide": "length",
+      "positions": [{ "x": 5.8, "y": 1.2, "rotated": false }]
+    }
+  ],
+  "patios": [
+    {
+      "id": 80,
+      "label": "Dining Patio",
+      "width": 10,
+      "length": 12,
+      "surface": "pavers",
+      "structureType": "pergola",
+      "structureHeight": 9,
+      "roofStyle": "flat",
+      "roofDirection": "auto",
+      "doorWidth": 3,
+      "furnishings": true,
+      "x": 6,
+      "y": 7
+    }
+  ],
+  "yardMargin": 12,
+  "landscape": [
+    { "id": 81, "type": "path", "label": "Front Walk", "width": 4, "length": 12, "qty": 1, "x": 6, "y": 20 },
+    { "id": 82, "type": "arch", "label": "Garden Arch", "width": 4, "length": 1.5, "height": 7, "qty": 1, "x": 4, "y": 9 },
+    { "id": 83, "type": "bed", "label": "Annual Color Strip", "width": 12, "length": 3, "qty": 1, "x": 2, "y": -5 }
+  ],
+  "prices": {},
+  "savedAt": "2026-08-15T00:00:00.000Z"
+}

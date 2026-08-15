@@ -1,0 +1,48 @@
+{
+  "enclosure": { "width": 16, "length": 20 },
+  "fenceHeight": 6,
+  "postSpacing": 8,
+  "gates": [
+    { "id": 1, "wall": "right", "offset": 8, "width": 3.5 }
+  ],
+  "courses": 2,
+  "beds": [
+    {
+      "id": 1,
+      "label": "Perennial Bed North",
+      "width": 4,
+      "length": 12,
+      "qty": 1,
+      "courses": 2,
+      "shape": "rect",
+      "zone": "center",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [{ "x": 2, "y": 2, "rotated": false }]
+    },
+    {
+      "id": 2,
+      "label": "Perennial Bed South",
+      "width": 4,
+      "length": 12,
+      "qty": 1,
+      "courses": 2,
+      "shape": "rect",
+      "zone": "center",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [{ "x": 10, "y": 6, "rotated": false }]
+    }
+  ],
+  "patios": [],
+  "yardMargin": 12,
+  "landscape": [
+    { "id": 71, "type": "mulch", "label": "Mulched Island", "width": 20, "length": 8, "qty": 1, "x": -2, "y": 21 },
+    { "id": 72, "type": "shrub", "label": "Evergreen Shrubs", "width": 2, "length": 2, "qty": 12, "x": 18, "y": 2 },
+    { "id": 73, "type": "grass", "label": "Low-Mow Lawn", "width": 14, "length": 10, "qty": 1, "x": -10, "y": -12 }
+  ],
+  "prices": {},
+  "savedAt": "2026-08-15T00:00:00.000Z"
+}

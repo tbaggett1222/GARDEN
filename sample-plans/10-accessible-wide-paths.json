@@ -1,0 +1,91 @@
+{
+  "enclosure": { "width": 16, "length": 20 },
+  "fenceHeight": 6,
+  "postSpacing": 7,
+  "gates": [
+    { "id": 1, "wall": "bottom", "offset": 3, "width": 10 }
+  ],
+  "courses": 2,
+  "beds": [
+    {
+      "id": 1,
+      "label": "North Left Bed",
+      "width": 3,
+      "length": 8,
+      "qty": 1,
+      "courses": 2,
+      "shape": "rect",
+      "zone": "center",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [{ "x": 1, "y": 1.5, "rotated": false }]
+    },
+    {
+      "id": 2,
+      "label": "North Right Bed",
+      "width": 3,
+      "length": 8,
+      "qty": 1,
+      "courses": 2,
+      "shape": "rect",
+      "zone": "center",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [{ "x": 12, "y": 1.5, "rotated": false }]
+    },
+    {
+      "id": 3,
+      "label": "South Left Bed",
+      "width": 3,
+      "length": 8,
+      "qty": 1,
+      "courses": 2,
+      "shape": "rect",
+      "zone": "center",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [{ "x": 1, "y": 10.5, "rotated": false }]
+    },
+    {
+      "id": 4,
+      "label": "South Right Bed",
+      "width": 3,
+      "length": 8,
+      "qty": 1,
+      "courses": 2,
+      "shape": "rect",
+      "zone": "center",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [{ "x": 12, "y": 10.5, "rotated": false }]
+    }
+  ],
+  "patios": [
+    {
+      "id": 100,
+      "label": "Accessible Seating Pad",
+      "width": 8,
+      "length": 6,
+      "surface": "pavers",
+      "structureType": "none",
+      "structureHeight": 8,
+      "roofStyle": "hip",
+      "roofDirection": "auto",
+      "doorWidth": 3,
+      "furnishings": true,
+      "x": 4,
+      "y": 7
+    }
+  ],
+  "yardMargin": 10,
+  "landscape": [
+    { "id": 101, "type": "path", "label": "Wide Entry Path", "width": 8, "length": 10, "qty": 1, "x": 4, "y": 20 },
+    { "id": 102, "type": "mulch", "label": "Wheel Stop Mulch", "width": 16, "length": 3, "qty": 1, "x": 0, "y": -4 }
+  ],
+  "prices": {},
+  "savedAt": "2026-08-15T00:00:00.000Z"
+}
