@@ -21,3 +21,5 @@ These starter plans are ready to import into the Garden Designer app.
 8. `08-pergola-dining-garden.json` — entertainment-focused plan with pergola patio
 9. `09-orchard-berry-border.json` — productive beds plus orchard-style perimeter plantings
 10. `10-accessible-wide-paths.json` — wider spacing and easy movement corridors
+11. `11-rainwater-resilient-garden.json` — drought/rain-surge resilient mix with mulch and swales
+12. `12-small-space-vertical-max.json` — compact footprint with vertical trellis-focused production
