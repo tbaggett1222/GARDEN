@@ -23,3 +23,16 @@ These starter plans are ready to import into the Garden Designer app.
 10. `10-accessible-wide-paths.json` — wider spacing and easy movement corridors
 11. `11-rainwater-resilient-garden.json` — drought/rain-surge resilient mix with mulch and swales
 12. `12-small-space-vertical-max.json` — compact footprint with vertical trellis-focused production
+
+## Best plan by goal (quick picker)
+
+- **First time gardener:** `01-beginner-8x8-two-beds.json`
+- **Small space / max yield:** `12-small-space-vertical-max.json`
+- **Family + outdoor seating:** `03-family-16x16-patio.json`
+- **Serious production / market style:** `04-market-16x32-intensive.json`
+- **Low maintenance:** `07-low-maintenance-perennial.json`
+- **Pollinators + cut flowers:** `05-pollinator-cutflower-garden.json`
+- **Accessibility focus:** `10-accessible-wide-paths.json`
+- **Rain/drought resilience:** `11-rainwater-resilient-garden.json`
+- **Garden entertaining:** `08-pergola-dining-garden.json`
+- **Fruit/berry emphasis:** `09-orchard-berry-border.json`
