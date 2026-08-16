@@ -1,0 +1,79 @@
+{
+  "enclosure": { "width": 8, "length": 16 },
+  "fenceHeight": 8,
+  "postSpacing": 6,
+  "gates": [
+    { "id": 1, "wall": "bottom", "offset": 2.3, "width": 3.5 }
+  ],
+  "courses": 3,
+  "beds": [
+    {
+      "id": 1,
+      "label": "Tomato Trellis Bed",
+      "width": 4,
+      "length": 8,
+      "qty": 1,
+      "courses": 3,
+      "shape": "rect",
+      "zone": "center",
+      "trellis": true,
+      "trellisHeight": 8,
+      "trellisSide": "length",
+      "positions": [{ "x": 0, "y": 0, "rotated": false }]
+    },
+    {
+      "id": 2,
+      "label": "Cucumber Trellis Bed",
+      "width": 4,
+      "length": 8,
+      "qty": 1,
+      "courses": 3,
+      "shape": "rect",
+      "zone": "center",
+      "trellis": true,
+      "trellisHeight": 8,
+      "trellisSide": "length",
+      "positions": [{ "x": 4, "y": 0, "rotated": false }]
+    },
+    {
+      "id": 3,
+      "label": "Salad L-Bed",
+      "width": 5,
+      "length": 6,
+      "qty": 1,
+      "courses": 2,
+      "shape": "L",
+      "notchWidth": 2,
+      "notchDepth": 2,
+      "notchCorner": "bottom-right",
+      "zone": "center",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [{ "x": 1.5, "y": 9, "rotated": false }]
+    },
+    {
+      "id": 4,
+      "label": "Herb Strip",
+      "width": 3,
+      "length": 5,
+      "qty": 1,
+      "courses": 2,
+      "shape": "rect",
+      "zone": "center",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [{ "x": 5, "y": 10.5, "rotated": false }]
+    }
+  ],
+  "patios": [],
+  "yardMargin": 8,
+  "landscape": [
+    { "id": 121, "type": "tunnel", "label": "Tunnel Trellis Connector", "width": 4, "length": 2, "height": 7, "qty": 1, "x": 2, "y": 8 },
+    { "id": 122, "type": "arch", "label": "Vertical Entry Arch", "width": 4, "length": 1.5, "height": 7, "qty": 1, "x": 2, "y": 16.5 },
+    { "id": 123, "type": "path", "label": "Narrow Access Path", "width": 3, "length": 8, "qty": 1, "x": 2.5, "y": 17.5 }
+  ],
+  "prices": {},
+  "savedAt": "2026-08-15T00:00:00.000Z"
+}

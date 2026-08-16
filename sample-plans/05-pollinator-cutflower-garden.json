@@ -1,0 +1,65 @@
+{
+  "enclosure": { "width": 16, "length": 16 },
+  "fenceHeight": 6,
+  "postSpacing": 7,
+  "gates": [
+    { "id": 1, "wall": "left", "offset": 6, "width": 3.5 }
+  ],
+  "courses": 2,
+  "beds": [
+    {
+      "id": 1,
+      "label": "Cut Flower Bed 1",
+      "width": 3,
+      "length": 10,
+      "qty": 1,
+      "courses": 2,
+      "shape": "rect",
+      "zone": "center",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [{ "x": 1.2, "y": 2, "rotated": false }]
+    },
+    {
+      "id": 2,
+      "label": "Cut Flower Bed 2",
+      "width": 3,
+      "length": 10,
+      "qty": 1,
+      "courses": 2,
+      "shape": "rect",
+      "zone": "center",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [{ "x": 5.2, "y": 2, "rotated": false }]
+    },
+    {
+      "id": 3,
+      "label": "Herb L-Bed",
+      "width": 6,
+      "length": 6,
+      "qty": 1,
+      "courses": 2,
+      "shape": "L",
+      "notchWidth": 2,
+      "notchDepth": 2,
+      "notchCorner": "bottom-left",
+      "zone": "center",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [{ "x": 9, "y": 7.5, "rotated": false }]
+    }
+  ],
+  "patios": [],
+  "yardMargin": 12,
+  "landscape": [
+    { "id": 51, "type": "bed", "label": "Native Flower Strip", "width": 20, "length": 3, "qty": 1, "x": -2, "y": -5 },
+    { "id": 52, "type": "shrub", "label": "Pollinator Shrubs", "width": 2, "length": 2, "qty": 8, "x": 18, "y": 1 },
+    { "id": 53, "type": "arch", "label": "Entry Arch", "width": 4, "length": 1.5, "height": 7, "qty": 1, "x": -2, "y": 6 }
+  ],
+  "prices": {},
+  "savedAt": "2026-08-15T00:00:00.000Z"
+}

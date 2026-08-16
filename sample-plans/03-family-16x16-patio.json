@@ -1,0 +1,80 @@
+{
+  "enclosure": { "width": 16, "length": 16 },
+  "fenceHeight": 6,
+  "postSpacing": 7,
+  "gates": [
+    { "id": 1, "wall": "bottom", "offset": 6.3, "width": 3.5 }
+  ],
+  "courses": 3,
+  "beds": [
+    {
+      "id": 1,
+      "label": "Salad Bed",
+      "width": 4,
+      "length": 8,
+      "qty": 1,
+      "courses": 3,
+      "shape": "rect",
+      "zone": "center",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [{ "x": 0.5, "y": 0.8, "rotated": false }]
+    },
+    {
+      "id": 2,
+      "label": "Tomato Bed",
+      "width": 4,
+      "length": 8,
+      "qty": 1,
+      "courses": 3,
+      "shape": "rect",
+      "zone": "center",
+      "trellis": true,
+      "trellisHeight": 8,
+      "trellisSide": "length",
+      "positions": [{ "x": 5.5, "y": 0.8, "rotated": false }]
+    },
+    {
+      "id": 3,
+      "label": "L Herb Bed",
+      "width": 6,
+      "length": 6,
+      "qty": 1,
+      "courses": 2,
+      "shape": "L",
+      "notchWidth": 2,
+      "notchDepth": 2,
+      "notchCorner": "top-right",
+      "zone": "center",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [{ "x": 0.8, "y": 9.2, "rotated": false }]
+    }
+  ],
+  "patios": [
+    {
+      "id": 40,
+      "label": "Family Patio",
+      "width": 8,
+      "length": 8,
+      "surface": "pavers",
+      "structureType": "none",
+      "structureHeight": 8,
+      "roofStyle": "hip",
+      "roofDirection": "auto",
+      "doorWidth": 3,
+      "furnishings": true,
+      "x": 7.2,
+      "y": 8
+    }
+  ],
+  "yardMargin": 10,
+  "landscape": [
+    { "id": 31, "type": "tree", "label": "Shade Tree", "width": 4, "length": 4, "qty": 1, "x": 18, "y": 6 },
+    { "id": 32, "type": "path", "label": "Walkway", "width": 4, "length": 10, "qty": 1, "x": 6, "y": 17 }
+  ],
+  "prices": {},
+  "savedAt": "2026-08-15T00:00:00.000Z"
+}

@@ -98,6 +98,20 @@ const ENCLOSURE_PRESETS = ["8x8", "8x16", "16x16", "16x32"];
 const BED_PRESETS = ["3x5", "3x6", "4x4", "4x8", "4x10"];
 const PATIO_PRESETS = ["8x8", "10x10", "12x16", "16x20"];
 const STOCK_LENGTHS = [8, 10, 12, 16];
+const SAMPLE_PLAN_MODULES = import.meta.glob("./sample-plans/*.json", { eager: true });
+const SAMPLE_PLANS = Object.entries(SAMPLE_PLAN_MODULES)
+  .map(([path, mod]) => {
+    const file = path.split("/").pop() || path;
+    return {
+      file,
+      data: mod.default || mod,
+      label: file
+        .replace(/^\d{2}-/, "")
+        .replace(/\.json$/, "")
+        .replace(/-/g, " "),
+    };
+  })
+  .sort((a, b) => a.file.localeCompare(b.file));
 
 function fmt(n) { return n.toLocaleString(undefined, { style: "currency", currency: "USD" }); }
 function round1(n) { return Math.round(n * 10) / 10; }
@@ -741,6 +755,19 @@ export default function GardenDesigner() {
     setSaveStatus(`Loaded "${name}"`);
     setSaveStatusType("ok");
     setTimeout(() => setSaveStatus(""), 2500);
+  }
+  function loadSamplePlan(file) {
+    const sample = SAMPLE_PLANS.find((p) => p.file === file);
+    if (!sample) return;
+    const snapshot = typeof structuredClone === "function"
+      ? structuredClone(sample.data)
+      : JSON.parse(JSON.stringify(sample.data));
+    applySnapshot(snapshot);
+    setReportName(file.replace(/\.json$/, ""));
+    setShowLoadMenu(false);
+    setSaveStatus(`Loaded sample plan "${file}"`);
+    setSaveStatusType("ok");
+    setTimeout(() => setSaveStatus(""), 3000);
   }
   function applySnapshot(data) {
     if (data.enclosure) setEnclosure(data.enclosure);
@@ -1483,6 +1510,7 @@ export default function GardenDesigner() {
         .gdw-loadrow{display:flex;justify-content:space-between;align-items:center;padding:4px 6px;border-radius:5px;gap:6px;}
         .gdw-loadrow:hover{background:#F0EADB;}
         .gdw-loadname{background:none;border:none;text-align:left;flex:1;cursor:pointer;font-size:12.5px;color:var(--ink);padding:2px 0;}
+        .gdw-loadsection{font-size:10.5px;color:#8a8065;text-transform:uppercase;letter-spacing:.04em;padding:6px 8px 3px 8px;}
         .gdw-loadempty{font-size:12px;color:#8a8065;padding:6px;}
         .gdw-savestatus{width:100%;font-size:12.5px;font-weight:600;padding:6px 10px;border-radius:6px;margin-top:2px;}
         .gdw-savestatus.ok{color:#2F6B2A;background:#E9F4E4;}
@@ -1544,11 +1572,20 @@ export default function GardenDesigner() {
             <button className="gdw-btn" onClick={() => setShowLoadMenu((v) => !v)} title="Designs saved by name inside the app"><FolderOpen size={13} style={{ verticalAlign: -2 }} /> Load ({savedReports.length})</button>
             {showLoadMenu && (
               <div className="gdw-loadmenu">
+                <div className="gdw-loadsection">Saved designs</div>
                 {savedReports.length === 0 && <div className="gdw-loadempty">No saved designs yet</div>}
                 {savedReports.map((name) => (
                   <div key={name} className="gdw-loadrow">
                     <button className="gdw-loadname" onClick={() => loadReport(name)}>{name}</button>
                     <button className="gdw-iconbtn" onClick={() => deleteReport(name)}><Trash2 size={14} /></button>
+                  </div>
+                ))}
+                <div className="gdw-loadsection" style={{ borderTop: "1px solid var(--line)", marginTop: 4, paddingTop: 7 }}>Sample plans</div>
+                {SAMPLE_PLANS.map((plan) => (
+                  <div key={plan.file} className="gdw-loadrow">
+                    <button className="gdw-loadname" onClick={() => loadSamplePlan(plan.file)} title={plan.file}>
+                      {plan.label}
+                    </button>
                   </div>
                 ))}
               </div>

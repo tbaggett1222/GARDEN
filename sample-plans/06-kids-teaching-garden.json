@@ -1,0 +1,77 @@
+{
+  "enclosure": { "width": 12, "length": 16 },
+  "fenceHeight": 6,
+  "postSpacing": 7,
+  "gates": [
+    { "id": 1, "wall": "bottom", "offset": 4.3, "width": 3.5 }
+  ],
+  "courses": 2,
+  "beds": [
+    {
+      "id": 1,
+      "label": "ABC Bed",
+      "width": 4,
+      "length": 6,
+      "qty": 1,
+      "courses": 2,
+      "shape": "rect",
+      "zone": "center",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [{ "x": 1, "y": 1, "rotated": false }]
+    },
+    {
+      "id": 2,
+      "label": "Pizza Bed",
+      "width": 4,
+      "length": 6,
+      "qty": 1,
+      "courses": 2,
+      "shape": "rect",
+      "zone": "center",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [{ "x": 7, "y": 1, "rotated": false }]
+    },
+    {
+      "id": 3,
+      "label": "Snack Bed",
+      "width": 4,
+      "length": 6,
+      "qty": 1,
+      "courses": 2,
+      "shape": "rect",
+      "zone": "center",
+      "trellis": true,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [{ "x": 4, "y": 8.5, "rotated": false }]
+    }
+  ],
+  "patios": [
+    {
+      "id": 60,
+      "label": "Lesson Circle",
+      "width": 6,
+      "length": 6,
+      "surface": "gravel",
+      "structureType": "none",
+      "structureHeight": 8,
+      "roofStyle": "hip",
+      "roofDirection": "auto",
+      "doorWidth": 3,
+      "furnishings": true,
+      "x": 3,
+      "y": 10
+    }
+  ],
+  "yardMargin": 10,
+  "landscape": [
+    { "id": 61, "type": "tree", "label": "Shade Tree", "width": 4, "length": 4, "qty": 1, "x": 13, "y": 4 },
+    { "id": 62, "type": "doubleArch", "label": "Tunnel Entry", "width": 4, "length": 4, "height": 7, "qty": 1, "x": -5, "y": 6 }
+  ],
+  "prices": {},
+  "savedAt": "2026-08-15T00:00:00.000Z"
+}
