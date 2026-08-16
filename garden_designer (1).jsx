@@ -98,17 +98,36 @@ const ENCLOSURE_PRESETS = ["8x8", "8x16", "16x16", "16x32"];
 const BED_PRESETS = ["3x5", "3x6", "4x4", "4x8", "4x10"];
 const PATIO_PRESETS = ["8x8", "10x10", "12x16", "16x20"];
 const STOCK_LENGTHS = [8, 10, 12, 16];
+const SAMPLE_PLAN_META = {
+  "01-beginner-8x8-two-beds.json": "Small, simple starter with two beds.",
+  "02-kitchen-8x16-four-beds.json": "Compact four-bed kitchen production plan.",
+  "03-family-16x16-patio.json": "Large-bed 16x16 layout with long rows.",
+  "04-market-16x32-intensive.json": "High-yield long-row 16x32 production layout.",
+  "05-pollinator-cutflower-garden.json": "Pollinator habitat and cut-flower focus.",
+  "06-kids-teaching-garden.json": "Simple educational zones for family learning.",
+  "07-low-maintenance-perennial.json": "Fewer beds and easy-upkeep perimeter planting.",
+  "08-pergola-dining-garden.json": "Entertaining-focused garden with pergola area.",
+  "09-orchard-berry-border.json": "Fruit-tree and berry-forward mixed production.",
+  "10-accessible-wide-paths.json": "Wider paths and easier access movement.",
+  "11-rainwater-resilient-garden.json": "Rain/drought-resilient mixed planting strategy.",
+  "12-small-space-vertical-max.json": "Vertical trellis-heavy small footprint design.",
+};
+function titleCaseWords(s) { return s.replace(/\b\w/g, (c) => c.toUpperCase()); }
 const SAMPLE_PLAN_MODULES = import.meta.glob("./sample-plans/*.json", { eager: true });
 const SAMPLE_PLANS = Object.entries(SAMPLE_PLAN_MODULES)
   .map(([path, mod]) => {
     const file = path.split("/").pop() || path;
+    const data = mod.default || mod;
+    const size = data?.enclosure ? `${data.enclosure.width}×${data.enclosure.length} ft` : "";
     return {
       file,
-      data: mod.default || mod,
-      label: file
+      data,
+      label: titleCaseWords(file
         .replace(/^\d{2}-/, "")
         .replace(/\.json$/, "")
-        .replace(/-/g, " "),
+        .replace(/-/g, " ")),
+      size,
+      blurb: SAMPLE_PLAN_META[file] || "Sample starter layout.",
     };
   })
   .sort((a, b) => a.file.localeCompare(b.file));
@@ -254,10 +273,17 @@ export default function GardenDesigner() {
   const [nudgeStep, setNudgeStep] = useState(0.5);
   const [viewMode, setViewMode] = useState("2d"); // '2d' | '3d'
   const [activeTab, setActiveTab] = useState("enclosure"); // 'enclosure' | 'beds' | 'patio' | 'landscaping' | 'prices'
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
   const [expandedBeds, setExpandedBeds] = useState(() => new Set([1, 2]));
   const [advancedBeds, setAdvancedBeds] = useState(() => new Set());
   const threeContainerRef = useRef(null);
   const camStateRef = useRef({ theta: 0.8, phi: 1.0, radius: null });
+  const historyRef = useRef([]);
+  const historyHashRef = useRef([]);
+  const historyIdxRef = useRef(-1);
+  const historyReadyRef = useRef(false);
+  const skipNextHistoryRef = useRef(false);
   function toggleExpanded(id) { setExpandedBeds((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; }); }
   function toggleAdvanced(id) { setAdvancedBeds((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; }); }
 
@@ -719,8 +745,59 @@ export default function GardenDesigner() {
     }
     setSavedReports([...names].sort());
   }
-  function buildSnapshot() {
-    return { enclosure, fenceHeight, postSpacing, gates, courses, beds, patios, yardMargin, landscape, prices, savedAt: new Date().toISOString() };
+  function buildSnapshot(includeTimestamp = true) {
+    const snapshot = { enclosure, fenceHeight, postSpacing, gates, courses, beds, patios, yardMargin, landscape, prices };
+    if (includeTimestamp) snapshot.savedAt = new Date().toISOString();
+    return snapshot;
+  }
+  function syncHistoryButtons() {
+    const idx = historyIdxRef.current;
+    const len = historyRef.current.length;
+    setCanUndo(idx > 0);
+    setCanRedo(idx >= 0 && idx < len - 1);
+  }
+  function pushHistorySnapshot(snapshot) {
+    const serialized = JSON.stringify(snapshot);
+    const currentSerialized = historyHashRef.current[historyIdxRef.current];
+    if (serialized === currentSerialized) return;
+    let nextHistory = historyRef.current.slice(0, historyIdxRef.current + 1);
+    let nextHashes = historyHashRef.current.slice(0, historyIdxRef.current + 1);
+    nextHistory.push(snapshot);
+    nextHashes.push(serialized);
+    const limit = 120;
+    if (nextHistory.length > limit) {
+      const trim = nextHistory.length - limit;
+      nextHistory = nextHistory.slice(trim);
+      nextHashes = nextHashes.slice(trim);
+      historyIdxRef.current = Math.max(historyIdxRef.current - trim, -1);
+    }
+    historyRef.current = nextHistory;
+    historyHashRef.current = nextHashes;
+    historyIdxRef.current = nextHistory.length - 1;
+    syncHistoryButtons();
+  }
+  function applyHistoryAt(index) {
+    const next = historyRef.current[index];
+    if (!next) return;
+    historyIdxRef.current = index;
+    skipNextHistoryRef.current = true;
+    const snapshot = typeof structuredClone === "function" ? structuredClone(next) : JSON.parse(JSON.stringify(next));
+    applySnapshot(snapshot);
+    syncHistoryButtons();
+  }
+  function undoChange() {
+    if (historyIdxRef.current <= 0) return;
+    applyHistoryAt(historyIdxRef.current - 1);
+    setSaveStatus("Undid last change");
+    setSaveStatusType("ok");
+    setTimeout(() => setSaveStatus(""), 1200);
+  }
+  function redoChange() {
+    if (historyIdxRef.current >= historyRef.current.length - 1) return;
+    applyHistoryAt(historyIdxRef.current + 1);
+    setSaveStatus("Redid change");
+    setSaveStatusType("ok");
+    setTimeout(() => setSaveStatus(""), 1200);
   }
   async function saveReport() {
     const name = reportName.trim();
@@ -763,9 +840,9 @@ export default function GardenDesigner() {
       ? structuredClone(sample.data)
       : JSON.parse(JSON.stringify(sample.data));
     applySnapshot(snapshot);
-    setReportName(file.replace(/\.json$/, ""));
+    setReportName(sample.label);
     setShowLoadMenu(false);
-    setSaveStatus(`Loaded sample plan "${file}"`);
+    setSaveStatus(`Loaded sample plan "${sample.label}"`);
     setSaveStatusType("ok");
     setTimeout(() => setSaveStatus(""), 3000);
   }
@@ -785,6 +862,35 @@ export default function GardenDesigner() {
     idCounter = Math.max(...allIds);
     setSelected(null);
   }
+  useEffect(() => {
+    const snapshot = buildSnapshot(false);
+    if (!historyReadyRef.current) {
+      historyRef.current = [snapshot];
+      historyHashRef.current = [JSON.stringify(snapshot)];
+      historyIdxRef.current = 0;
+      historyReadyRef.current = true;
+      syncHistoryButtons();
+      return;
+    }
+    if (skipNextHistoryRef.current) {
+      skipNextHistoryRef.current = false;
+      return;
+    }
+    pushHistorySnapshot(snapshot);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enclosure, fenceHeight, postSpacing, gates, courses, beds, patios, yardMargin, landscape, prices]);
+
+  useEffect(() => {
+    function onUndoRedoHotkeys(e) {
+      if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+      if (e.key.toLowerCase() !== "z") return;
+      e.preventDefault();
+      if (e.shiftKey) redoChange();
+      else undoChange();
+    }
+    window.addEventListener("keydown", onUndoRedoHotkeys);
+    return () => window.removeEventListener("keydown", onUndoRedoHotkeys);
+  }, []);
   // "Save As" / "Load from file" — the artifact sandbox often blocks direct filesystem
   // access (showSaveFilePicker / <a download>) outright, with no error to catch, so those
   // can silently do nothing. Copy/paste to a text file is the one path guaranteed to work
@@ -1506,11 +1612,15 @@ export default function GardenDesigner() {
         .gdw-structcard:hover{border-color:var(--leaf);}
         .gdw-structcard.active{border-color:var(--leaf);background:#F0F5EC;box-shadow:0 0 0 1px var(--leaf) inset;}
         .gdw-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:18px;padding:10px 14px;background:var(--panel);border:1px solid var(--line);border-radius:10px;}
-        .gdw-loadmenu{position:absolute;top:110%;left:0;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,0.18);min-width:210px;max-height:240px;overflow-y:auto;z-index:20;padding:6px;}
+        .gdw-loadmenu{position:absolute;top:110%;left:0;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,0.18);min-width:270px;max-height:300px;overflow-y:auto;z-index:20;padding:6px;}
         .gdw-loadrow{display:flex;justify-content:space-between;align-items:center;padding:4px 6px;border-radius:5px;gap:6px;}
         .gdw-loadrow:hover{background:#F0EADB;}
         .gdw-loadname{background:none;border:none;text-align:left;flex:1;cursor:pointer;font-size:12.5px;color:var(--ink);padding:2px 0;}
         .gdw-loadsection{font-size:10.5px;color:#8a8065;text-transform:uppercase;letter-spacing:.04em;padding:6px 8px 3px 8px;}
+        .gdw-samplecard{display:flex;flex-direction:column;align-items:flex-start;width:100%;background:#F9F7F0;border:1px solid #DFD7C3;border-radius:8px;text-align:left;cursor:pointer;padding:8px 9px;gap:2px;margin:0 0 6px 0;}
+        .gdw-samplecard:hover{border-color:var(--leaf);background:#F2F6EE;}
+        .gdw-sampletitle{font-size:12.5px;font-weight:600;color:var(--ink);}
+        .gdw-samplemeta{font-size:11px;color:#6b6350;line-height:1.35;}
         .gdw-loadempty{font-size:12px;color:#8a8065;padding:6px;}
         .gdw-savestatus{width:100%;font-size:12.5px;font-weight:600;padding:6px 10px;border-radius:6px;margin-top:2px;}
         .gdw-savestatus.ok{color:#2F6B2A;background:#E9F4E4;}
@@ -1568,6 +1678,8 @@ export default function GardenDesigner() {
         <div className="gdw-toolbar gdw-noprint">
           <input className="gdw-inp" style={{ width: "auto", flex: "1 1 160px" }} placeholder="Name this design…" value={reportName} onChange={(e) => setReportName(e.target.value)} />
           <button className="gdw-btn primary" onClick={saveReport} disabled={!reportName.trim()} title="Save under this name inside the app"><Save size={13} style={{ verticalAlign: -2 }} /> Save</button>
+          <button className="gdw-btn" onClick={undoChange} disabled={!canUndo} title="Undo (Ctrl/Cmd+Z)">↶ Undo</button>
+          <button className="gdw-btn" onClick={redoChange} disabled={!canRedo} title="Redo (Ctrl/Cmd+Shift+Z)">↷ Redo</button>
           <div style={{ position: "relative" }}>
             <button className="gdw-btn" onClick={() => setShowLoadMenu((v) => !v)} title="Designs saved by name inside the app"><FolderOpen size={13} style={{ verticalAlign: -2 }} /> Load ({savedReports.length})</button>
             {showLoadMenu && (
@@ -1582,9 +1694,11 @@ export default function GardenDesigner() {
                 ))}
                 <div className="gdw-loadsection" style={{ borderTop: "1px solid var(--line)", marginTop: 4, paddingTop: 7 }}>Sample plans</div>
                 {SAMPLE_PLANS.map((plan) => (
-                  <div key={plan.file} className="gdw-loadrow">
-                    <button className="gdw-loadname" onClick={() => loadSamplePlan(plan.file)} title={plan.file}>
-                      {plan.label}
+                  <div key={plan.file}>
+                    <button className="gdw-samplecard" onClick={() => loadSamplePlan(plan.file)} title={plan.file}>
+                      <span className="gdw-sampletitle">{plan.label}</span>
+                      <span className="gdw-samplemeta">{plan.size || "Custom size"}</span>
+                      <span className="gdw-samplemeta">{plan.blurb}</span>
                     </button>
                   </div>
                 ))}

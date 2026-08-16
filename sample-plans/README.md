@@ -13,8 +13,8 @@ These starter plans are ready to import into the Garden Designer app.
 
 1. `01-beginner-8x8-two-beds.json` — tiny starter layout for first-time gardeners
 2. `02-kitchen-8x16-four-beds.json` — compact kitchen garden with four productive beds
-3. `03-family-16x16-patio.json` — mixed growing + hangout layout with a patio
-4. `04-market-16x32-intensive.json` — high-output layout for serious production
+3. `03-family-16x16-patio.json` — large-bed 16×16 layout with long trellised rows
+4. `04-market-16x32-intensive.json` — large-bed 16×32 production layout with six long rows
 5. `05-pollinator-cutflower-garden.json` — flowers + habitat focused design
 6. `06-kids-teaching-garden.json` — simple educational layout with clear zones
 7. `07-low-maintenance-perennial.json` — fewer beds with shrubs/mulch for easy upkeep
@@ -28,7 +28,7 @@ These starter plans are ready to import into the Garden Designer app.
 
 - **First time gardener:** `01-beginner-8x8-two-beds.json`
 - **Small space / max yield:** `12-small-space-vertical-max.json`
-- **Family + outdoor seating:** `03-family-16x16-patio.json`
+- **Large 16×16 bed layout:** `03-family-16x16-patio.json`
 - **Serious production / market style:** `04-market-16x32-intensive.json`
 - **Low maintenance:** `07-low-maintenance-perennial.json`
 - **Pollinators + cut flowers:** `05-pollinator-cutflower-garden.json`
