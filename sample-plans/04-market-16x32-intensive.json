@@ -10,9 +10,9 @@
   "beds": [
     {
       "id": 1,
-      "label": "Production Beds",
+      "label": "Large Production Beds",
       "width": 4,
-      "length": 10,
+      "length": 12,
       "qty": 6,
       "courses": 3,
       "shape": "rect",
@@ -21,38 +21,19 @@
       "trellisHeight": 8,
       "trellisSide": "length",
       "positions": [
-        { "x": 0.5, "y": 0.8, "rotated": false },
-        { "x": 5.5, "y": 0.8, "rotated": false },
-        { "x": 10.5, "y": 0.8, "rotated": false },
-        { "x": 0.5, "y": 12, "rotated": false },
-        { "x": 5.5, "y": 12, "rotated": false },
-        { "x": 10.5, "y": 12, "rotated": false }
-      ]
-    },
-    {
-      "id": 2,
-      "label": "Succession Beds",
-      "width": 3,
-      "length": 8,
-      "qty": 4,
-      "courses": 2,
-      "shape": "rect",
-      "zone": "center",
-      "trellis": false,
-      "trellisHeight": 6,
-      "trellisSide": "width",
-      "positions": [
-        { "x": 1, "y": 23, "rotated": false },
-        { "x": 5, "y": 23, "rotated": false },
-        { "x": 9, "y": 23, "rotated": false },
-        { "x": 13, "y": 23, "rotated": false }
+        { "x": 2, "y": 1, "rotated": true },
+        { "x": 2, "y": 6, "rotated": true },
+        { "x": 2, "y": 11, "rotated": true },
+        { "x": 2, "y": 16, "rotated": true },
+        { "x": 2, "y": 21, "rotated": true },
+        { "x": 2, "y": 26, "rotated": true }
       ]
     }
   ],
   "patios": [],
   "yardMargin": 12,
   "landscape": [
-    { "id": 41, "type": "mulch", "label": "Supply Pad", "width": 8, "length": 8, "qty": 1, "x": 18, "y": 2 },
+    { "id": 41, "type": "mulch", "label": "Supply Pad", "width": 8, "length": 8, "qty": 1, "x": 18, "y": 4 },
     { "id": 42, "type": "path", "label": "Main Entry Walk", "width": 4, "length": 16, "qty": 1, "x": 6, "y": 33 }
   ],
   "prices": {},
