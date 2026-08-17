@@ -141,6 +141,15 @@ const SAMPLE_PLANS = Object.entries(SAMPLE_PLAN_MODULES)
     const file = path.split("/").pop() || path;
     const data = mod.default || mod;
     const size = data?.enclosure ? `${data.enclosure.width}×${data.enclosure.length} ft` : "";
+    const hasOutsidePergola = !!(data?.enclosure && Array.isArray(data?.patios) && data.patios.some((p) => (
+      p?.structureType === "pergola"
+      && (
+        (Number(p.x) || 0) < 0
+        || (Number(p.y) || 0) < 0
+        || (Number(p.x) || 0) + Math.max(Number(p.width) || 0, 0) > data.enclosure.width
+        || (Number(p.y) || 0) + Math.max(Number(p.length) || 0, 0) > data.enclosure.length
+      )
+    )));
     return {
       file,
       data,
@@ -150,6 +159,7 @@ const SAMPLE_PLANS = Object.entries(SAMPLE_PLAN_MODULES)
         .replace(/-/g, " ")),
       size,
       blurb: SAMPLE_PLAN_META[file] || "Sample starter layout.",
+      hasOutsidePergola,
     };
   })
   .sort((a, b) => a.file.localeCompare(b.file));
@@ -1054,6 +1064,7 @@ export default function GardenDesigner() {
     if (data.gardenSite) setGardenSite({ usdaZone: 7, sunHours: 8, ...data.gardenSite });
     if (data.irrigation) setIrrigation({ enabled: true, method: "drip", zones: 2, rowSpacingIn: 12, emitterSpacingIn: 12, emitterGph: 0.5, minutesPerDay: 35, daysPerWeek: 4, ...data.irrigation });
     if (data.renderQuality3d) setRenderQuality3d(data.renderQuality3d);
+    setPlanCamera({ zoom: 1, panX: 0, panY: 0 }); // refit 2D viewport to show full enclosure + yard when loading
     const allIds = [...(data.beds || []).map((b) => b.id), ...(data.gates || []).map((g) => g.id), ...(data.landscape || []).map((l) => l.id), ...(data.patios || []).map((p) => p.id), idCounter];
     idCounter = Math.max(...allIds);
     setSelected(null);
@@ -1939,7 +1950,10 @@ export default function GardenDesigner() {
                   <div key={plan.file}>
                     <button className="gdw-samplecard" onClick={() => loadSamplePlan(plan.file)} title={plan.file}>
                       <span className="gdw-sampletitle">{plan.label}</span>
-                      <span className="gdw-samplemeta">{plan.size || "Custom size"}</span>
+                      <span className="gdw-samplemeta">
+                        {plan.size || "Custom size"}
+                        {plan.hasOutsidePergola ? " · Pergola outside fence" : ""}
+                      </span>
                       <span className="gdw-samplemeta">{plan.blurb}</span>
                     </button>
                   </div>
