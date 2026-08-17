@@ -127,6 +127,10 @@ const SAMPLE_PLAN_META = {
   "14-family-32x48-orchard.json": "32x48 family garden with orchard edge and dining patio.",
   "15-market-40x60-intensive.json": "40x60 intensive market-style layout with long rows.",
   "16-estate-40x60-mixed-garden.json": "40x60 mixed estate garden for kitchen, flowers, and berries.",
+  "17-homestead-34x60-production.json": "34x60 homestead production layout with central service lane.",
+  "18-family-34x60-learning-garden.json": "34x60 family learning layout with patio and teaching beds.",
+  "19-market-40x60-zoned.json": "40x60 zoned market layout with nursery edge beds.",
+  "20-estate-40x60-entertaining.json": "40x60 estate layout balancing kitchen rows and entertaining patio.",
 };
 function titleCaseWords(s) { return s.replace(/\b\w/g, (c) => c.toUpperCase()); }
 const SAMPLE_PLAN_MODULES = import.meta.glob("./sample-plans/*.json", { eager: true });
