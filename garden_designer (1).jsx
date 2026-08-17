@@ -260,7 +260,11 @@ function fencePostAnchors(width, length, spacing) {
     seen.add(key);
     unique.push(p);
   });
-  return unique;
+  const isEdge = (v, max) => Math.abs(v) < 0.001 || Math.abs(v - max) < 0.001;
+  return unique.map((p) => ({
+    ...p,
+    isCorner: isEdge(p.x, width) && isEdge(p.y, length),
+  }));
 }
 
 let idCounter = 3;
@@ -1247,7 +1251,8 @@ export default function GardenDesigner() {
     fencePosts.forEach((p) => {
       const inGate = gates.some((g) => g.wall === p.wall && p.wallOffset > g.offset && p.wallOffset < g.offset + g.width);
       if (inGate) return;
-      const post = new THREE.Mesh(new THREE.BoxGeometry(0.33, fenceHeight, 0.33), postMat);
+      const postSize = p.isCorner ? 0.42 : 0.33;
+      const post = new THREE.Mesh(new THREE.BoxGeometry(postSize, fenceHeight, postSize), postMat);
       post.position.set(p.x - W / 2, fenceHeight / 2, p.y - L / 2);
       scene.add(post);
     });
@@ -2214,7 +2219,17 @@ export default function GardenDesigner() {
                 {fencePosts.map((p, i) => {
                   const inGate = gates.some((g) => g.wall === p.wall && p.wallOffset > g.offset && p.wallOffset < g.offset + g.width);
                   if (inGate) return null;
-                  return <circle key={`post-${i}`} cx={p.x} cy={p.y} r={0.16} fill="var(--wood)" />;
+                  return (
+                    <circle
+                      key={`post-${i}`}
+                      cx={p.x}
+                      cy={p.y}
+                      r={p.isCorner ? 0.23 : 0.16}
+                      fill="var(--wood)"
+                      stroke={p.isCorner ? "var(--gold)" : "none"}
+                      strokeWidth={p.isCorner ? 0.06 : 0}
+                    />
+                  );
                 })}
                 {layout.ringActive && (
                   <rect x={layout.ringLine.x} y={layout.ringLine.y} width={layout.ringLine.w} height={layout.ringLine.h} fill="none" stroke="var(--gold)" strokeWidth={0.08} strokeDasharray="0.3,0.3" />
