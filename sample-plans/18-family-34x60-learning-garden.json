@@ -158,8 +158,8 @@
       "roofDirection": "auto",
       "doorWidth": 3,
       "furnishings": true,
-      "x": 24,
-      "y": 48
+      "x": 22,
+      "y": 62
     }
   ],
   "yardMargin": 18,
