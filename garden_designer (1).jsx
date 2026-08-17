@@ -272,6 +272,7 @@ export default function GardenDesigner() {
   const [selected, setSelected] = useState(null); // { kind: 'bed'|'patio', bedId, idx }
   const [nudgeStep, setNudgeStep] = useState(0.5);
   const [viewMode, setViewMode] = useState("2d"); // '2d' | '3d'
+  const [renderQuality3d, setRenderQuality3d] = useState("cinematic"); // 'standard' | 'cinematic'
   const [activeTab, setActiveTab] = useState("enclosure"); // 'enclosure' | 'beds' | 'patio' | 'landscaping' | 'prices'
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
@@ -748,7 +749,7 @@ export default function GardenDesigner() {
     setSavedReports([...names].sort());
   }
   function buildSnapshot(includeTimestamp = true) {
-    const snapshot = { enclosure, fenceHeight, postSpacing, gates, courses, beds, patios, yardMargin, landscape, prices };
+    const snapshot = { enclosure, fenceHeight, postSpacing, gates, courses, beds, patios, yardMargin, landscape, prices, renderQuality3d };
     if (includeTimestamp) snapshot.savedAt = new Date().toISOString();
     return snapshot;
   }
@@ -860,6 +861,7 @@ export default function GardenDesigner() {
     if (data.yardMargin) setYardMargin(data.yardMargin);
     if (data.landscape) setLandscape(data.landscape);
     if (data.prices) setPrices({ ...DEFAULT_PRICES, ...data.prices });
+    if (data.renderQuality3d) setRenderQuality3d(data.renderQuality3d);
     const allIds = [...(data.beds || []).map((b) => b.id), ...(data.gates || []).map((g) => g.id), ...(data.landscape || []).map((l) => l.id), ...(data.patios || []).map((p) => p.id), idCounter];
     idCounter = Math.max(...allIds);
     setSelected(null);
@@ -880,7 +882,7 @@ export default function GardenDesigner() {
     }
     pushHistorySnapshot(snapshot);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enclosure, fenceHeight, postSpacing, gates, courses, beds, patios, yardMargin, landscape, prices]);
+  }, [enclosure, fenceHeight, postSpacing, gates, courses, beds, patios, yardMargin, landscape, prices, renderQuality3d]);
 
   useEffect(() => {
     function onUndoRedoHotkeys(e) {
@@ -1094,26 +1096,68 @@ export default function GardenDesigner() {
     if (viewMode !== "3d" || !threeContainerRef.current) return;
     const container = threeContainerRef.current;
     container.innerHTML = "";
+    const cinematic = renderQuality3d === "cinematic";
     const W = enclosure.width, L = enclosure.length;
     const width = container.clientWidth || 600, height = container.clientHeight || 460;
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color("#BFE3D0");
-    scene.fog = new THREE.Fog("#BFE3D0", Math.max(W, L) * 1.5, Math.max(W, L) * 4.5);
+    scene.background = new THREE.Color(cinematic ? "#B8D2C2" : "#BFE3D0");
+    scene.fog = new THREE.Fog(cinematic ? "#B8D2C2" : "#BFE3D0", Math.max(W, L) * 1.3, Math.max(W, L) * 4.2);
 
     const camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 500);
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, cinematic ? 2 : 1.25));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = cinematic ? 1.03 : 1.08;
+    renderer.physicallyCorrectLights = true;
+    renderer.shadowMap.enabled = cinematic;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.setSize(width, height);
     container.appendChild(renderer.domElement);
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.65));
-    const sun = new THREE.DirectionalLight(0xffffff, 0.85);
+    const mkMat = (params = {}) => {
+      const { clearcoat, transmission, ...shared } = params;
+      if (cinematic) {
+        return new THREE.MeshPhysicalMaterial({
+          roughness: 0.82,
+          metalness: 0.03,
+          clearcoat: 0.04,
+          ...shared,
+          ...(clearcoat !== undefined ? { clearcoat } : {}),
+          ...(transmission !== undefined ? { transmission } : {}),
+        });
+      }
+      return new THREE.MeshStandardMaterial(shared);
+    };
+
+    scene.add(new THREE.AmbientLight(0xffffff, cinematic ? 0.4 : 0.65));
+    const skyFill = new THREE.HemisphereLight(0xd6e8ff, 0x6c7a63, cinematic ? 0.72 : 0.45);
+    scene.add(skyFill);
+    const sun = new THREE.DirectionalLight(0xfff5e8, cinematic ? 1.45 : 0.85);
     sun.position.set(W * 0.6, Math.max(W, L) * 0.9, L * 0.4);
+    sun.castShadow = cinematic;
+    if (cinematic) {
+      sun.shadow.mapSize.set(2048, 2048);
+      sun.shadow.bias = -0.00012;
+      sun.shadow.normalBias = 0.01;
+      const range = Math.max(W + yardMargin, L + yardMargin) * 1.1;
+      sun.shadow.camera.left = -range;
+      sun.shadow.camera.right = range;
+      sun.shadow.camera.top = range;
+      sun.shadow.camera.bottom = -range;
+      sun.shadow.camera.near = 0.5;
+      sun.shadow.camera.far = Math.max(W, L) * 6;
+    }
     scene.add(sun);
 
     const groundSize = Math.max(W + 2 * yardMargin, L + 2 * yardMargin) * 1.8;
-    const ground = new THREE.Mesh(new THREE.PlaneGeometry(groundSize, groundSize), new THREE.MeshStandardMaterial({ color: "#82A96B" }));
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(groundSize, groundSize),
+      mkMat({ color: "#82A96B", roughness: cinematic ? 0.92 : 0.86, metalness: 0.0, clearcoat: 0.0 })
+    );
     ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = cinematic;
     scene.add(ground);
 
     // ---- fence walls + posts (with gaps at gate openings) ----
@@ -1144,7 +1188,7 @@ export default function GardenDesigner() {
     addWallSegments("right", L, { x: W / 2, z: -L / 2 }, "z");
 
     // 2x6 top cap rail along the fence (skips gate openings) — laid flat, wide face up
-    const capMat = new THREE.MeshStandardMaterial({ color: "#7A5637" });
+    const capMat = mkMat({ color: "#7A5637", roughness: 0.86, metalness: 0.02, clearcoat: 0.09 });
     function addCapSegments(wall, wallLen, worldStart, axis) {
       wallSegments(wallLen, gates.filter((g) => g.wall === wall)).forEach(([s, e]) => {
         const segLen = e - s;
@@ -1161,7 +1205,7 @@ export default function GardenDesigner() {
     addCapSegments("right", L, { x: W / 2, z: -L / 2 }, "z");
 
     // gate posts (taller marker so gate openings are visible)
-    const gatePostMat = new THREE.MeshStandardMaterial({ color: "#C99A2E" });
+    const gatePostMat = mkMat({ color: "#C99A2E", roughness: 0.55, metalness: 0.24, clearcoat: 0.08 });
     gates.forEach((g) => {
       const ep = gateEndpoints(g);
       [[ep.x1, ep.y1], [ep.x2, ep.y2]].forEach(([px, py]) => {
@@ -1171,7 +1215,7 @@ export default function GardenDesigner() {
       });
     });
 
-    const postMat = new THREE.MeshStandardMaterial({ color: "#6B4A2E" });
+    const postMat = mkMat({ color: "#6B4A2E", roughness: 0.84, metalness: 0.02, clearcoat: 0.08 });
     const perim = 2 * (W + L);
     const nPosts = Math.ceil(perim / postSpacing);
     for (let i = 0; i < nPosts; i++) {
@@ -1187,8 +1231,8 @@ export default function GardenDesigner() {
     }
 
     // ---- raised beds: wood frame + mounded soil + planted rows (simplified as rectangular footprints — see 2D plan for exact L-shape geometry) ----
-    const frameMat = new THREE.MeshStandardMaterial({ color: "#8A6A45" });
-    const soilMat = new THREE.MeshStandardMaterial({ color: "#4A3626" });
+    const frameMat = mkMat({ color: "#8A6A45", roughness: 0.83, metalness: 0.03, clearcoat: 0.1 });
+    const soilMat = mkMat({ color: "#4A3626", roughness: 1, metalness: 0, clearcoat: 0 });
     const plantColors = ["#6B9950", "#8FBF6E", "#5E8A46"];
     const wallThickness = 0.15;
     layout.placed.forEach((b) => {
@@ -1218,7 +1262,7 @@ export default function GardenDesigner() {
 
       // small planted-row markers
       plantDots(cw, cl, false, null).forEach(([lx, lz], i) => {
-        const plant = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.22, 6), new THREE.MeshStandardMaterial({ color: plantColors[i % plantColors.length] }));
+        const plant = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.22, 6), mkMat({ color: plantColors[i % plantColors.length], roughness: 0.95, metalness: 0 }));
         plant.position.set(wx0 + lx, h + 0.12, wz0 + lz);
         scene.add(plant);
       });
@@ -1226,7 +1270,7 @@ export default function GardenDesigner() {
       // trellis — matches this bed's chosen dimension (width or length), mounted on top of the frame
       if (b.trellis) {
         const trellisH = b.trellisHeight || 6;
-        const trellisMat = new THREE.MeshStandardMaterial({ color: "#6B4A2E" });
+        const trellisMat = mkMat({ color: "#6B4A2E", roughness: 0.86, metalness: 0.02, clearcoat: 0.07 });
         const isLengthSide = b.trellisSide === "length";
         const span = isLengthSide ? cl : cw;
         const panel = fencePanel(span, trellisH);
@@ -1252,11 +1296,11 @@ export default function GardenDesigner() {
     // ---- patios ----
     patios.forEach((patio) => {
       const patioColor = patio.surface === "gravel" ? "#B9AF9C" : "#D9C9A8";
-      const slab = new THREE.Mesh(new THREE.BoxGeometry(patio.width, 0.08, patio.length), new THREE.MeshStandardMaterial({ color: patioColor }));
+      const slab = new THREE.Mesh(new THREE.BoxGeometry(patio.width, 0.08, patio.length), mkMat({ color: patioColor, roughness: patio.surface === "gravel" ? 0.95 : 0.72, metalness: 0.02 }));
       slab.position.set(patio.x + patio.width / 2 - W / 2, 0.04, patio.y + patio.length / 2 - L / 2);
       scene.add(slab);
       if (patio.structureType !== "none") {
-        const postMat3 = new THREE.MeshStandardMaterial({ color: "#6B4A2E" });
+        const postMat3 = mkMat({ color: "#6B4A2E", roughness: 0.84, metalness: 0.03, clearcoat: 0.08 });
         const roofColor = patio.structureType === "gazebo" ? "#7A5637" : "#5C4A38";
         const postH = patio.structureHeight || 8, inset = 0.6;
         const wx0 = patio.x - W / 2, wz0 = patio.y - L / 2;
@@ -1282,9 +1326,9 @@ export default function GardenDesigner() {
         if (patio.structureType === "cabin") {
           // actual walls with a door gap and windows, not just posts+roof — a real small building
           const wallH = postH, wallT = 0.18, doorW = patio.doorWidth || 3, doorH = Math.min(6.5, wallH - 0.8);
-          const wallMat = new THREE.MeshStandardMaterial({ color: "#D8CDB0" });
-          const doorMat = new THREE.MeshStandardMaterial({ color: "#4A3626" });
-          const windowMat = new THREE.MeshStandardMaterial({ color: "#BFDDE0" });
+          const wallMat = mkMat({ color: "#D8CDB0", roughness: 0.7, metalness: 0.01 });
+          const doorMat = mkMat({ color: "#4A3626", roughness: 0.85, metalness: 0.01, clearcoat: 0.06 });
+          const windowMat = mkMat({ color: "#BFDDE0", roughness: 0.15, metalness: 0.05, transmission: cinematic ? 0.48 : 0.0, opacity: cinematic ? 0.85 : 1, transparent: cinematic });
           const midX = patio.width / 2;
           const segW = Math.max(midX - doorW / 2, 0.3);
           const frontL = new THREE.Mesh(new THREE.BoxGeometry(segW, wallH, wallT), wallMat);
@@ -1325,18 +1369,18 @@ export default function GardenDesigner() {
           const beamCount = Math.max(Math.round(patio.length / 1.2), 3);
           for (let i = 0; i <= beamCount; i++) {
             const bz = patio.y + inset + (i / beamCount) * (patio.length - 2 * inset);
-            const beam = new THREE.Mesh(new THREE.BoxGeometry(patio.width - 2 * inset + 0.6, 0.14, 0.2), new THREE.MeshStandardMaterial({ color: roofColor }));
+            const beam = new THREE.Mesh(new THREE.BoxGeometry(patio.width - 2 * inset + 0.6, 0.14, 0.2), mkMat({ color: roofColor, roughness: 0.82, metalness: 0.03, clearcoat: 0.05 }));
             beam.position.set(patio.x + patio.width / 2 - W / 2, postH + 0.1, bz - L / 2);
             scene.add(beam);
           }
         } else if (patio.roofStyle === "flat") {
-          const roof = new THREE.Mesh(new THREE.BoxGeometry(patio.width + 0.6, 0.15, patio.length + 0.6), new THREE.MeshStandardMaterial({ color: roofColor }));
+          const roof = new THREE.Mesh(new THREE.BoxGeometry(patio.width + 0.6, 0.15, patio.length + 0.6), mkMat({ color: roofColor, roughness: 0.78, metalness: 0.04 }));
           roof.position.set(patio.x + patio.width / 2 - W / 2, postH + 0.1, patio.y + patio.length / 2 - L / 2);
           scene.add(roof);
         } else if (patio.roofStyle === "gable") {
           // real two-panel ridge roof, sized to the actual footprint — ridge runs along
           // the longer side, so it always meets the walls correctly regardless of shape
-          const roofMat = new THREE.MeshStandardMaterial({ color: roofColor });
+          const roofMat = mkMat({ color: roofColor, roughness: 0.78, metalness: 0.04 });
           const cx = patio.x + patio.width / 2 - W / 2, cz = patio.y + patio.length / 2 - L / 2;
           const autoRidgeAlongZ = patio.length >= patio.width;
           const ridgeAlongZ = patio.roofDirection === "rotated" ? !autoRidgeAlongZ : autoRidgeAlongZ;
@@ -1369,7 +1413,7 @@ export default function GardenDesigner() {
           // hip roof (default) — a unit pyramid/cone scaled per-axis so its base exactly
           // matches the rectangular footprint instead of a same-radius square/octagon
           const segs = patio.structureType === "gazebo" ? 8 : 4;
-          const roof = new THREE.Mesh(new THREE.ConeGeometry(1, 2.4, segs), new THREE.MeshStandardMaterial({ color: roofColor }));
+          const roof = new THREE.Mesh(new THREE.ConeGeometry(1, 2.4, segs), mkMat({ color: roofColor, roughness: 0.78, metalness: 0.04 }));
           roof.position.set(patio.x + patio.width / 2 - W / 2, postH + 1.2, patio.y + patio.length / 2 - L / 2);
           const faceFactor = segs === 4 ? Math.SQRT2 : 2 * Math.cos(Math.PI / 8); // unit-radius flat-to-flat width
           roof.scale.set((patio.width + 0.6) / faceFactor, 1, (patio.length + 0.6) / faceFactor);
@@ -1384,18 +1428,18 @@ export default function GardenDesigner() {
       const t = LANDSCAPE_TYPES[l.type];
       const wx = l.x + l.width / 2 - W / 2, wz = l.y + l.length / 2 - L / 2;
       if (l.type === "tree") {
-        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 1.4, 8), new THREE.MeshStandardMaterial({ color: "#6B4A2E" }));
+        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 1.4, 8), mkMat({ color: "#6B4A2E", roughness: 0.86, metalness: 0.02, clearcoat: 0.08 }));
         trunk.position.set(wx, 0.7, wz);
         scene.add(trunk);
-        const canopy = new THREE.Mesh(new THREE.ConeGeometry(l.width / 2, l.width * 0.9, 10), new THREE.MeshStandardMaterial({ color: t.color }));
+        const canopy = new THREE.Mesh(new THREE.ConeGeometry(l.width / 2, l.width * 0.9, 10), mkMat({ color: t.color, roughness: 0.96, metalness: 0 }));
         canopy.position.set(wx, 1.4 + (l.width * 0.9) / 2, wz);
         scene.add(canopy);
       } else if (l.type === "shrub") {
-        const bush = new THREE.Mesh(new THREE.SphereGeometry(l.width / 2, 10, 8), new THREE.MeshStandardMaterial({ color: t.color }));
+        const bush = new THREE.Mesh(new THREE.SphereGeometry(l.width / 2, 10, 8), mkMat({ color: t.color, roughness: 0.96, metalness: 0 }));
         bush.position.set(wx, l.width / 2, wz);
         scene.add(bush);
       } else if (l.type === "arch") {
-        const archMat = new THREE.MeshStandardMaterial({ color: t.color });
+        const archMat = mkMat({ color: t.color, roughness: 0.83, metalness: 0.02, clearcoat: 0.06 });
         const archH = l.height || 7, postSpan = l.width * 0.7;
         [-1, 1].forEach((side) => {
           const post = new THREE.Mesh(new THREE.BoxGeometry(0.25, archH, 0.25), archMat);
@@ -1409,7 +1453,7 @@ export default function GardenDesigner() {
       } else if (l.type === "doubleArch") {
         // two arches set front-to-back (spaced along the walkway), joined by rails
         // running along the top — a short covered tunnel, not a wide double-door
-        const archMat = new THREE.MeshStandardMaterial({ color: t.color });
+        const archMat = mkMat({ color: t.color, roughness: 0.83, metalness: 0.02, clearcoat: 0.06 });
         const archH = l.height || 7, postSpan = l.width * 0.7, spacing = l.length;
         const frontZ = wz - spacing / 2, backZ = wz + spacing / 2;
         [frontZ, backZ].forEach((z) => {
@@ -1430,7 +1474,7 @@ export default function GardenDesigner() {
       } else if (l.type === "tunnel") {
         // a bent wire panel spanning bed-to-bed: several parallel arcs (the panel's
         // horizontal wires) stacked across the footprint depth, plus radial cross-wires
-        const tunnelMat = new THREE.MeshStandardMaterial({ color: t.color });
+        const tunnelMat = mkMat({ color: t.color, roughness: 0.83, metalness: 0.03, clearcoat: 0.04 });
         const radius = l.width / 2;
         const heightScale = (l.height || 6) / radius;
         const strands = 4;
@@ -1451,11 +1495,19 @@ export default function GardenDesigner() {
           scene.add(spoke);
         }
       } else {
-        const slab = new THREE.Mesh(new THREE.BoxGeometry(l.width, 0.06, l.length), new THREE.MeshStandardMaterial({ color: t.color }));
+        const slab = new THREE.Mesh(new THREE.BoxGeometry(l.width, 0.06, l.length), mkMat({ color: t.color, roughness: 0.88, metalness: 0.01 }));
         slab.position.set(wx, 0.03, wz);
         scene.add(slab);
       }
     });
+
+    if (cinematic) {
+      scene.traverse((obj) => {
+        if (!obj.isMesh) return;
+        if (obj !== ground) obj.castShadow = true;
+        obj.receiveShadow = true;
+      });
+    }
 
     // ---- camera orbit controls (manual — OrbitControls isn't available in three r128) ----
     if (camStateRef.current.radius == null) {
@@ -1506,6 +1558,7 @@ export default function GardenDesigner() {
     dom.addEventListener("wheel", onWheel, { passive: false });
     function onResize() {
       const w2 = container.clientWidth || 600, h2 = container.clientHeight || height;
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, cinematic ? 2 : 1.25));
       renderer.setSize(w2, h2);
       camera.aspect = w2 / h2;
       camera.updateProjectionMatrix();
@@ -1526,7 +1579,7 @@ export default function GardenDesigner() {
       renderer.dispose();
       if (container) container.innerHTML = "";
     };
-  }, [viewMode, enclosure, layout, patios, landscape, gates, fenceHeight, postSpacing, yardMargin]);
+  }, [viewMode, renderQuality3d, enclosure, layout, patios, landscape, gates, fenceHeight, postSpacing, yardMargin]);
 
   function exportCSV() {
     const rows = [["Category", "Item", "Qty", "Unit", "Unit Price", "Line Total"]];
@@ -2097,6 +2150,12 @@ export default function GardenDesigner() {
                   <button className={`gdw-btn ${viewMode === "2d" ? "active" : ""}`} onClick={() => setViewMode("2d")}><Map size={13} style={{ verticalAlign: -2 }} /> 2D Plan</button>
                   <button className={`gdw-btn ${viewMode === "3d" ? "active" : ""}`} onClick={() => setViewMode("3d")}><Box size={13} style={{ verticalAlign: -2 }} /> 3D Preview</button>
                   {viewMode === "2d" && <button className="gdw-btn" onClick={autoArrange}><LayoutGrid size={13} style={{ verticalAlign: -2 }} /> Auto-arrange</button>}
+                  {viewMode === "3d" && (
+                    <>
+                      <button className={`gdw-btn ${renderQuality3d === "standard" ? "active" : ""}`} onClick={() => setRenderQuality3d("standard")} title="Faster 3D rendering">Standard</button>
+                      <button className={`gdw-btn ${renderQuality3d === "cinematic" ? "active" : ""}`} onClick={() => setRenderQuality3d("cinematic")} title="Higher quality physically based rendering">Cinematic</button>
+                    </>
+                  )}
                 </div>
               </div>
               {viewMode === "2d" ? (
@@ -2264,7 +2323,9 @@ export default function GardenDesigner() {
                 </>
               ) : (
                 <>
-                  <p className="gdw-note gdw-noprint" style={{ margin: "0 0 8px 0" }}>Drag to orbit, scroll to zoom. This is a preview of your current layout — switch back to 2D Plan to move or resize anything. L-shaped beds show as simplified boxes here; their exact shape stays in the 2D plan and the shopping list.</p>
+                  <p className="gdw-note gdw-noprint" style={{ margin: "0 0 8px 0" }}>
+                    Drag to orbit, scroll to zoom. {renderQuality3d === "cinematic" ? "Cinematic mode uses physically based shading, ACES tonemapping, soft shadows, and higher pixel density for a more realistic look." : "Standard mode is optimized for speed on older devices."} This web renderer is an approximation; Unreal Engine 5 features like Nanite/Lumen and full offline path tracing are not available directly in-browser.
+                  </p>
                   <div ref={threeContainerRef} className="gdw-three gdw-noprint" style={{ width: "100%", borderRadius: 8, overflow: "hidden", background: "#BFE3D0" }} />
                 </>
               )}
