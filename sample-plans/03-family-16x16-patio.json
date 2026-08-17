@@ -1,9 +1,17 @@
 {
-  "enclosure": { "width": 16, "length": 16 },
+  "enclosure": {
+    "width": 16,
+    "length": 16
+  },
   "fenceHeight": 6,
   "postSpacing": 7,
   "gates": [
-    { "id": 1, "wall": "bottom", "offset": 6.3, "width": 3.5 }
+    {
+      "id": 1,
+      "wall": "bottom",
+      "offset": 6.3,
+      "width": 3.5
+    }
   ],
   "courses": 3,
   "beds": [
@@ -20,17 +28,47 @@
       "trellisHeight": 8,
       "trellisSide": "length",
       "positions": [
-        { "x": 3, "y": 1, "rotated": true },
-        { "x": 3, "y": 6, "rotated": true },
-        { "x": 3, "y": 11, "rotated": true }
+        {
+          "x": 3,
+          "y": 1,
+          "rotated": true
+        },
+        {
+          "x": 3,
+          "y": 6,
+          "rotated": true
+        },
+        {
+          "x": 3,
+          "y": 10,
+          "rotated": true
+        }
       ]
     }
   ],
   "patios": [],
   "yardMargin": 12,
   "landscape": [
-    { "id": 31, "type": "path", "label": "Main Entry Path", "width": 4, "length": 10, "qty": 1, "x": 6, "y": 16.5 },
-    { "id": 32, "type": "mulch", "label": "Compost / Staging Pad", "width": 6, "length": 6, "qty": 1, "x": 18, "y": 4 }
+    {
+      "id": 31,
+      "type": "path",
+      "label": "Main Entry Path",
+      "width": 4,
+      "length": 10,
+      "qty": 1,
+      "x": 6,
+      "y": 16.5
+    },
+    {
+      "id": 32,
+      "type": "mulch",
+      "label": "Compost / Staging Pad",
+      "width": 6,
+      "length": 6,
+      "qty": 1,
+      "x": 18,
+      "y": 4
+    }
   ],
   "prices": {},
   "savedAt": "2026-08-15T00:00:00.000Z"

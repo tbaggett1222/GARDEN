@@ -1,9 +1,17 @@
 {
-  "enclosure": { "width": 16, "length": 20 },
+  "enclosure": {
+    "width": 16,
+    "length": 20
+  },
   "fenceHeight": 6,
   "postSpacing": 7,
   "gates": [
-    { "id": 1, "wall": "bottom", "offset": 3, "width": 10 }
+    {
+      "id": 1,
+      "wall": "bottom",
+      "offset": 3,
+      "width": 10
+    }
   ],
   "courses": 2,
   "beds": [
@@ -19,7 +27,13 @@
       "trellis": false,
       "trellisHeight": 6,
       "trellisSide": "width",
-      "positions": [{ "x": 1, "y": 1.5, "rotated": false }]
+      "positions": [
+        {
+          "x": 1,
+          "y": 1.5,
+          "rotated": false
+        }
+      ]
     },
     {
       "id": 2,
@@ -33,7 +47,13 @@
       "trellis": false,
       "trellisHeight": 6,
       "trellisSide": "width",
-      "positions": [{ "x": 12, "y": 1.5, "rotated": false }]
+      "positions": [
+        {
+          "x": 12,
+          "y": 1.5,
+          "rotated": false
+        }
+      ]
     },
     {
       "id": 3,
@@ -47,7 +67,13 @@
       "trellis": false,
       "trellisHeight": 6,
       "trellisSide": "width",
-      "positions": [{ "x": 1, "y": 10.5, "rotated": false }]
+      "positions": [
+        {
+          "x": 1,
+          "y": 10,
+          "rotated": false
+        }
+      ]
     },
     {
       "id": 4,
@@ -61,7 +87,13 @@
       "trellis": false,
       "trellisHeight": 6,
       "trellisSide": "width",
-      "positions": [{ "x": 12, "y": 10.5, "rotated": false }]
+      "positions": [
+        {
+          "x": 12,
+          "y": 10,
+          "rotated": false
+        }
+      ]
     }
   ],
   "patios": [
@@ -83,8 +115,26 @@
   ],
   "yardMargin": 10,
   "landscape": [
-    { "id": 101, "type": "path", "label": "Wide Entry Path", "width": 8, "length": 10, "qty": 1, "x": 4, "y": 20 },
-    { "id": 102, "type": "mulch", "label": "Wheel Stop Mulch", "width": 16, "length": 3, "qty": 1, "x": 0, "y": -4 }
+    {
+      "id": 101,
+      "type": "path",
+      "label": "Wide Entry Path",
+      "width": 8,
+      "length": 10,
+      "qty": 1,
+      "x": 4,
+      "y": 20
+    },
+    {
+      "id": 102,
+      "type": "mulch",
+      "label": "Wheel Stop Mulch",
+      "width": 16,
+      "length": 3,
+      "qty": 1,
+      "x": 0,
+      "y": -4
+    }
   ],
   "prices": {},
   "savedAt": "2026-08-15T00:00:00.000Z"

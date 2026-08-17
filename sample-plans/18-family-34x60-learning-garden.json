@@ -1,0 +1,205 @@
+{
+  "enclosure": {
+    "width": 34,
+    "length": 60
+  },
+  "fenceHeight": 6,
+  "postSpacing": 7,
+  "gates": [
+    {
+      "id": 1,
+      "wall": "bottom",
+      "offset": 13,
+      "width": 8
+    },
+    {
+      "id": 2,
+      "wall": "left",
+      "offset": 26,
+      "width": 4
+    }
+  ],
+  "courses": 3,
+  "beds": [
+    {
+      "id": 1,
+      "label": "Family Food Rows",
+      "width": 4,
+      "length": 12,
+      "qty": 6,
+      "courses": 3,
+      "shape": "rect",
+      "zone": "center",
+      "cropKey": "beans",
+      "trellis": true,
+      "trellisHeight": 8,
+      "trellisSide": "length",
+      "positions": [
+        {
+          "x": 3,
+          "y": 8,
+          "rotated": false
+        },
+        {
+          "x": 9,
+          "y": 8,
+          "rotated": false
+        },
+        {
+          "x": 15,
+          "y": 8,
+          "rotated": false
+        },
+        {
+          "x": 3,
+          "y": 24,
+          "rotated": false
+        },
+        {
+          "x": 9,
+          "y": 24,
+          "rotated": false
+        },
+        {
+          "x": 15,
+          "y": 24,
+          "rotated": false
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "label": "Kitchen & Salad Beds",
+      "width": 3,
+      "length": 10,
+      "qty": 5,
+      "courses": 2,
+      "shape": "rect",
+      "zone": "center",
+      "cropKey": "lettuce",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [
+        {
+          "x": 23,
+          "y": 8,
+          "rotated": false
+        },
+        {
+          "x": 23,
+          "y": 20,
+          "rotated": false
+        },
+        {
+          "x": 23,
+          "y": 32,
+          "rotated": false
+        },
+        {
+          "x": 23,
+          "y": 44,
+          "rotated": false
+        },
+        {
+          "x": 27,
+          "y": 44,
+          "rotated": false
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "label": "Teaching Beds",
+      "width": 3,
+      "length": 8,
+      "qty": 4,
+      "courses": 2,
+      "shape": "rect",
+      "zone": "center",
+      "cropKey": "carrot",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [
+        {
+          "x": 5,
+          "y": 46,
+          "rotated": false
+        },
+        {
+          "x": 9,
+          "y": 46,
+          "rotated": false
+        },
+        {
+          "x": 13,
+          "y": 46,
+          "rotated": false
+        },
+        {
+          "x": 17,
+          "y": 46,
+          "rotated": false
+        }
+      ]
+    }
+  ],
+  "patios": [
+    {
+      "id": 180,
+      "label": "Family Pergola Patio",
+      "width": 8,
+      "length": 10,
+      "surface": "pavers",
+      "structureType": "pergola",
+      "structureHeight": 9,
+      "roofStyle": "flat",
+      "roofDirection": "auto",
+      "doorWidth": 3,
+      "furnishings": true,
+      "x": 24,
+      "y": 48
+    }
+  ],
+  "yardMargin": 18,
+  "landscape": [
+    {
+      "id": 181,
+      "type": "path",
+      "label": "Main Axis Walk",
+      "width": 4,
+      "length": 56,
+      "qty": 1,
+      "x": 19,
+      "y": 2
+    },
+    {
+      "id": 182,
+      "type": "tree",
+      "label": "Mini Orchard",
+      "width": 4,
+      "length": 4,
+      "qty": 4,
+      "x": 36,
+      "y": 12
+    }
+  ],
+  "prices": {},
+  "gardenSite": {
+    "usdaZone": 7,
+    "sunHours": 8
+  },
+  "irrigation": {
+    "enabled": true,
+    "method": "drip",
+    "zones": 4,
+    "rowSpacingIn": 12,
+    "emitterSpacingIn": 12,
+    "emitterGph": 0.5,
+    "minutesPerDay": 38,
+    "daysPerWeek": 4
+  },
+  "renderQuality3d": "cinematic",
+  "savedAt": "2026-08-17T20:15:00.000Z"
+}

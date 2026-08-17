@@ -1,0 +1,142 @@
+{
+  "enclosure": {
+    "width": 40,
+    "length": 60
+  },
+  "fenceHeight": 6,
+  "postSpacing": 7,
+  "gates": [
+    {
+      "id": 1,
+      "wall": "bottom",
+      "offset": 14,
+      "width": 12
+    },
+    {
+      "id": 2,
+      "wall": "right",
+      "offset": 28,
+      "width": 4
+    }
+  ],
+  "courses": 3,
+  "beds": [
+    {
+      "id": 1,
+      "label": "Market Long Rows",
+      "width": 4,
+      "length": 20,
+      "qty": 12,
+      "courses": 3,
+      "shape": "rect",
+      "zone": "center",
+      "cropKey": "tomato",
+      "trellis": true,
+      "trellisHeight": 8,
+      "trellisSide": "length",
+      "positions": [
+        {
+          "x": 3,
+          "y": 6,
+          "rotated": false
+        },
+        {
+          "x": 9,
+          "y": 6,
+          "rotated": false
+        },
+        {
+          "x": 15,
+          "y": 6,
+          "rotated": false
+        },
+        {
+          "x": 21,
+          "y": 6,
+          "rotated": false
+        },
+        {
+          "x": 27,
+          "y": 6,
+          "rotated": false
+        },
+        {
+          "x": 33,
+          "y": 6,
+          "rotated": false
+        },
+        {
+          "x": 3,
+          "y": 32,
+          "rotated": false
+        },
+        {
+          "x": 9,
+          "y": 32,
+          "rotated": false
+        },
+        {
+          "x": 15,
+          "y": 32,
+          "rotated": false
+        },
+        {
+          "x": 21,
+          "y": 32,
+          "rotated": false
+        },
+        {
+          "x": 27,
+          "y": 32,
+          "rotated": false
+        },
+        {
+          "x": 33,
+          "y": 32,
+          "rotated": false
+        }
+      ]
+    }
+  ],
+  "patios": [],
+  "yardMargin": 20,
+  "landscape": [
+    {
+      "id": 101,
+      "type": "path",
+      "label": "Center Service Lane",
+      "width": 4,
+      "length": 56,
+      "qty": 1,
+      "x": 18,
+      "y": 2
+    },
+    {
+      "id": 102,
+      "type": "mulch",
+      "label": "Bulk Material Staging",
+      "width": 10,
+      "length": 8,
+      "qty": 1,
+      "x": 42,
+      "y": 8
+    }
+  ],
+  "prices": {},
+  "gardenSite": {
+    "usdaZone": 7,
+    "sunHours": 8.5
+  },
+  "irrigation": {
+    "enabled": true,
+    "method": "drip",
+    "zones": 6,
+    "rowSpacingIn": 12,
+    "emitterSpacingIn": 12,
+    "emitterGph": 0.6,
+    "minutesPerDay": 45,
+    "daysPerWeek": 4
+  },
+  "renderQuality3d": "cinematic",
+  "savedAt": "2026-08-17T12:00:00.000Z"
+}

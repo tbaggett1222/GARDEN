@@ -1,10 +1,23 @@
 {
-  "enclosure": { "width": 16, "length": 32 },
+  "enclosure": {
+    "width": 16,
+    "length": 32
+  },
   "fenceHeight": 8,
   "postSpacing": 7,
   "gates": [
-    { "id": 1, "wall": "bottom", "offset": 6.3, "width": 3.5 },
-    { "id": 2, "wall": "right", "offset": 12, "width": 3.5 }
+    {
+      "id": 1,
+      "wall": "bottom",
+      "offset": 6.3,
+      "width": 3.5
+    },
+    {
+      "id": 2,
+      "wall": "right",
+      "offset": 27,
+      "width": 3.5
+    }
   ],
   "courses": 3,
   "beds": [
@@ -21,8 +34,16 @@
       "trellisHeight": 8,
       "trellisSide": "length",
       "positions": [
-        { "x": 1, "y": 3, "rotated": false },
-        { "x": 11, "y": 3, "rotated": false }
+        {
+          "x": 1,
+          "y": 3,
+          "rotated": false
+        },
+        {
+          "x": 11,
+          "y": 3,
+          "rotated": false
+        }
       ]
     },
     {
@@ -38,18 +59,57 @@
       "trellisHeight": 6,
       "trellisSide": "width",
       "positions": [
-        { "x": 4.5, "y": 18, "rotated": false },
-        { "x": 8.5, "y": 18, "rotated": false },
-        { "x": 12.5, "y": 18, "rotated": false }
+        {
+          "x": 4.5,
+          "y": 18,
+          "rotated": false
+        },
+        {
+          "x": 8.5,
+          "y": 18,
+          "rotated": false
+        },
+        {
+          "x": 12.5,
+          "y": 18,
+          "rotated": false
+        }
       ]
     }
   ],
   "patios": [],
   "yardMargin": 14,
   "landscape": [
-    { "id": 91, "type": "tree", "label": "Dwarf Fruit Trees", "width": 4, "length": 4, "qty": 6, "x": 18, "y": 1 },
-    { "id": 92, "type": "shrub", "label": "Blueberry Hedge", "width": 2, "length": 2, "qty": 14, "x": -12, "y": 2 },
-    { "id": 93, "type": "grass", "label": "Mow Strip", "width": 10, "length": 30, "qty": 1, "x": -10, "y": 1 }
+    {
+      "id": 91,
+      "type": "tree",
+      "label": "Dwarf Fruit Trees",
+      "width": 4,
+      "length": 4,
+      "qty": 6,
+      "x": 18,
+      "y": 1
+    },
+    {
+      "id": 92,
+      "type": "shrub",
+      "label": "Blueberry Hedge",
+      "width": 2,
+      "length": 2,
+      "qty": 14,
+      "x": -12,
+      "y": 2
+    },
+    {
+      "id": 93,
+      "type": "grass",
+      "label": "Mow Strip",
+      "width": 10,
+      "length": 30,
+      "qty": 1,
+      "x": -10,
+      "y": 1
+    }
   ],
   "prices": {},
   "savedAt": "2026-08-15T00:00:00.000Z"

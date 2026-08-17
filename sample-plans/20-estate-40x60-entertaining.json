@@ -1,0 +1,215 @@
+{
+  "enclosure": {
+    "width": 40,
+    "length": 60
+  },
+  "fenceHeight": 6,
+  "postSpacing": 7,
+  "gates": [
+    {
+      "id": 1,
+      "wall": "bottom",
+      "offset": 14,
+      "width": 12
+    },
+    {
+      "id": 2,
+      "wall": "top",
+      "offset": 16,
+      "width": 8
+    }
+  ],
+  "courses": 3,
+  "beds": [
+    {
+      "id": 1,
+      "label": "Kitchen Blocks",
+      "width": 4,
+      "length": 10,
+      "qty": 8,
+      "courses": 3,
+      "shape": "rect",
+      "zone": "center",
+      "cropKey": "pepper",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [
+        {
+          "x": 4,
+          "y": 10,
+          "rotated": false
+        },
+        {
+          "x": 10,
+          "y": 10,
+          "rotated": false
+        },
+        {
+          "x": 16,
+          "y": 10,
+          "rotated": false
+        },
+        {
+          "x": 22,
+          "y": 10,
+          "rotated": false
+        },
+        {
+          "x": 4,
+          "y": 24,
+          "rotated": false
+        },
+        {
+          "x": 10,
+          "y": 24,
+          "rotated": false
+        },
+        {
+          "x": 16,
+          "y": 24,
+          "rotated": false
+        },
+        {
+          "x": 22,
+          "y": 24,
+          "rotated": false
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "label": "Cut Flower Rows",
+      "width": 3,
+      "length": 14,
+      "qty": 6,
+      "courses": 2,
+      "shape": "rect",
+      "zone": "center",
+      "cropKey": "mixed",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [
+        {
+          "x": 4,
+          "y": 38,
+          "rotated": false
+        },
+        {
+          "x": 8,
+          "y": 38,
+          "rotated": false
+        },
+        {
+          "x": 12,
+          "y": 38,
+          "rotated": false
+        },
+        {
+          "x": 18,
+          "y": 38,
+          "rotated": false
+        },
+        {
+          "x": 22,
+          "y": 38,
+          "rotated": false
+        },
+        {
+          "x": 26,
+          "y": 38,
+          "rotated": false
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "label": "Berry Edge Beds",
+      "width": 4,
+      "length": 8,
+      "qty": 3,
+      "courses": 2,
+      "shape": "rect",
+      "zone": "center",
+      "cropKey": "squash",
+      "trellis": true,
+      "trellisHeight": 8,
+      "trellisSide": "length",
+      "positions": [
+        {
+          "x": 32,
+          "y": 10,
+          "rotated": false
+        },
+        {
+          "x": 32,
+          "y": 22,
+          "rotated": false
+        },
+        {
+          "x": 32,
+          "y": 34,
+          "rotated": false
+        }
+      ]
+    }
+  ],
+  "patios": [
+    {
+      "id": 200,
+      "label": "Gathering Patio",
+      "width": 10,
+      "length": 12,
+      "surface": "pavers",
+      "structureType": "pavilion",
+      "structureHeight": 9,
+      "roofStyle": "hip",
+      "roofDirection": "auto",
+      "doorWidth": 3,
+      "furnishings": true,
+      "x": 28,
+      "y": 45
+    }
+  ],
+  "yardMargin": 20,
+  "landscape": [
+    {
+      "id": 201,
+      "type": "path",
+      "label": "Main Axis Path",
+      "width": 4,
+      "length": 56,
+      "qty": 1,
+      "x": 18,
+      "y": 2
+    },
+    {
+      "id": 202,
+      "type": "tree",
+      "label": "Shade Trees",
+      "width": 5,
+      "length": 5,
+      "qty": 3,
+      "x": 44,
+      "y": 10
+    }
+  ],
+  "prices": {},
+  "gardenSite": {
+    "usdaZone": 7,
+    "sunHours": 8
+  },
+  "irrigation": {
+    "enabled": true,
+    "method": "drip",
+    "zones": 5,
+    "rowSpacingIn": 12,
+    "emitterSpacingIn": 12,
+    "emitterGph": 0.5,
+    "minutesPerDay": 40,
+    "daysPerWeek": 4
+  },
+  "renderQuality3d": "cinematic",
+  "savedAt": "2026-08-17T20:15:00.000Z"
+}

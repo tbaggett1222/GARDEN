@@ -1,9 +1,17 @@
 {
-  "enclosure": { "width": 16, "length": 20 },
+  "enclosure": {
+    "width": 16,
+    "length": 20
+  },
   "fenceHeight": 6,
   "postSpacing": 7,
   "gates": [
-    { "id": 1, "wall": "bottom", "offset": 6.3, "width": 3.5 }
+    {
+      "id": 1,
+      "wall": "bottom",
+      "offset": 6.3,
+      "width": 3.5
+    }
   ],
   "courses": 3,
   "beds": [
@@ -19,7 +27,13 @@
       "trellis": true,
       "trellisHeight": 8,
       "trellisSide": "length",
-      "positions": [{ "x": 1, "y": 2, "rotated": false }]
+      "positions": [
+        {
+          "x": 1,
+          "y": 2,
+          "rotated": false
+        }
+      ]
     },
     {
       "id": 2,
@@ -33,7 +47,13 @@
       "trellis": false,
       "trellisHeight": 6,
       "trellisSide": "width",
-      "positions": [{ "x": 6.5, "y": 2.5, "rotated": false }]
+      "positions": [
+        {
+          "x": 6.5,
+          "y": 2.5,
+          "rotated": false
+        }
+      ]
     },
     {
       "id": 3,
@@ -50,7 +70,13 @@
       "trellis": false,
       "trellisHeight": 6,
       "trellisSide": "width",
-      "positions": [{ "x": 1.5, "y": 13, "rotated": false }]
+      "positions": [
+        {
+          "x": 1.5,
+          "y": 12,
+          "rotated": false
+        }
+      ]
     }
   ],
   "patios": [
@@ -72,10 +98,46 @@
   ],
   "yardMargin": 12,
   "landscape": [
-    { "id": 111, "type": "mulch", "label": "Moisture-Retention Mulch Zone", "width": 16, "length": 4, "qty": 1, "x": 0, "y": -6 },
-    { "id": 112, "type": "bed", "label": "Rain Garden Swale", "width": 14, "length": 4, "qty": 1, "x": 1, "y": 21 },
-    { "id": 113, "type": "tree", "label": "Canopy Tree", "width": 4, "length": 4, "qty": 1, "x": 18, "y": 5 },
-    { "id": 114, "type": "path", "label": "Permeable Walk", "width": 4, "length": 10, "qty": 1, "x": 6, "y": 20 }
+    {
+      "id": 111,
+      "type": "mulch",
+      "label": "Moisture-Retention Mulch Zone",
+      "width": 16,
+      "length": 4,
+      "qty": 1,
+      "x": 0,
+      "y": -6
+    },
+    {
+      "id": 112,
+      "type": "bed",
+      "label": "Rain Garden Swale",
+      "width": 14,
+      "length": 4,
+      "qty": 1,
+      "x": 1,
+      "y": 21
+    },
+    {
+      "id": 113,
+      "type": "tree",
+      "label": "Canopy Tree",
+      "width": 4,
+      "length": 4,
+      "qty": 1,
+      "x": 18,
+      "y": 5
+    },
+    {
+      "id": 114,
+      "type": "path",
+      "label": "Permeable Walk",
+      "width": 4,
+      "length": 10,
+      "qty": 1,
+      "x": 6,
+      "y": 20
+    }
   ],
   "prices": {},
   "savedAt": "2026-08-15T00:00:00.000Z"

@@ -1,17 +1,25 @@
 {
-  "enclosure": { "width": 8, "length": 8 },
+  "enclosure": {
+    "width": 8,
+    "length": 8
+  },
   "fenceHeight": 6,
   "postSpacing": 7,
   "gates": [
-    { "id": 1, "wall": "bottom", "offset": 2.3, "width": 3.5 }
+    {
+      "id": 1,
+      "wall": "bottom",
+      "offset": 2.75,
+      "width": 2.5
+    }
   ],
   "courses": 3,
   "beds": [
     {
       "id": 1,
       "label": "Bed A",
-      "width": 4,
-      "length": 8,
+      "width": 3,
+      "length": 5,
       "qty": 1,
       "courses": 3,
       "shape": "rect",
@@ -19,7 +27,13 @@
       "trellis": false,
       "trellisHeight": 6,
       "trellisSide": "width",
-      "positions": [{ "x": 0, "y": 0, "rotated": false }]
+      "positions": [
+        {
+          "x": 0.5,
+          "y": 1,
+          "rotated": false
+        }
+      ]
     },
     {
       "id": 2,
@@ -33,13 +47,28 @@
       "trellis": false,
       "trellisHeight": 6,
       "trellisSide": "width",
-      "positions": [{ "x": 5, "y": 1.5, "rotated": false }]
+      "positions": [
+        {
+          "x": 4.5,
+          "y": 1,
+          "rotated": false
+        }
+      ]
     }
   ],
   "patios": [],
   "yardMargin": 8,
   "landscape": [
-    { "id": 11, "type": "shrub", "label": "Shrub Cluster", "width": 2, "length": 2, "qty": 4, "x": -4, "y": 9 }
+    {
+      "id": 11,
+      "type": "shrub",
+      "label": "Shrub Cluster",
+      "width": 2,
+      "length": 2,
+      "qty": 4,
+      "x": -4,
+      "y": 9
+    }
   ],
   "prices": {},
   "savedAt": "2026-08-15T00:00:00.000Z"

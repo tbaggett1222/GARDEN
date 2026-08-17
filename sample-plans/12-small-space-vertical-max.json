@@ -1,9 +1,17 @@
 {
-  "enclosure": { "width": 8, "length": 16 },
+  "enclosure": {
+    "width": 8,
+    "length": 16
+  },
   "fenceHeight": 8,
   "postSpacing": 6,
   "gates": [
-    { "id": 1, "wall": "bottom", "offset": 2.3, "width": 3.5 }
+    {
+      "id": 1,
+      "wall": "bottom",
+      "offset": 2.3,
+      "width": 3.5
+    }
   ],
   "courses": 3,
   "beds": [
@@ -19,7 +27,13 @@
       "trellis": true,
       "trellisHeight": 8,
       "trellisSide": "length",
-      "positions": [{ "x": 0, "y": 0, "rotated": false }]
+      "positions": [
+        {
+          "x": 0,
+          "y": 0,
+          "rotated": false
+        }
+      ]
     },
     {
       "id": 2,
@@ -33,7 +47,13 @@
       "trellis": true,
       "trellisHeight": 8,
       "trellisSide": "length",
-      "positions": [{ "x": 4, "y": 0, "rotated": false }]
+      "positions": [
+        {
+          "x": 4,
+          "y": 0,
+          "rotated": false
+        }
+      ]
     },
     {
       "id": 3,
@@ -50,7 +70,13 @@
       "trellis": false,
       "trellisHeight": 6,
       "trellisSide": "width",
-      "positions": [{ "x": 1.5, "y": 9, "rotated": false }]
+      "positions": [
+        {
+          "x": 1.5,
+          "y": 8,
+          "rotated": false
+        }
+      ]
     },
     {
       "id": 4,
@@ -64,15 +90,50 @@
       "trellis": false,
       "trellisHeight": 6,
       "trellisSide": "width",
-      "positions": [{ "x": 5, "y": 10.5, "rotated": false }]
+      "positions": [
+        {
+          "x": 5,
+          "y": 8.5,
+          "rotated": false
+        }
+      ]
     }
   ],
   "patios": [],
   "yardMargin": 8,
   "landscape": [
-    { "id": 121, "type": "tunnel", "label": "Tunnel Trellis Connector", "width": 4, "length": 2, "height": 7, "qty": 1, "x": 2, "y": 8 },
-    { "id": 122, "type": "arch", "label": "Vertical Entry Arch", "width": 4, "length": 1.5, "height": 7, "qty": 1, "x": 2, "y": 16.5 },
-    { "id": 123, "type": "path", "label": "Narrow Access Path", "width": 3, "length": 8, "qty": 1, "x": 2.5, "y": 17.5 }
+    {
+      "id": 121,
+      "type": "tunnel",
+      "label": "Tunnel Trellis Connector",
+      "width": 4,
+      "length": 2,
+      "height": 7,
+      "qty": 1,
+      "x": 2,
+      "y": 8
+    },
+    {
+      "id": 122,
+      "type": "arch",
+      "label": "Vertical Entry Arch",
+      "width": 4,
+      "length": 1.5,
+      "height": 7,
+      "qty": 1,
+      "x": 2,
+      "y": 16.5
+    },
+    {
+      "id": 123,
+      "type": "path",
+      "label": "Narrow Access Path",
+      "width": 3,
+      "length": 8,
+      "qty": 1,
+      "x": 2.5,
+      "y": 17.5
+    }
   ],
   "prices": {},
   "savedAt": "2026-08-15T00:00:00.000Z"
