@@ -9,6 +9,7 @@ export default defineConfig(() => ({
       targets: ["defaults", "not IE 11"],
     }),
   ],
-  // GitHub Pages needs repo subpath; Netlify/local should stay at root.
-  base: process.env.GITHUB_ACTIONS === "true" ? "/GARDEN/" : "/",
+  // Relative asset paths prevent blank pages when host paths differ
+  // (e.g. GitHub Pages project URL vs local preview or alternate hosts).
+  base: "./",
 }));
