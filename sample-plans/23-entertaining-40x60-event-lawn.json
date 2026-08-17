@@ -1,0 +1,105 @@
+{
+  "enclosure": { "width": 40, "length": 60 },
+  "fenceHeight": 6,
+  "postSpacing": 7,
+  "gates": [
+    { "id": 1, "wall": "bottom", "offset": 14, "width": 12 },
+    { "id": 2, "wall": "top", "offset": 16, "width": 8 }
+  ],
+  "courses": 3,
+  "beds": [
+    {
+      "id": 1,
+      "label": "Chef Garden Beds",
+      "width": 4,
+      "length": 12,
+      "qty": 6,
+      "courses": 3,
+      "shape": "rect",
+      "zone": "center",
+      "cropKey": "pepper",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [
+        { "x": 3, "y": 8, "rotated": false },
+        { "x": 3, "y": 22, "rotated": false },
+        { "x": 3, "y": 36, "rotated": false },
+        { "x": 33, "y": 8, "rotated": false },
+        { "x": 33, "y": 22, "rotated": false },
+        { "x": 33, "y": 36, "rotated": false }
+      ]
+    },
+    {
+      "id": 2,
+      "label": "Cocktail Herb Strip",
+      "width": 3,
+      "length": 10,
+      "qty": 4,
+      "courses": 2,
+      "shape": "rect",
+      "zone": "center",
+      "cropKey": "lettuce",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [
+        { "x": 14, "y": 46, "rotated": false },
+        { "x": 18, "y": 46, "rotated": false },
+        { "x": 22, "y": 46, "rotated": false },
+        { "x": 26, "y": 46, "rotated": false }
+      ]
+    }
+  ],
+  "patios": [
+    {
+      "id": 230,
+      "label": "Event Pavilion Court",
+      "width": 18,
+      "length": 14,
+      "surface": "pavers",
+      "structureType": "pavilion",
+      "structureHeight": 10,
+      "roofStyle": "hip",
+      "roofDirection": "auto",
+      "doorWidth": 3,
+      "furnishings": true,
+      "x": 11,
+      "y": 16
+    },
+    {
+      "id": 231,
+      "label": "Open Lawn Lounge",
+      "width": 16,
+      "length": 10,
+      "surface": "gravel",
+      "structureType": "none",
+      "structureHeight": 8,
+      "roofStyle": "hip",
+      "roofDirection": "auto",
+      "doorWidth": 3,
+      "furnishings": true,
+      "x": 12,
+      "y": 33
+    }
+  ],
+  "yardMargin": 20,
+  "landscape": [
+    { "id": 232, "type": "grass", "label": "Event Lawn", "width": 18, "length": 12, "qty": 1, "x": 11, "y": 32 },
+    { "id": 233, "type": "path", "label": "Guest Entry Walk", "width": 4, "length": 18, "qty": 1, "x": 18, "y": 0 }
+  ],
+  "prices": {},
+  "gardenSite": { "usdaZone": 7, "sunHours": 8 },
+  "irrigation": {
+    "enabled": true,
+    "method": "drip",
+    "zones": 5,
+    "rowSpacingIn": 12,
+    "emitterSpacingIn": 12,
+    "emitterGph": 0.5,
+    "minutesPerDay": 40,
+    "daysPerWeek": 4
+  },
+  "renderQuality3d": "cinematic",
+  "savedAt": "2026-08-17T20:25:00.000Z"
+}
