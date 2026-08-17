@@ -1,10 +1,23 @@
 {
-  "enclosure": { "width": 16, "length": 32 },
+  "enclosure": {
+    "width": 16,
+    "length": 32
+  },
   "fenceHeight": 8,
   "postSpacing": 6,
   "gates": [
-    { "id": 1, "wall": "bottom", "offset": 6.3, "width": 3.5 },
-    { "id": 2, "wall": "top", "offset": 6.3, "width": 3.5 }
+    {
+      "id": 1,
+      "wall": "left",
+      "offset": 14,
+      "width": 3.5
+    },
+    {
+      "id": 2,
+      "wall": "right",
+      "offset": 14,
+      "width": 3.5
+    }
   ],
   "courses": 3,
   "beds": [
@@ -21,20 +34,62 @@
       "trellisHeight": 8,
       "trellisSide": "length",
       "positions": [
-        { "x": 2, "y": 1, "rotated": true },
-        { "x": 2, "y": 6, "rotated": true },
-        { "x": 2, "y": 11, "rotated": true },
-        { "x": 2, "y": 16, "rotated": true },
-        { "x": 2, "y": 21, "rotated": true },
-        { "x": 2, "y": 26, "rotated": true }
+        {
+          "x": 2,
+          "y": 1,
+          "rotated": true
+        },
+        {
+          "x": 2,
+          "y": 6,
+          "rotated": true
+        },
+        {
+          "x": 2,
+          "y": 11,
+          "rotated": true
+        },
+        {
+          "x": 2,
+          "y": 16,
+          "rotated": true
+        },
+        {
+          "x": 2,
+          "y": 21,
+          "rotated": true
+        },
+        {
+          "x": 2,
+          "y": 26,
+          "rotated": true
+        }
       ]
     }
   ],
   "patios": [],
   "yardMargin": 12,
   "landscape": [
-    { "id": 41, "type": "mulch", "label": "Supply Pad", "width": 8, "length": 8, "qty": 1, "x": 18, "y": 4 },
-    { "id": 42, "type": "path", "label": "Main Entry Walk", "width": 4, "length": 16, "qty": 1, "x": 6, "y": 33 }
+    {
+      "id": 41,
+      "type": "mulch",
+      "label": "Supply Pad",
+      "width": 8,
+      "length": 8,
+      "qty": 1,
+      "x": 18,
+      "y": 4
+    },
+    {
+      "id": 42,
+      "type": "path",
+      "label": "Main Entry Walk",
+      "width": 4,
+      "length": 16,
+      "qty": 1,
+      "x": 6,
+      "y": 33
+    }
   ],
   "prices": {},
   "savedAt": "2026-08-15T00:00:00.000Z"

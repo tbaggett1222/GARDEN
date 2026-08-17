@@ -1,0 +1,159 @@
+{
+  "enclosure": {
+    "width": 32,
+    "length": 48
+  },
+  "fenceHeight": 6,
+  "postSpacing": 7,
+  "gates": [
+    {
+      "id": 1,
+      "wall": "bottom",
+      "offset": 12,
+      "width": 8
+    },
+    {
+      "id": 2,
+      "wall": "left",
+      "offset": 20,
+      "width": 4
+    }
+  ],
+  "courses": 3,
+  "beds": [
+    {
+      "id": 1,
+      "label": "Family Row Beds",
+      "width": 4,
+      "length": 12,
+      "qty": 6,
+      "courses": 3,
+      "shape": "rect",
+      "zone": "center",
+      "cropKey": "beans",
+      "trellis": true,
+      "trellisHeight": 8,
+      "trellisSide": "length",
+      "positions": [
+        {
+          "x": 3,
+          "y": 6,
+          "rotated": false
+        },
+        {
+          "x": 9,
+          "y": 6,
+          "rotated": false
+        },
+        {
+          "x": 15,
+          "y": 6,
+          "rotated": false
+        },
+        {
+          "x": 3,
+          "y": 22,
+          "rotated": false
+        },
+        {
+          "x": 9,
+          "y": 22,
+          "rotated": false
+        },
+        {
+          "x": 15,
+          "y": 22,
+          "rotated": false
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "label": "Kids Raised Bed Cluster",
+      "width": 3,
+      "length": 8,
+      "qty": 3,
+      "courses": 2,
+      "shape": "rect",
+      "zone": "center",
+      "cropKey": "lettuce",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [
+        {
+          "x": 3,
+          "y": 37,
+          "rotated": false
+        },
+        {
+          "x": 7,
+          "y": 37,
+          "rotated": false
+        },
+        {
+          "x": 11,
+          "y": 37,
+          "rotated": false
+        }
+      ]
+    }
+  ],
+  "patios": [
+    {
+      "id": 90,
+      "label": "Pergola Dining Patio",
+      "width": 8,
+      "length": 12,
+      "surface": "pavers",
+      "structureType": "pergola",
+      "structureHeight": 9,
+      "roofStyle": "flat",
+      "roofDirection": "auto",
+      "doorWidth": 3,
+      "furnishings": true,
+      "x": 22,
+      "y": 30
+    }
+  ],
+  "yardMargin": 16,
+  "landscape": [
+    {
+      "id": 91,
+      "type": "tree",
+      "label": "Fruit Tree Row",
+      "width": 4,
+      "length": 4,
+      "qty": 4,
+      "x": 34,
+      "y": 6
+    },
+    {
+      "id": 92,
+      "type": "path",
+      "label": "Main Walkway",
+      "width": 4,
+      "length": 46,
+      "qty": 1,
+      "x": 20,
+      "y": 1
+    }
+  ],
+  "prices": {},
+  "gardenSite": {
+    "usdaZone": 7,
+    "sunHours": 8
+  },
+  "irrigation": {
+    "enabled": true,
+    "method": "drip",
+    "zones": 3,
+    "rowSpacingIn": 12,
+    "emitterSpacingIn": 12,
+    "emitterGph": 0.5,
+    "minutesPerDay": 35,
+    "daysPerWeek": 4
+  },
+  "renderQuality3d": "cinematic",
+  "savedAt": "2026-08-17T12:00:00.000Z"
+}

@@ -23,6 +23,10 @@ These starter plans are ready to import into the Garden Designer app.
 10. `10-accessible-wide-paths.json` — wider spacing and easy movement corridors
 11. `11-rainwater-resilient-garden.json` — drought/rain-surge resilient mix with mulch and swales
 12. `12-small-space-vertical-max.json` — compact footprint with vertical trellis-focused production
+13. `13-production-32x48-zoned.json` — large 32×48 production plan with service lanes and edge beds
+14. `14-family-32x48-orchard.json` — 32×48 family layout with patio + orchard-style edge zones
+15. `15-market-40x60-intensive.json` — 40×60 intensive market-scale long-row plan
+16. `16-estate-40x60-mixed-garden.json` — 40×60 mixed-use garden with kitchen, flowers, and berry sections
 
 ## Best plan by goal (quick picker)
 
@@ -36,3 +40,7 @@ These starter plans are ready to import into the Garden Designer app.
 - **Rain/drought resilience:** `11-rainwater-resilient-garden.json`
 - **Garden entertaining:** `08-pergola-dining-garden.json`
 - **Fruit/berry emphasis:** `09-orchard-berry-border.json`
+- **Large 32×48 production:** `13-production-32x48-zoned.json`
+- **Large 32×48 family + patio:** `14-family-32x48-orchard.json`
+- **Large 40×60 market:** `15-market-40x60-intensive.json`
+- **Large 40×60 mixed estate:** `16-estate-40x60-mixed-garden.json`

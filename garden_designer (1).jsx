@@ -123,6 +123,10 @@ const SAMPLE_PLAN_META = {
   "10-accessible-wide-paths.json": "Wider paths and easier access movement.",
   "11-rainwater-resilient-garden.json": "Rain/drought-resilient mixed planting strategy.",
   "12-small-space-vertical-max.json": "Vertical trellis-heavy small footprint design.",
+  "13-production-32x48-zoned.json": "Large 32x48 zoned production layout with service lanes.",
+  "14-family-32x48-orchard.json": "32x48 family garden with orchard edge and dining patio.",
+  "15-market-40x60-intensive.json": "40x60 intensive market-style layout with long rows.",
+  "16-estate-40x60-mixed-garden.json": "40x60 mixed estate garden for kitchen, flowers, and berries.",
 };
 function titleCaseWords(s) { return s.replace(/\b\w/g, (c) => c.toUpperCase()); }
 const SAMPLE_PLAN_MODULES = import.meta.glob("./sample-plans/*.json", { eager: true });
