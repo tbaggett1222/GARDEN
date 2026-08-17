@@ -10,7 +10,7 @@ const DEFAULT_PRICES = {
   gateKitWalk: 48, gateKitDrive: 145, fenceClips: 12,
   board8: 28, board10: 35, board12: 42, board16: 58,
   post4x4x8: 19, deckScrews: 14, fabricRoll: 22,
-  linerRoll: 28, hardwareClothRoll: 55,
+  linerRoll: 28, hardwareClothRoll: 55, screenMeshRoll: 32,
   trellisPostEach: 9, trellisMeshSqft: 2.75, trellisHardwareEach: 8,
   soilBag: 6.5, soilBulkCY: 55,
   paver16: 4.25, paverBaseBag: 4.75, sandBag: 4.25,
@@ -588,7 +588,8 @@ export default function GardenDesigner() {
     const screwBoxes = Math.max(Math.ceil(totalBedCount / 2), totalBedCount > 0 ? 1 : 0);
     const fabricRolls = Math.max(Math.ceil(totalBedAreaSqft / 150), totalBedCount > 0 ? 1 : 0);
     const linerRolls = Math.max(Math.ceil(totalLinerAreaSqft / 100), totalBedCount > 0 ? 1 : 0);
-    const meshRolls = Math.max(Math.ceil(totalBedAreaSqft / 75), totalBedCount > 0 ? 1 : 0);
+    const hardwareClothRolls = Math.max(Math.ceil(totalBedAreaSqft / 75), totalBedCount > 0 ? 1 : 0);
+    const screenMeshRolls = Math.max(Math.ceil(totalBedAreaSqft / 100), totalBedCount > 0 ? 1 : 0);
     const soilBags = Math.ceil(totalSoilCf / 1.5);
     const soilCY = totalSoilCf / 27;
 
@@ -598,12 +599,13 @@ export default function GardenDesigner() {
       { desc: `Exterior deck screws, 3" (5 lb box)`, qty: screwBoxes, unit: "box", price: prices.deckScrews },
       { desc: `Landscape/weed barrier fabric, under footprint (3x50 ft roll)`, qty: fabricRolls, unit: "roll", price: prices.fabricRoll },
       { desc: `Bed liner fabric, interior walls (4x25 ft roll)`, qty: linerRolls, unit: "roll", price: prices.linerRoll },
-      { desc: `Galvanized hardware cloth, 1/2" — rodent barrier, stapled to bottom (3x25 ft roll)`, qty: meshRolls, unit: "roll", price: prices.hardwareClothRoll },
+      { desc: `Galvanized hardware cloth, 1/2" — rodent barrier, stapled to bottom (3x25 ft roll)`, qty: hardwareClothRolls, unit: "roll", price: prices.hardwareClothRoll },
+      { desc: `Fine screen mesh underlayment — covers bed bottoms to support soil above hardware cloth (4x25 ft roll)`, qty: screenMeshRolls, unit: "roll", price: prices.screenMeshRoll },
       { desc: `Raised bed soil mix (1.5 cf bag)`, qty: soilBags, unit: "bag", price: prices.soilBag },
     ];
     sections.push({
       name: "Raised Beds", icon: "sprout", items: bedItems,
-      note: `${totalBedCount} bed${totalBedCount === 1 ? "" : "s"} · ${heightNote} · ${round1(totalSoilCf)} cf soil (${round1(soilCY)} cy) · liner covers interior walls, hardware cloth covers the bottom of each bed` + (soilCY > 2 ? " — consider bulk soil delivery instead of bags for large volumes" : ""),
+      note: `${totalBedCount} bed${totalBedCount === 1 ? "" : "s"} · ${heightNote} · ${round1(totalSoilCf)} cf soil (${round1(soilCY)} cy) · liner covers interior walls; hardware cloth + screen mesh cover each bed bottom` + (soilCY > 2 ? " — consider bulk soil delivery instead of bags for large volumes" : ""),
     });
 
     // ---- Trellises: sized to match each bed's width, 6 or 8 ft tall ----
