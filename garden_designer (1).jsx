@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import * as THREE from "three";
-import { Plus, Trash2, Download, Copy, Leaf, Ruler, ShoppingCart, Fence, Sprout, Home as HomeIcon, RotateCw, LayoutGrid, Box, Map, ChevronDown, ChevronRight, Save, FolderOpen, Printer } from "lucide-react";
+import { Plus, Trash2, Download, Copy, Leaf, Ruler, ShoppingCart, Fence, Sprout, Home as HomeIcon, RotateCw, LayoutGrid, Box, Map, ChevronDown, ChevronRight, Save, FolderOpen, Printer, Droplets } from "lucide-react";
 
 // ---------- Default unit prices (approx. Home Depot / Lowes, editable in-app) ----------
 const DEFAULT_PRICES = {
@@ -17,6 +17,7 @@ const DEFAULT_PRICES = {
   gravelBulkCY: 48, structPergolaLow: 18, structPergolaHigh: 35, structArborLow: 14, structArborHigh: 26, structPavilionLow: 30, structPavilionHigh: 55, structGazeboLow: 35, structGazeboHigh: 70, structCabinLow: 55, structCabinHigh: 130,
   furnishingsEach: 450, exteriorDoorEach: 220,
   treeEach: 120, shrubEach: 28, flowerBedSqft: 8, mulchBulkCY: 45, sodSqft: 0.55, pathSqft: 6, archEach: 140, doubleArchEach: 230, tunnelEach: 65,
+  dripMainlineRoll100: 38, dripTubingRoll100: 34, soakerHose50: 26, dripEmitterEach: 0.45, dripFittingPack: 14, irrigationTimerEach: 42, pressureRegulatorEach: 19, filterEach: 16, backflowPreventerEach: 12, zoneValveEach: 18,
 };
 
 const LANDSCAPE_TYPES = {
@@ -98,6 +99,17 @@ const ENCLOSURE_PRESETS = ["8x8", "8x16", "16x16", "16x32"];
 const BED_PRESETS = ["3x5", "3x6", "4x4", "4x8", "4x10"];
 const PATIO_PRESETS = ["8x8", "10x10", "12x16", "16x20"];
 const STOCK_LENGTHS = [8, 10, 12, 16];
+const CROP_PROFILES = [
+  { key: "mixed", label: "Mixed / custom planting", minZone: 3, maxZone: 11, minSunHours: 4, spacingIn: 12, waterInchesWeek: 1.2, notes: "General fallback profile." },
+  { key: "lettuce", label: "Lettuce & greens", minZone: 3, maxZone: 10, minSunHours: 4, spacingIn: 8, waterInchesWeek: 1.1, notes: "Cool-season, appreciates partial shade in hot climates." },
+  { key: "tomato", label: "Tomatoes", minZone: 5, maxZone: 11, minSunHours: 8, spacingIn: 24, waterInchesWeek: 1.5, notes: "Full sun and steady moisture for best yield." },
+  { key: "pepper", label: "Peppers", minZone: 5, maxZone: 11, minSunHours: 8, spacingIn: 18, waterInchesWeek: 1.25, notes: "Prefers warm soil and consistent watering." },
+  { key: "carrot", label: "Carrots / root crops", minZone: 3, maxZone: 10, minSunHours: 6, spacingIn: 3, waterInchesWeek: 1.0, notes: "Keep topsoil moist during germination." },
+  { key: "onion", label: "Onions / alliums", minZone: 3, maxZone: 10, minSunHours: 6, spacingIn: 4, waterInchesWeek: 1.0, notes: "Well-drained beds reduce bulb rot." },
+  { key: "beans", label: "Beans & peas", minZone: 4, maxZone: 10, minSunHours: 6, spacingIn: 6, waterInchesWeek: 1.0, notes: "Vining types benefit from trellis support." },
+  { key: "squash", label: "Squash / cucumbers", minZone: 5, maxZone: 11, minSunHours: 8, spacingIn: 24, waterInchesWeek: 1.6, notes: "Large leaves need consistent irrigation." },
+];
+const CROP_PROFILE_BY_KEY = Object.fromEntries(CROP_PROFILES.map((c) => [c.key, c]));
 const SAMPLE_PLAN_META = {
   "01-beginner-8x8-two-beds.json": "Small, simple starter with two beds.",
   "02-kitchen-8x16-four-beds.json": "Compact four-bed kitchen production plan.",
@@ -134,6 +146,14 @@ const SAMPLE_PLANS = Object.entries(SAMPLE_PLAN_MODULES)
 
 function fmt(n) { return n.toLocaleString(undefined, { style: "currency", currency: "USD" }); }
 function round1(n) { return Math.round(n * 10) / 10; }
+function bedFootprintAreaSqft(b) {
+  const width = Math.max(Number(b.width) || 0, 0);
+  const length = Math.max(Number(b.length) || 0, 0);
+  if (b.shape !== "L") return width * length;
+  const notchW = Math.max(0, Math.min(Number(b.notchWidth) || 0, Math.max(width - 0.1, 0)));
+  const notchD = Math.max(0, Math.min(Number(b.notchDepth) || 0, Math.max(length - 0.1, 0)));
+  return Math.max(width * length - notchW * notchD, 0);
+}
 
 function piecesForSide(sideFt) {
   const fit = STOCK_LENGTHS.find((s) => s >= sideFt);
@@ -277,8 +297,8 @@ export default function GardenDesigner() {
   const [courses, setCourses] = useState(3); // default course count used when adding a new bed
   const [perimeterInset, setPerimeterInset] = useState(4); // setback (ft) from fence to perimeter-zone beds
   const [beds, setBeds] = useState([
-    { id: 1, label: "Bed A", width: 4, length: 8, qty: 2, courses: 3, shape: "rect", zone: "center", trellis: false, trellisHeight: 6, trellisSide: "width", positions: [{ x: 2, y: 2, rotated: false }, { x: 2, y: 11, rotated: false }] },
-    { id: 2, label: "Bed B", width: 3, length: 5, qty: 1, courses: 3, shape: "rect", zone: "center", trellis: false, trellisHeight: 6, trellisSide: "width", positions: [{ x: 7, y: 2, rotated: false }] },
+    { id: 1, label: "Bed A", width: 4, length: 8, qty: 2, courses: 3, shape: "rect", zone: "center", cropKey: "mixed", trellis: false, trellisHeight: 6, trellisSide: "width", positions: [{ x: 2, y: 2, rotated: false }, { x: 2, y: 11, rotated: false }] },
+    { id: 2, label: "Bed B", width: 3, length: 5, qty: 1, courses: 3, shape: "rect", zone: "center", cropKey: "mixed", trellis: false, trellisHeight: 6, trellisSide: "width", positions: [{ x: 7, y: 2, rotated: false }] },
   ]);
   const [patios, setPatios] = useState([]);
   const [expandedPatios, setExpandedPatios] = useState(() => new Set());
@@ -286,6 +306,8 @@ export default function GardenDesigner() {
   const [landscape, setLandscape] = useState([]);
   const [expandedLandscape, setExpandedLandscape] = useState(() => new Set());
   const [prices, setPrices] = useState(DEFAULT_PRICES);
+  const [gardenSite, setGardenSite] = useState({ usdaZone: 7, sunHours: 8 });
+  const [irrigation, setIrrigation] = useState({ enabled: true, method: "drip", zones: 2, rowSpacingIn: 12, emitterSpacingIn: 12, emitterGph: 0.5, minutesPerDay: 35, daysPerWeek: 4 });
   const [reportName, setReportName] = useState("");
   const [savedReports, setSavedReports] = useState([]);
   const [showLoadMenu, setShowLoadMenu] = useState(false);
@@ -304,7 +326,7 @@ export default function GardenDesigner() {
   const [nudgeStep, setNudgeStep] = useState(0.5);
   const [viewMode, setViewMode] = useState("2d"); // '2d' | '3d'
   const [renderQuality3d, setRenderQuality3d] = useState("cinematic"); // 'standard' | 'cinematic'
-  const [activeTab, setActiveTab] = useState("enclosure"); // 'enclosure' | 'beds' | 'patio' | 'landscaping' | 'prices'
+  const [activeTab, setActiveTab] = useState("enclosure"); // 'enclosure' | 'beds' | 'patio' | 'landscaping' | 'trellis' | 'irrigation' | 'prices'
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
   const [expandedBeds, setExpandedBeds] = useState(() => new Set([1, 2]));
@@ -346,7 +368,7 @@ export default function GardenDesigner() {
     // stack new beds below whatever's already placed, so two beds added back-to-back
     // don't both land on the same fixed (1,1) spot and hide on top of each other
     const cascadeY = beds.reduce((maxY, b) => Math.max(maxY, ...(b.positions || []).map((p) => p.y + (p.rotated ? b.width : b.length))), 0);
-    setBeds((bs) => [...bs, { id: idCounter, label: `Bed ${String.fromCharCode(65 + bs.length)}`, width: w, length: l, qty: 1, courses, shape: "rect", notchWidth: 2, notchDepth: 2, notchCorner: "top-right", zone: "center", trellis: false, trellisHeight: 6, trellisSide: "width", positions: [{ x: 1, y: round1(cascadeY + 1), rotated: false }] }]);
+    setBeds((bs) => [...bs, { id: idCounter, label: `Bed ${String.fromCharCode(65 + bs.length)}`, width: w, length: l, qty: 1, courses, shape: "rect", notchWidth: 2, notchDepth: 2, notchCorner: "top-right", zone: "center", cropKey: "mixed", trellis: false, trellisHeight: 6, trellisSide: "width", positions: [{ x: 1, y: round1(cascadeY + 1), rotated: false }] }]);
     setExpandedBeds((s) => new Set(s).add(idCounter));
   }
   function removeBed(id) { setBeds((bs) => bs.filter((b) => b.id !== id)); }
@@ -526,6 +548,53 @@ export default function GardenDesigner() {
   }
   function setPrice(key, val) { setPrices((p) => ({ ...p, [key]: Number(val) || 0 })); }
 
+  const plantingGuidance = useMemo(() => {
+    const zone = Number(gardenSite.usdaZone) || 7;
+    const sunHours = Number(gardenSite.sunHours) || 8;
+    const bedsSummary = beds.map((b) => {
+      const crop = CROP_PROFILE_BY_KEY[b.cropKey] || CROP_PROFILE_BY_KEY.mixed;
+      const area = bedFootprintAreaSqft(b);
+      const spacingFt = Math.max((crop.spacingIn || 12) / 12, 0.2);
+      const plantsPerBed = Math.max(Math.floor(area / (spacingFt * spacingFt)), 1);
+      const plantsTotal = plantsPerBed * Math.max(Number(b.qty) || 1, 1);
+      const issues = [];
+      if (crop.key !== "mixed") {
+        if (zone < crop.minZone || zone > crop.maxZone) issues.push(`zone ${zone} is outside recommended ${crop.minZone}-${crop.maxZone}`);
+        if (sunHours < crop.minSunHours) issues.push(`needs ~${crop.minSunHours}+ sun hours (you set ${sunHours})`);
+      }
+      return { bedId: b.id, bedLabel: b.label, crop, plantsTotal, issues };
+    });
+    const issuesCount = bedsSummary.reduce((sum, row) => sum + row.issues.length, 0);
+    return { bedsSummary, issuesCount };
+  }, [beds, gardenSite.usdaZone, gardenSite.sunHours]);
+
+  const irrigationPlan = useMemo(() => {
+    const zones = Math.max(Number(irrigation.zones) || 1, 1);
+    const rowSpacingFt = Math.max((Number(irrigation.rowSpacingIn) || 12) / 12, 0.5);
+    const emitterSpacingIn = Math.max(Number(irrigation.emitterSpacingIn) || 12, 4);
+    const emitterGph = Math.max(Number(irrigation.emitterGph) || 0.5, 0.1);
+    const minutesPerDay = Math.max(Number(irrigation.minutesPerDay) || 1, 1);
+    const daysPerWeek = Math.max(Number(irrigation.daysPerWeek) || 1, 1);
+    let lateralFt = 0;
+    let bedCount = 0;
+    beds.forEach((b) => {
+      const qty = Math.max(Number(b.qty) || 0, 0);
+      if (!qty) return;
+      const width = Math.max(Number(b.width) || 0.5, 0.5);
+      const area = bedFootprintAreaSqft(b);
+      const rowsPerBed = Math.max(Math.round(width / rowSpacingFt), 1);
+      const rowRunFt = Math.max(area / (rowsPerBed * rowSpacingFt), 0.5);
+      lateralFt += rowsPerBed * rowRunFt * qty;
+      bedCount += qty;
+    });
+    const mainlineFt = round1((2 * (enclosure.width + enclosure.length)) * 0.55 + zones * 6);
+    const emitterCount = irrigation.method === "drip" ? Math.ceil((lateralFt * 12) / emitterSpacingIn) : 0;
+    const hoursPerWeek = (minutesPerDay / 60) * daysPerWeek;
+    const soakerGphPerFt = 0.6;
+    const gallonsPerWeek = round1((irrigation.method === "drip" ? emitterCount * emitterGph : lateralFt * soakerGphPerFt) * hoursPerWeek);
+    return { enabled: !!irrigation.enabled, zones, lateralFt: round1(lateralFt), mainlineFt, emitterCount, gallonsPerWeek, rowSpacingFt, emitterSpacingIn };
+  }, [beds, enclosure, irrigation]);
+
   // ---------- BOM calculation ----------
   const bom = useMemo(() => {
     const sections = [];
@@ -660,6 +729,42 @@ export default function GardenDesigner() {
       sections.push({ name: "Trellises", icon: "trellis", items: trellisItems, note: `${trellisCount} trellis${trellisCount === 1 ? "" : "es"}, each matching its bed's width, mounted along the back edge on top of the bed frame` });
     }
 
+    // ---- Irrigation planner ----
+    if (irrigationPlan.enabled && irrigationPlan.lateralFt > 0) {
+      const totalTubeFt = irrigationPlan.mainlineFt + irrigationPlan.lateralFt;
+      const mainlineRolls = Math.max(Math.ceil((irrigationPlan.mainlineFt * 1.1) / 100), 1);
+      const lateralRolls = irrigation.method === "drip"
+        ? Math.max(Math.ceil((irrigationPlan.lateralFt * 1.1) / 100), 1)
+        : 0;
+      const soakerRolls = irrigation.method === "soaker"
+        ? Math.max(Math.ceil((irrigationPlan.lateralFt * 1.1) / 50), 1)
+        : 0;
+      const fittingPacks = Math.max(Math.ceil(totalTubeFt / 80), 1);
+      const irrigationItems = [
+        { desc: `Irrigation timer`, qty: 1, unit: "ea", price: prices.irrigationTimerEach },
+        { desc: `Pressure regulator`, qty: 1, unit: "ea", price: prices.pressureRegulatorEach },
+        { desc: `Inline sediment filter`, qty: 1, unit: "ea", price: prices.filterEach },
+        { desc: `Backflow preventer`, qty: 1, unit: "ea", price: prices.backflowPreventerEach },
+        { desc: `Zone valve`, qty: irrigationPlan.zones, unit: "ea", price: prices.zoneValveEach },
+        { desc: `1/2" mainline poly tubing (100 ft roll)`, qty: mainlineRolls, unit: "roll", price: prices.dripMainlineRoll100 },
+        { desc: `Drip/irrigation fittings pack (tees/elbows/couplers)`, qty: fittingPacks, unit: "pack", price: prices.dripFittingPack },
+      ];
+      if (irrigation.method === "drip") {
+        irrigationItems.push(
+          { desc: `1/4" drip tubing (100 ft roll)`, qty: lateralRolls, unit: "roll", price: prices.dripTubingRoll100 },
+          { desc: `Drip emitters`, qty: irrigationPlan.emitterCount, unit: "ea", price: prices.dripEmitterEach },
+        );
+      } else {
+        irrigationItems.push({ desc: `Soaker hose (50 ft)`, qty: soakerRolls, unit: "roll", price: prices.soakerHose50 });
+      }
+      sections.push({
+        name: "Irrigation",
+        icon: "droplets",
+        items: irrigationItems,
+        note: `${irrigation.method === "drip" ? "Drip" : "Soaker"} plan · ${irrigationPlan.zones} zone${irrigationPlan.zones === 1 ? "" : "s"} · ~${irrigationPlan.mainlineFt} ft mainline + ~${irrigationPlan.lateralFt} ft bed runs · est. ${irrigationPlan.gallonsPerWeek} gal/week`,
+      });
+    }
+
     // ---- Patios: ground surface + optional overhead structure, each independently customized ----
     patios.forEach((patio) => {
       const patioItems = [];
@@ -716,7 +821,7 @@ export default function GardenDesigner() {
     const grandTotal = withTotals.reduce((sum, s) => sum + s.subtotal, 0);
 
     return { sections: withTotals, grandTotal, perimeter, totalBedAreaSqft, totalBedCount };
-  }, [enclosure, fenceHeight, postSpacing, gates, courses, beds, patios, landscape, prices, bedWallHeightFt, boardActualIn]);
+  }, [enclosure, fenceHeight, postSpacing, gates, courses, beds, patios, landscape, prices, irrigation, irrigationPlan, bedWallHeightFt, boardActualIn]);
 
   // ---------- Layout: reads current positions; auto-arrange writes new ones ----------
   const layout = useMemo(() => {
@@ -781,7 +886,7 @@ export default function GardenDesigner() {
     setSavedReports([...names].sort());
   }
   function buildSnapshot(includeTimestamp = true) {
-    const snapshot = { enclosure, fenceHeight, postSpacing, gates, courses, beds, patios, yardMargin, landscape, prices, renderQuality3d };
+    const snapshot = { enclosure, fenceHeight, postSpacing, gates, courses, beds, patios, yardMargin, landscape, prices, gardenSite, irrigation, renderQuality3d };
     if (includeTimestamp) snapshot.savedAt = new Date().toISOString();
     return snapshot;
   }
@@ -893,6 +998,8 @@ export default function GardenDesigner() {
     if (data.yardMargin) setYardMargin(data.yardMargin);
     if (data.landscape) setLandscape(data.landscape);
     if (data.prices) setPrices({ ...DEFAULT_PRICES, ...data.prices });
+    if (data.gardenSite) setGardenSite({ usdaZone: 7, sunHours: 8, ...data.gardenSite });
+    if (data.irrigation) setIrrigation({ enabled: true, method: "drip", zones: 2, rowSpacingIn: 12, emitterSpacingIn: 12, emitterGph: 0.5, minutesPerDay: 35, daysPerWeek: 4, ...data.irrigation });
     if (data.renderQuality3d) setRenderQuality3d(data.renderQuality3d);
     const allIds = [...(data.beds || []).map((b) => b.id), ...(data.gates || []).map((g) => g.id), ...(data.landscape || []).map((l) => l.id), ...(data.patios || []).map((p) => p.id), idCounter];
     idCounter = Math.max(...allIds);
@@ -914,7 +1021,7 @@ export default function GardenDesigner() {
     }
     pushHistorySnapshot(snapshot);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enclosure, fenceHeight, postSpacing, gates, courses, beds, patios, yardMargin, landscape, prices, renderQuality3d]);
+  }, [enclosure, fenceHeight, postSpacing, gates, courses, beds, patios, yardMargin, landscape, prices, gardenSite, irrigation, renderQuality3d]);
 
   useEffect(() => {
     function onUndoRedoHotkeys(e) {
@@ -1838,6 +1945,7 @@ export default function GardenDesigner() {
               <button className={`gdw-tab ${activeTab === "patio" ? "active" : ""}`} onClick={() => setActiveTab("patio")}><HomeIcon size={14} /> Patio</button>
               <button className={`gdw-tab ${activeTab === "landscaping" ? "active" : ""}`} onClick={() => setActiveTab("landscaping")}><Leaf size={14} /> Landscaping</button>
               <button className={`gdw-tab ${activeTab === "trellis" ? "active" : ""}`} onClick={() => setActiveTab("trellis")}><LayoutGrid size={14} /> Trellis</button>
+              <button className={`gdw-tab ${activeTab === "irrigation" ? "active" : ""}`} onClick={() => setActiveTab("irrigation")}><Droplets size={14} /> Irrigation</button>
               <button className={`gdw-tab ${activeTab === "prices" ? "active" : ""}`} onClick={() => setActiveTab("prices")}><ShoppingCart size={14} /> Prices</button>
             </div>
             {activeTab === "enclosure" && (
@@ -1924,6 +2032,7 @@ export default function GardenDesigner() {
                         <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13.5, fontWeight: 600 }}>
                           <ChevronRight size={14} /> {b.label} — {b.width}×{b.length} ft{b.shape === "L" ? " (L)" : ""} ×{b.qty}{b.trellis ? ` · trellis ${b.trellisHeight || 6}′ on ${b.trellisSide === "length" ? "length" : "width"}` : ""}
                           <span style={{ fontWeight: 400, color: "#8a8065", fontSize: 12 }}>· {b.zone === "perimeter" ? "perimeter" : "center"}</span>
+                          <span style={{ fontWeight: 400, color: "#8a8065", fontSize: 12 }}>· {(CROP_PROFILE_BY_KEY[b.cropKey] || CROP_PROFILE_BY_KEY.mixed).label}</span>
                         </span>
                         <button className="gdw-iconbtn" onClick={(e) => { e.stopPropagation(); removeBed(b.id); }}><Trash2 size={15} /></button>
                       </div>
@@ -1958,6 +2067,14 @@ export default function GardenDesigner() {
                         <button key={c} className={`gdw-btn ${(b.courses || courses) === c ? "active" : ""}`} style={{ padding: "3px 7px", fontSize: 11 }} onClick={() => updateBed(b.id, { courses: c })}>{c}× ≈ {round1((c * boardActualIn) / 12)}′</button>
                       ))}
                       <span style={{ fontSize: 11, color: "#8a8065" }}>({bHeight} ft)</span>
+                    </div>
+                    <div className="gdw-row" style={{ marginTop: 2 }}>
+                      <span style={{ fontSize: 11, color: "#6b6350" }}>Plant profile</span>
+                      <select className="gdw-inp" style={{ width: "auto" }} value={b.cropKey || "mixed"} onChange={(e) => updateBed(b.id, { cropKey: e.target.value })}>
+                        {CROP_PROFILES.map((crop) => (
+                          <option key={crop.key} value={crop.key}>{crop.label}</option>
+                        ))}
+                      </select>
                     </div>
                     <button className="gdw-morebtn" onClick={() => toggleAdvanced(b.id)}>
                       {showAdvanced ? <ChevronDown size={12} /> : <ChevronRight size={12} />} {showAdvanced ? "Fewer options" : "More options (shape, placement, trellis)"}
@@ -2010,6 +2127,27 @@ export default function GardenDesigner() {
                 );
               })}
               <button className="gdw-add" onClick={addBed}><Plus size={14} style={{ verticalAlign: -2 }} /> Add bed</button>
+              <div className="gdw-label" style={{ marginTop: 14 }}>Planting intelligence</div>
+              <div className="gdw-row">
+                <span style={{ fontSize: 11, color: "#6b6350" }}>USDA zone</span>
+                <input type="number" min={1} max={13} step={1} className="gdw-inp" style={{ width: 54 }} value={gardenSite.usdaZone} onChange={(e) => setGardenSite((s) => ({ ...s, usdaZone: Math.max(1, Math.min(Number(e.target.value) || 1, 13)) }))} />
+                <span style={{ fontSize: 11, color: "#6b6350" }}>Sun hours/day</span>
+                <input type="number" min={1} max={14} step={0.5} className="gdw-inp" style={{ width: 60 }} value={gardenSite.sunHours} onChange={(e) => setGardenSite((s) => ({ ...s, sunHours: Math.max(1, Math.min(Number(e.target.value) || 1, 14)) }))} />
+                <span style={{ fontSize: 11, color: plantingGuidance.issuesCount ? "#B5502A" : "#2F6B2A" }}>
+                  {plantingGuidance.issuesCount ? `${plantingGuidance.issuesCount} warning${plantingGuidance.issuesCount === 1 ? "" : "s"}` : "No zone/sun conflicts"}
+                </span>
+              </div>
+              <div className="gdw-note" style={{ margin: "0 0 6px 0" }}>
+                Estimated spacing and compatibility checks by bed crop profile.
+              </div>
+              <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5 }}>
+                {plantingGuidance.bedsSummary.map((row) => (
+                  <li key={`plant-${row.bedId}`}>
+                    <strong>{row.bedLabel}</strong>: {row.crop.label} · ~{row.plantsTotal} plant{row.plantsTotal === 1 ? "" : "s"} at {row.crop.spacingIn}" spacing
+                    {row.issues.length > 0 && <span style={{ color: "#B5502A" }}> · {row.issues.join("; ")}</span>}
+                  </li>
+                ))}
+              </ul>
             </div>
             )}
 
@@ -2148,6 +2286,49 @@ export default function GardenDesigner() {
                     <li key={b.id}>{b.label} — {b.trellisSide === "length" ? b.length : b.width} ft ({b.trellisSide === "length" ? "length" : "width"} side), {b.trellisHeight || 6} ft tall</li>
                   ))}
                 </ul>
+              )}
+            </div>
+            )}
+
+            {activeTab === "irrigation" && (
+            <div className="gdw-panel">
+              <h2><Droplets size={16} /> Irrigation Planner</h2>
+              <p className="gdw-note" style={{ margin: "0 0 10px 0" }}>Plan drip or soaker irrigation and automatically include components in the BOM.</p>
+              <div className="gdw-row">
+                <button className={`gdw-btn ${irrigation.enabled ? "active" : ""}`} onClick={() => setIrrigation((s) => ({ ...s, enabled: true }))}>Enabled</button>
+                <button className={`gdw-btn ${!irrigation.enabled ? "active" : ""}`} onClick={() => setIrrigation((s) => ({ ...s, enabled: false }))}>Disabled</button>
+              </div>
+              {irrigation.enabled && (
+                <>
+                  <div className="gdw-row" style={{ marginBottom: 6 }}>
+                    <span style={{ fontSize: 11, color: "#6b6350" }}>Method</span>
+                    <button className={`gdw-btn ${irrigation.method === "drip" ? "active" : ""}`} onClick={() => setIrrigation((s) => ({ ...s, method: "drip" }))}>Drip</button>
+                    <button className={`gdw-btn ${irrigation.method === "soaker" ? "active" : ""}`} onClick={() => setIrrigation((s) => ({ ...s, method: "soaker" }))}>Soaker hose</button>
+                  </div>
+                  <div className="gdw-row">
+                    <span style={{ fontSize: 11, color: "#6b6350" }}>Zones</span>
+                    <input type="number" min={1} max={12} className="gdw-inp" style={{ width: 56 }} value={irrigation.zones} onChange={(e) => setIrrigation((s) => ({ ...s, zones: Math.max(1, Math.min(Number(e.target.value) || 1, 12)) }))} />
+                    <span style={{ fontSize: 11, color: "#6b6350" }}>Row spacing (in)</span>
+                    <input type="number" min={6} max={36} step={1} className="gdw-inp" style={{ width: 62 }} value={irrigation.rowSpacingIn} onChange={(e) => setIrrigation((s) => ({ ...s, rowSpacingIn: Math.max(6, Math.min(Number(e.target.value) || 6, 36)) }))} />
+                    <span style={{ fontSize: 11, color: "#6b6350" }}>Run mins/day</span>
+                    <input type="number" min={1} max={180} step={1} className="gdw-inp" style={{ width: 62 }} value={irrigation.minutesPerDay} onChange={(e) => setIrrigation((s) => ({ ...s, minutesPerDay: Math.max(1, Math.min(Number(e.target.value) || 1, 180)) }))} />
+                  </div>
+                  <div className="gdw-row">
+                    <span style={{ fontSize: 11, color: "#6b6350" }}>Days/week</span>
+                    <input type="number" min={1} max={7} step={1} className="gdw-inp" style={{ width: 56 }} value={irrigation.daysPerWeek} onChange={(e) => setIrrigation((s) => ({ ...s, daysPerWeek: Math.max(1, Math.min(Number(e.target.value) || 1, 7)) }))} />
+                    {irrigation.method === "drip" && (
+                      <>
+                        <span style={{ fontSize: 11, color: "#6b6350" }}>Emitter spacing (in)</span>
+                        <input type="number" min={4} max={24} step={1} className="gdw-inp" style={{ width: 62 }} value={irrigation.emitterSpacingIn} onChange={(e) => setIrrigation((s) => ({ ...s, emitterSpacingIn: Math.max(4, Math.min(Number(e.target.value) || 4, 24)) }))} />
+                        <span style={{ fontSize: 11, color: "#6b6350" }}>Emitter GPH</span>
+                        <input type="number" min={0.1} max={4} step={0.1} className="gdw-inp" style={{ width: 58 }} value={irrigation.emitterGph} onChange={(e) => setIrrigation((s) => ({ ...s, emitterGph: Math.max(0.1, Math.min(Number(e.target.value) || 0.1, 4)) }))} />
+                      </>
+                    )}
+                  </div>
+                  <div className="gdw-note" style={{ margin: "2px 0 0 0" }}>
+                    Estimated system: {irrigationPlan.zones} zone{irrigationPlan.zones === 1 ? "" : "s"} · ~{irrigationPlan.mainlineFt} ft mainline · ~{irrigationPlan.lateralFt} ft bed runs{irrigation.method === "drip" ? ` · ~${irrigationPlan.emitterCount} emitters` : ""} · ~{irrigationPlan.gallonsPerWeek} gal/week.
+                  </div>
+                </>
               )}
             </div>
             )}
