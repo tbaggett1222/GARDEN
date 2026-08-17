@@ -1,0 +1,121 @@
+{
+  "enclosure": { "width": 34, "length": 60 },
+  "fenceHeight": 6,
+  "postSpacing": 7,
+  "gates": [
+    { "id": 1, "wall": "bottom", "offset": 11, "width": 12 },
+    { "id": 2, "wall": "left", "offset": 24, "width": 4 }
+  ],
+  "courses": 3,
+  "beds": [
+    {
+      "id": 1,
+      "label": "Kitchen Side Beds",
+      "width": 3,
+      "length": 10,
+      "qty": 4,
+      "courses": 3,
+      "shape": "rect",
+      "zone": "center",
+      "cropKey": "beans",
+      "trellis": true,
+      "trellisHeight": 8,
+      "trellisSide": "length",
+      "positions": [
+        { "x": 4, "y": 6, "rotated": false },
+        { "x": 4, "y": 18, "rotated": false },
+        { "x": 4, "y": 30, "rotated": false },
+        { "x": 4, "y": 42, "rotated": false }
+      ]
+    },
+    {
+      "id": 2,
+      "label": "Flower Border Beds",
+      "width": 3,
+      "length": 8,
+      "qty": 4,
+      "courses": 2,
+      "shape": "rect",
+      "zone": "center",
+      "cropKey": "mixed",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [
+        { "x": 27, "y": 6, "rotated": false },
+        { "x": 27, "y": 18, "rotated": false },
+        { "x": 27, "y": 30, "rotated": false },
+        { "x": 27, "y": 42, "rotated": false }
+      ]
+    },
+    {
+      "id": 3,
+      "label": "Fresh Cut Herb Beds",
+      "width": 4,
+      "length": 8,
+      "qty": 2,
+      "courses": 2,
+      "shape": "rect",
+      "zone": "center",
+      "cropKey": "lettuce",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [
+        { "x": 14, "y": 48, "rotated": false },
+        { "x": 20, "y": 48, "rotated": false }
+      ]
+    }
+  ],
+  "patios": [
+    {
+      "id": 220,
+      "label": "North Dining Pavilion",
+      "width": 10,
+      "length": 12,
+      "surface": "pavers",
+      "structureType": "pavilion",
+      "structureHeight": 9,
+      "roofStyle": "hip",
+      "roofDirection": "auto",
+      "doorWidth": 3,
+      "furnishings": true,
+      "x": 8,
+      "y": 14
+    },
+    {
+      "id": 221,
+      "label": "South Lounge Pavilion",
+      "width": 10,
+      "length": 14,
+      "surface": "pavers",
+      "structureType": "pavilion",
+      "structureHeight": 9,
+      "roofStyle": "gable",
+      "roofDirection": "auto",
+      "doorWidth": 3,
+      "furnishings": true,
+      "x": 16,
+      "y": 32
+    }
+  ],
+  "yardMargin": 18,
+  "landscape": [
+    { "id": 222, "type": "path", "label": "Main Axis Walk", "width": 4, "length": 56, "qty": 1, "x": 14, "y": 2 },
+    { "id": 223, "type": "tree", "label": "Photo Backdrop Trees", "width": 5, "length": 5, "qty": 4, "x": 36, "y": 10 }
+  ],
+  "prices": {},
+  "gardenSite": { "usdaZone": 7, "sunHours": 8 },
+  "irrigation": {
+    "enabled": true,
+    "method": "drip",
+    "zones": 4,
+    "rowSpacingIn": 12,
+    "emitterSpacingIn": 12,
+    "emitterGph": 0.5,
+    "minutesPerDay": 36,
+    "daysPerWeek": 4
+  },
+  "renderQuality3d": "cinematic",
+  "savedAt": "2026-08-17T20:25:00.000Z"
+}

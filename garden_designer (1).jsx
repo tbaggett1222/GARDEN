@@ -111,8 +111,6 @@ const CROP_PROFILES = [
 ];
 const CROP_PROFILE_BY_KEY = Object.fromEntries(CROP_PROFILES.map((c) => [c.key, c]));
 const SAMPLE_PLAN_META = {
-  "01-beginner-8x8-two-beds.json": "Small, simple starter with two beds.",
-  "02-kitchen-8x16-four-beds.json": "Compact four-bed kitchen production plan.",
   "03-family-16x16-patio.json": "Large-bed 16x16 layout with long rows.",
   "04-market-16x32-intensive.json": "High-yield long-row 16x32 production layout.",
   "05-pollinator-cutflower-garden.json": "Pollinator habitat and cut-flower focus.",
@@ -131,6 +129,10 @@ const SAMPLE_PLAN_META = {
   "18-family-34x60-learning-garden.json": "34x60 family learning layout with patio and teaching beds.",
   "19-market-40x60-zoned.json": "40x60 zoned market layout with nursery edge beds.",
   "20-estate-40x60-entertaining.json": "40x60 estate layout balancing kitchen rows and entertaining patio.",
+  "21-entertaining-34x60-pergola-courtyard.json": "34x60 entertainment courtyard with pergola dining and fire lounge.",
+  "22-entertaining-34x60-pavilion-dining.json": "34x60 dual-pavilion dining layout for family and guests.",
+  "23-entertaining-40x60-event-lawn.json": "40x60 event-friendly layout with pavilion court and open lawn.",
+  "24-entertaining-40x60-gazebo-orchard.json": "40x60 gazebo and orchard entertaining layout with banquet patio.",
 };
 function titleCaseWords(s) { return s.replace(/\b\w/g, (c) => c.toUpperCase()); }
 const SAMPLE_PLAN_MODULES = import.meta.glob("./sample-plans/*.json", { eager: true });
