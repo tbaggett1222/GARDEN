@@ -156,6 +156,7 @@ const SAMPLE_PLANS = Object.entries(SAMPLE_PLAN_MODULES)
 
 function fmt(n) { return n.toLocaleString(undefined, { style: "currency", currency: "USD" }); }
 function round1(n) { return Math.round(n * 10) / 10; }
+function clamp(n, min, max) { return Math.max(min, Math.min(n, max)); }
 function bedFootprintAreaSqft(b) {
   const width = Math.max(Number(b.width) || 0, 0);
   const length = Math.max(Number(b.length) || 0, 0);
@@ -335,6 +336,7 @@ export default function GardenDesigner() {
   const [selected, setSelected] = useState(null); // { kind: 'bed'|'patio', bedId, idx }
   const [nudgeStep, setNudgeStep] = useState(0.5);
   const [viewMode, setViewMode] = useState("2d"); // '2d' | '3d'
+  const [planCamera, setPlanCamera] = useState({ zoom: 1, panX: 0, panY: 0 });
   const [renderQuality3d, setRenderQuality3d] = useState("cinematic"); // 'standard' | 'cinematic'
   const [activeTab, setActiveTab] = useState("enclosure"); // 'enclosure' | 'beds' | 'patio' | 'landscaping' | 'trellis' | 'irrigation' | 'prices'
   const [canUndo, setCanUndo] = useState(false);
@@ -386,6 +388,47 @@ export default function GardenDesigner() {
   function applyBedPreset(id, p) { const [w, l] = p.split("x").map(Number); updateBed(id, { width: w, length: l }); }
   function wallLength(wall) { return wall === "top" || wall === "bottom" ? enclosure.width : enclosure.length; }
   const fencePosts = useMemo(() => fencePostAnchors(enclosure.width, enclosure.length, postSpacing), [enclosure.width, enclosure.length, postSpacing]);
+  const planBaseBounds = useMemo(() => ({
+    x: -1 - yardMargin,
+    y: -1 - yardMargin,
+    width: enclosure.width + 2 + 2 * yardMargin,
+    height: enclosure.length + 2 + 2 * yardMargin,
+  }), [enclosure.width, enclosure.length, yardMargin]);
+  const planViewport = useMemo(() => {
+    const zoom = clamp(Number(planCamera.zoom) || 1, 1, 6);
+    const width = planBaseBounds.width / zoom;
+    const height = planBaseBounds.height / zoom;
+    const maxPanX = Math.max((planBaseBounds.width - width) / 2, 0);
+    const maxPanY = Math.max((planBaseBounds.height - height) / 2, 0);
+    const panX = clamp(Number(planCamera.panX) || 0, -maxPanX, maxPanX);
+    const panY = clamp(Number(planCamera.panY) || 0, -maxPanY, maxPanY);
+    const centerX = planBaseBounds.x + planBaseBounds.width / 2 + panX;
+    const centerY = planBaseBounds.y + planBaseBounds.height / 2 + panY;
+    return { zoom, panX, panY, maxPanX, maxPanY, x: centerX - width / 2, y: centerY - height / 2, width, height };
+  }, [planBaseBounds, planCamera]);
+  const planPanStep = useMemo(() => {
+    const visibleSpan = Math.min(planViewport.width, planViewport.height);
+    return round1(Math.max(0.5, visibleSpan * 0.12));
+  }, [planViewport.width, planViewport.height]);
+  function zoomPlan(multiplier) {
+    setPlanCamera((cam) => {
+      const nextZoom = clamp((Number(cam.zoom) || 1) * multiplier, 1, 6);
+      if (nextZoom <= 1.001) return { zoom: 1, panX: 0, panY: 0 };
+      return { ...cam, zoom: Math.round(nextZoom * 100) / 100 };
+    });
+  }
+  function panPlan(dx, dy) {
+    setPlanCamera((cam) => ({
+      ...cam,
+      panX: round1((Number(cam.panX) || 0) + dx),
+      panY: round1((Number(cam.panY) || 0) + dy),
+    }));
+  }
+  function resetPlanViewport() { setPlanCamera({ zoom: 1, panX: 0, panY: 0 }); }
+  function onPlanWheel(e) {
+    e.preventDefault();
+    zoomPlan(e.deltaY < 0 ? 1.12 : 1 / 1.12);
+  }
   function addGate() {
     idCounter += 1;
     const wl = wallLength("bottom");
@@ -2367,7 +2410,14 @@ export default function GardenDesigner() {
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   <button className={`gdw-btn ${viewMode === "2d" ? "active" : ""}`} onClick={() => setViewMode("2d")}><Map size={13} style={{ verticalAlign: -2 }} /> 2D Plan</button>
                   <button className={`gdw-btn ${viewMode === "3d" ? "active" : ""}`} onClick={() => setViewMode("3d")}><Box size={13} style={{ verticalAlign: -2 }} /> 3D Preview</button>
-                  {viewMode === "2d" && <button className="gdw-btn" onClick={autoArrange}><LayoutGrid size={13} style={{ verticalAlign: -2 }} /> Auto-arrange</button>}
+                  {viewMode === "2d" && (
+                    <>
+                      <button className="gdw-btn" onClick={autoArrange}><LayoutGrid size={13} style={{ verticalAlign: -2 }} /> Auto-arrange</button>
+                      <button className="gdw-btn" onClick={() => zoomPlan(1 / 1.2)} title="Zoom out 2D plan">−</button>
+                      <button className="gdw-btn" onClick={() => zoomPlan(1.2)} title="Zoom in 2D plan">+</button>
+                      <button className="gdw-btn" onClick={resetPlanViewport} title="Fit full plan in view">Fit</button>
+                    </>
+                  )}
                   {viewMode === "3d" && (
                     <>
                       <button className={`gdw-btn ${renderQuality3d === "standard" ? "active" : ""}`} onClick={() => setRenderQuality3d("standard")} title="Faster 3D rendering">Standard</button>
@@ -2378,8 +2428,20 @@ export default function GardenDesigner() {
               </div>
               {viewMode === "2d" ? (
                 <>
-              <p className="gdw-note gdw-noprint" style={{ margin: "0 0 8px 0" }}>Drag to place freely — beds, patios, and landscaping can all go outside the fence, into the surrounding yard. Click an item to select it, then use the arrow buttons below (or keyboard arrows) to nudge it. Click empty ground or press Esc to deselect. Click the ↻ badge to rotate a bed 90°.</p>
-              <svg ref={svgRef} className="gdw-svg" viewBox={`${-1 - yardMargin} ${-1 - yardMargin} ${enclosure.width + 2 + 2 * yardMargin} ${enclosure.length + 2 + 2 * yardMargin}`}>
+              <p className="gdw-note gdw-noprint" style={{ margin: "0 0 8px 0" }}>Drag to place freely — beds, patios, and landscaping can all go outside the fence, into the surrounding yard. Use mouse wheel (or the − / + buttons) to zoom the 2D plan, then pan with the arrows when zoomed in. Click an item to select it, then use the arrow buttons below (or keyboard arrows) to nudge it. Click empty ground or press Esc to deselect. Click the ↻ badge to rotate a bed 90°.</p>
+              <div className="gdw-row gdw-noprint" style={{ margin: "0 0 8px 0", alignItems: "center", gap: 6 }}>
+                <span style={{ fontSize: 12, color: "#5b5342" }}>2D zoom: {Math.round(planViewport.zoom * 100)}%</span>
+                {planViewport.zoom > 1.01 && (
+                  <>
+                    <span style={{ fontSize: 12, color: "#8a8065", marginLeft: 8 }}>Pan</span>
+                    <button className="gdw-btn" onClick={() => panPlan(-planPanStep, 0)} title="Pan left">←</button>
+                    <button className="gdw-btn" onClick={() => panPlan(0, -planPanStep)} title="Pan up">↑</button>
+                    <button className="gdw-btn" onClick={() => panPlan(0, planPanStep)} title="Pan down">↓</button>
+                    <button className="gdw-btn" onClick={() => panPlan(planPanStep, 0)} title="Pan right">→</button>
+                  </>
+                )}
+              </div>
+              <svg ref={svgRef} className="gdw-svg" onWheel={onPlanWheel} viewBox={`${planViewport.x} ${planViewport.y} ${planViewport.width} ${planViewport.height}`}>
                 <rect x={-yardMargin} y={-yardMargin} width={enclosure.width + 2 * yardMargin} height={enclosure.length + 2 * yardMargin} fill="#8FBF6E" onClick={() => setSelected(null)} />
                 <rect x={0} y={0} width={enclosure.width} height={enclosure.length} fill="#EFE9D6" onClick={() => setSelected(null)} />
                 {["top", "bottom", "left", "right"].map((wall) => {
