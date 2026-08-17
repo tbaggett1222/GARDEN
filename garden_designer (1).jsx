@@ -235,6 +235,33 @@ function wallSegments(length, gatesOnWall) {
   if (cur < length) segs.push([cur, length]);
   return segs;
 }
+function fencePostAnchors(width, length, spacing) {
+  const step = Math.max(spacing || 1, 0.5);
+  const rows = [];
+  function addWall(wall, wallLen, toPoint) {
+    const offsets = [0];
+    for (let d = step; d < wallLen; d += step) offsets.push(round1(d));
+    offsets.push(wallLen);
+    offsets.forEach((off) => {
+      const p = toPoint(off);
+      rows.push({ ...p, wall, wallOffset: off });
+    });
+  }
+  addWall("top", width, (off) => ({ x: off, y: 0 }));
+  addWall("right", length, (off) => ({ x: width, y: off }));
+  addWall("bottom", width, (off) => ({ x: width - off, y: length }));
+  addWall("left", length, (off) => ({ x: 0, y: length - off }));
+
+  const seen = new Set();
+  const unique = [];
+  rows.forEach((p) => {
+    const key = `${round1(p.x)}|${round1(p.y)}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    unique.push(p);
+  });
+  return unique;
+}
 
 let idCounter = 3;
 
@@ -322,6 +349,7 @@ export default function GardenDesigner() {
   function applyEnclosurePreset(p) { const [w, l] = p.split("x").map(Number); setEnclosure({ width: w, length: l }); }
   function applyBedPreset(id, p) { const [w, l] = p.split("x").map(Number); updateBed(id, { width: w, length: l }); }
   function wallLength(wall) { return wall === "top" || wall === "bottom" ? enclosure.width : enclosure.length; }
+  const fencePosts = useMemo(() => fencePostAnchors(enclosure.width, enclosure.length, postSpacing), [enclosure.width, enclosure.length, postSpacing]);
   function addGate() {
     idCounter += 1;
     const wl = wallLength("bottom");
@@ -1216,19 +1244,13 @@ export default function GardenDesigner() {
     });
 
     const postMat = mkMat({ color: "#6B4A2E", roughness: 0.84, metalness: 0.02, clearcoat: 0.08 });
-    const perim = 2 * (W + L);
-    const nPosts = Math.ceil(perim / postSpacing);
-    for (let i = 0; i < nPosts; i++) {
-      const d = (i * perim) / nPosts;
-      let px, py;
-      if (d < W) { px = d; py = 0; }
-      else if (d < W + L) { px = W; py = d - W; }
-      else if (d < 2 * W + L) { px = W - (d - W - L); py = L; }
-      else { px = 0; py = L - (d - 2 * W - L); }
+    fencePosts.forEach((p) => {
+      const inGate = gates.some((g) => g.wall === p.wall && p.wallOffset > g.offset && p.wallOffset < g.offset + g.width);
+      if (inGate) return;
       const post = new THREE.Mesh(new THREE.BoxGeometry(0.33, fenceHeight, 0.33), postMat);
-      post.position.set(px - W / 2, fenceHeight / 2, py - L / 2);
+      post.position.set(p.x - W / 2, fenceHeight / 2, p.y - L / 2);
       scene.add(post);
-    }
+    });
 
     // ---- raised beds: wood frame + mounded soil + planted rows (simplified as rectangular footprints — see 2D plan for exact L-shape geometry) ----
     const frameMat = mkMat({ color: "#8A6A45", roughness: 0.83, metalness: 0.03, clearcoat: 0.1 });
@@ -1579,7 +1601,7 @@ export default function GardenDesigner() {
       renderer.dispose();
       if (container) container.innerHTML = "";
     };
-  }, [viewMode, renderQuality3d, enclosure, layout, patios, landscape, gates, fenceHeight, postSpacing, yardMargin]);
+  }, [viewMode, renderQuality3d, enclosure, layout, patios, landscape, gates, fenceHeight, postSpacing, yardMargin, fencePosts]);
 
   function exportCSV() {
     const rows = [["Category", "Item", "Qty", "Unit", "Unit Price", "Line Total"]];
@@ -2189,18 +2211,10 @@ export default function GardenDesigner() {
                     </g>
                   );
                 })}
-                {Array.from({ length: Math.ceil((2 * (enclosure.width + enclosure.length)) / postSpacing) }).map((_, i) => {
-                  const perim = 2 * (enclosure.width + enclosure.length);
-                  const d = (i * perim) / Math.ceil(perim / postSpacing);
-                  let x, y, wall;
-                  if (d < enclosure.width) { x = d; y = 0; wall = "top"; }
-                  else if (d < enclosure.width + enclosure.length) { x = enclosure.width; y = d - enclosure.width; wall = "right"; }
-                  else if (d < 2 * enclosure.width + enclosure.length) { x = enclosure.width - (d - enclosure.width - enclosure.length); y = enclosure.length; wall = "bottom"; }
-                  else { x = 0; y = enclosure.length - (d - 2 * enclosure.width - enclosure.length); wall = "left"; }
-                  const wallOffset = wall === "top" || wall === "bottom" ? x : y;
-                  const inGate = gates.some((g) => g.wall === wall && wallOffset > g.offset && wallOffset < g.offset + g.width);
+                {fencePosts.map((p, i) => {
+                  const inGate = gates.some((g) => g.wall === p.wall && p.wallOffset > g.offset && p.wallOffset < g.offset + g.width);
                   if (inGate) return null;
-                  return <circle key={i} cx={x} cy={y} r={0.16} fill="var(--wood)" />;
+                  return <circle key={`post-${i}`} cx={p.x} cy={p.y} r={0.16} fill="var(--wood)" />;
                 })}
                 {layout.ringActive && (
                   <rect x={layout.ringLine.x} y={layout.ringLine.y} width={layout.ringLine.w} height={layout.ringLine.h} fill="none" stroke="var(--gold)" strokeWidth={0.08} strokeDasharray="0.3,0.3" />
