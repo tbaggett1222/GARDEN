@@ -30,7 +30,7 @@
       "positions": [
         {
           "x": 3,
-          "y": 1,
+          "y": 2,
           "rotated": true
         },
         {
@@ -43,7 +43,8 @@
           "y": 10,
           "rotated": true
         }
-      ]
+      ],
+      "cropKey": "tomato"
     }
   ],
   "patios": [],
@@ -71,5 +72,20 @@
     }
   ],
   "prices": {},
-  "savedAt": "2026-08-15T00:00:00.000Z"
+  "savedAt": "2026-08-17T22:40:17Z",
+  "gardenSite": {
+    "usdaZone": 7,
+    "sunHours": 8
+  },
+  "irrigation": {
+    "enabled": true,
+    "method": "drip",
+    "zones": 3,
+    "rowSpacingIn": 12,
+    "emitterSpacingIn": 12,
+    "emitterGph": 0.5,
+    "minutesPerDay": 36,
+    "daysPerWeek": 4
+  },
+  "renderQuality3d": "cinematic"
 }

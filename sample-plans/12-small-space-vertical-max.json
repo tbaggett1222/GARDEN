@@ -30,10 +30,11 @@
       "positions": [
         {
           "x": 0,
-          "y": 0,
+          "y": 2,
           "rotated": false
         }
-      ]
+      ],
+      "cropKey": "tomato"
     },
     {
       "id": 2,
@@ -50,10 +51,11 @@
       "positions": [
         {
           "x": 4,
-          "y": 0,
+          "y": 2,
           "rotated": false
         }
-      ]
+      ],
+      "cropKey": "squash"
     },
     {
       "id": 3,
@@ -76,7 +78,8 @@
           "y": 8,
           "rotated": false
         }
-      ]
+      ],
+      "cropKey": "lettuce"
     },
     {
       "id": 4,
@@ -96,7 +99,8 @@
           "y": 8.5,
           "rotated": false
         }
-      ]
+      ],
+      "cropKey": "mixed"
     }
   ],
   "patios": [],
@@ -136,5 +140,20 @@
     }
   ],
   "prices": {},
-  "savedAt": "2026-08-15T00:00:00.000Z"
+  "savedAt": "2026-08-17T22:40:17Z",
+  "gardenSite": {
+    "usdaZone": 7,
+    "sunHours": 8
+  },
+  "irrigation": {
+    "enabled": true,
+    "method": "drip",
+    "zones": 2,
+    "rowSpacingIn": 12,
+    "emitterSpacingIn": 12,
+    "emitterGph": 0.5,
+    "minutesPerDay": 32,
+    "daysPerWeek": 4
+  },
+  "renderQuality3d": "cinematic"
 }

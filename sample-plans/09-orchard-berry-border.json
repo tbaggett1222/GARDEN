@@ -44,7 +44,8 @@
           "y": 3,
           "rotated": false
         }
-      ]
+      ],
+      "cropKey": "squash"
     },
     {
       "id": 2,
@@ -71,10 +72,11 @@
         },
         {
           "x": 12.5,
-          "y": 18,
+          "y": 16,
           "rotated": false
         }
-      ]
+      ],
+      "cropKey": "mixed"
     }
   ],
   "patios": [],
@@ -112,5 +114,20 @@
     }
   ],
   "prices": {},
-  "savedAt": "2026-08-15T00:00:00.000Z"
+  "savedAt": "2026-08-17T22:40:17Z",
+  "gardenSite": {
+    "usdaZone": 7,
+    "sunHours": 8
+  },
+  "irrigation": {
+    "enabled": true,
+    "method": "drip",
+    "zones": 4,
+    "rowSpacingIn": 12,
+    "emitterSpacingIn": 12,
+    "emitterGph": 0.5,
+    "minutesPerDay": 40,
+    "daysPerWeek": 4
+  },
+  "renderQuality3d": "cinematic"
 }
