@@ -380,6 +380,7 @@ export default function GardenDesigner() {
   const [viewMode, setViewMode] = useState("2d"); // '2d' | '3d'
   const [planCamera, setPlanCamera] = useState({ zoom: 1, panX: 0, panY: 0 });
   const [renderQuality3d, setRenderQuality3d] = useState("cinematic"); // 'standard' | 'cinematic'
+  const [threeZoomPct, setThreeZoomPct] = useState(40);
   const [activeTab, setActiveTab] = useState("enclosure"); // 'enclosure' | 'beds' | 'patio' | 'landscaping' | 'trellis' | 'irrigation' | 'prices'
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
@@ -387,6 +388,8 @@ export default function GardenDesigner() {
   const [advancedBeds, setAdvancedBeds] = useState(() => new Set());
   const threeContainerRef = useRef(null);
   const camStateRef = useRef({ theta: 0.8, phi: 1.0, radius: null });
+  const threeZoomBoundsRef = useRef({ minR: 1, maxR: 1 });
+  const applyThreeCamRef = useRef(null);
   const historyRef = useRef([]);
   const historyHashRef = useRef([]);
   const historyIdxRef = useRef(-1);
@@ -462,6 +465,25 @@ export default function GardenDesigner() {
   }
   function setPlanZoom(nextZoomRaw) {
     setPlanCamera((cam) => applyPlanZoom(nextZoomRaw, cam));
+  }
+  function applyThreeZoomPct(nextPctRaw) {
+    const pct = clamp(numOr(nextPctRaw, 40), 0, 100);
+    const { minR, maxR } = threeZoomBoundsRef.current;
+    if (!Number.isFinite(minR) || !Number.isFinite(maxR) || maxR <= minR) return;
+    camStateRef.current.radius = maxR - (pct / 100) * (maxR - minR);
+    if (applyThreeCamRef.current) applyThreeCamRef.current();
+  }
+  function setThreeZoomControl(nextPctRaw) {
+    const pct = Math.round(clamp(numOr(nextPctRaw, 40), 0, 100));
+    setThreeZoomPct(pct);
+    applyThreeZoomPct(pct);
+  }
+  function nudgeThreeZoom(deltaPct) {
+    setThreeZoomPct((prev) => {
+      const next = Math.round(clamp(prev + deltaPct, 0, 100));
+      applyThreeZoomPct(next);
+      return next;
+    });
   }
   function zoomPlan(multiplier) {
     setPlanCamera((cam) => applyPlanZoom((Number(cam.zoom) || 1) * multiplier, cam));
@@ -1875,8 +1897,13 @@ export default function GardenDesigner() {
     const defaultR = maxExtent * 1.3;
     const priorR = numOr(camStateRef.current.radius, defaultR);
     camStateRef.current.radius = clamp(priorR, minR, maxR);
+    threeZoomBoundsRef.current = { minR, maxR };
     camStateRef.current.theta = numOr(camStateRef.current.theta, 0.8);
     camStateRef.current.phi = clamp(numOr(camStateRef.current.phi, 1.0), 0.15, 1.45);
+    const radiusToPct = (radius) => {
+      if (!Number.isFinite(radius) || maxR <= minR) return 40;
+      return Math.round(clamp(((maxR - radius) / (maxR - minR)) * 100, 0, 100));
+    };
     const target = new THREE.Vector3(0, fenceHeight * 0.25, 0);
     function applyCam() {
       const { theta, phi, radius } = camStateRef.current;
@@ -1887,6 +1914,8 @@ export default function GardenDesigner() {
       );
       camera.lookAt(target);
     }
+    applyThreeCamRef.current = applyCam;
+    setThreeZoomPct(radiusToPct(camStateRef.current.radius));
     applyCam();
 
     let dragging = false, lastX = 0, lastY = 0;
@@ -1906,6 +1935,7 @@ export default function GardenDesigner() {
     function onWheel(e) {
       e.preventDefault();
       camStateRef.current.radius = Math.min(maxR, Math.max(minR, camStateRef.current.radius * (1 + e.deltaY * 0.001)));
+      setThreeZoomPct(radiusToPct(camStateRef.current.radius));
       applyCam();
     }
     dom.addEventListener("pointerdown", onDown);
@@ -1932,6 +1962,7 @@ export default function GardenDesigner() {
       window.removeEventListener("pointerup", onUp);
       dom.removeEventListener("wheel", onWheel);
       window.removeEventListener("resize", onResize);
+      applyThreeCamRef.current = null;
       renderer.dispose();
       if (container) container.innerHTML = "";
     };
@@ -2795,6 +2826,23 @@ export default function GardenDesigner() {
                   <p className="gdw-note gdw-noprint" style={{ margin: "0 0 8px 0" }}>
                     Drag to orbit, scroll to zoom. {renderQuality3d === "cinematic" ? "Cinematic mode uses physically based shading, ACES tonemapping, cedar-style bed framing with mesh guards, soft shadows, and higher pixel density for a more realistic look." : "Standard mode is optimized for speed on older devices."} This web renderer is an approximation; Unreal Engine 5 features like Nanite/Lumen and full offline path tracing are not available directly in-browser.
                   </p>
+                  <div className="gdw-row gdw-noprint" style={{ margin: "0 0 8px 0", alignItems: "center", gap: 6 }}>
+                    <span style={{ fontSize: 12, color: "#5b5342" }}>3D zoom:</span>
+                    <button className="gdw-btn" onClick={() => nudgeThreeZoom(-8)} title="Zoom out 3D preview">−</button>
+                    <span style={{ fontSize: 11, color: "#8a8065" }}>Wide</span>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      step={2}
+                      value={threeZoomPct}
+                      onChange={(e) => setThreeZoomControl(Number(e.target.value))}
+                      title="Slide to zoom 3D camera"
+                      style={{ width: 170 }}
+                    />
+                    <span style={{ fontSize: 11, color: "#8a8065" }}>Close</span>
+                    <button className="gdw-btn" onClick={() => nudgeThreeZoom(8)} title="Zoom in 3D preview">+</button>
+                  </div>
                   <div ref={threeContainerRef} className="gdw-three gdw-noprint" style={{ width: "100%", borderRadius: 8, overflow: "hidden", background: "#BFE3D0" }} />
                 </>
               )}
