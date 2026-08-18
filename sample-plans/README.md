@@ -2,6 +2,8 @@
 
 These starter plans are ready to import into the Garden Designer app.
 
+All included plans are quality-checked to keep beds clear of gate access lanes and now include crop profiles, planting site defaults, irrigation settings, and cinematic 3D render quality.
+
 ## How to use
 
 1. Open the app.

@@ -30,10 +30,11 @@
       "positions": [
         {
           "x": 1,
-          "y": 1,
+          "y": 2,
           "rotated": false
         }
-      ]
+      ],
+      "cropKey": "lettuce"
     },
     {
       "id": 2,
@@ -50,10 +51,11 @@
       "positions": [
         {
           "x": 7,
-          "y": 1,
+          "y": 2,
           "rotated": false
         }
-      ]
+      ],
+      "cropKey": "pepper"
     },
     {
       "id": 3,
@@ -73,7 +75,8 @@
           "y": 7.5,
           "rotated": false
         }
-      ]
+      ],
+      "cropKey": "carrot"
     }
   ],
   "patios": [
@@ -118,5 +121,20 @@
     }
   ],
   "prices": {},
-  "savedAt": "2026-08-15T00:00:00.000Z"
+  "savedAt": "2026-08-17T22:40:17Z",
+  "gardenSite": {
+    "usdaZone": 7,
+    "sunHours": 8
+  },
+  "irrigation": {
+    "enabled": true,
+    "method": "drip",
+    "zones": 3,
+    "rowSpacingIn": 12,
+    "emitterSpacingIn": 12,
+    "emitterGph": 0.5,
+    "minutesPerDay": 36,
+    "daysPerWeek": 4
+  },
+  "renderQuality3d": "cinematic"
 }

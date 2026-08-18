@@ -398,6 +398,8 @@ export default function GardenDesigner() {
   function applyBedPreset(id, p) { const [w, l] = p.split("x").map(Number); updateBed(id, { width: w, length: l }); }
   function wallLength(wall) { return wall === "top" || wall === "bottom" ? enclosure.width : enclosure.length; }
   const fencePosts = useMemo(() => fencePostAnchors(enclosure.width, enclosure.length, postSpacing), [enclosure.width, enclosure.length, postSpacing]);
+  const MIN_PLAN_ZOOM = 0.35;
+  const MAX_PLAN_ZOOM = 6;
   const planBaseBounds = useMemo(() => ({
     x: -1 - yardMargin,
     y: -1 - yardMargin,
@@ -405,7 +407,7 @@ export default function GardenDesigner() {
     height: enclosure.length + 2 + 2 * yardMargin,
   }), [enclosure.width, enclosure.length, yardMargin]);
   const planViewport = useMemo(() => {
-    const zoom = clamp(Number(planCamera.zoom) || 1, 1, 6);
+    const zoom = clamp(Number(planCamera.zoom) || 1, MIN_PLAN_ZOOM, MAX_PLAN_ZOOM);
     const width = planBaseBounds.width / zoom;
     const height = planBaseBounds.height / zoom;
     const maxPanX = Math.max((planBaseBounds.width - width) / 2, 0);
@@ -422,8 +424,8 @@ export default function GardenDesigner() {
   }, [planViewport.width, planViewport.height]);
   function zoomPlan(multiplier) {
     setPlanCamera((cam) => {
-      const nextZoom = clamp((Number(cam.zoom) || 1) * multiplier, 1, 6);
-      if (nextZoom <= 1.001) return { zoom: 1, panX: 0, panY: 0 };
+      const nextZoom = clamp((Number(cam.zoom) || 1) * multiplier, MIN_PLAN_ZOOM, MAX_PLAN_ZOOM);
+      if (nextZoom <= 1.001) return { zoom: Math.round(nextZoom * 100) / 100, panX: 0, panY: 0 };
       return { ...cam, zoom: Math.round(nextZoom * 100) / 100 };
     });
   }
@@ -435,6 +437,7 @@ export default function GardenDesigner() {
     }));
   }
   function resetPlanViewport() { setPlanCamera({ zoom: 1, panX: 0, panY: 0 }); }
+  function overviewPlanViewport() { setPlanCamera({ zoom: 0.7, panX: 0, panY: 0 }); }
   function onPlanWheel(e) {
     e.preventDefault();
     zoomPlan(e.deltaY < 0 ? 1.12 : 1 / 1.12);
@@ -2429,6 +2432,7 @@ export default function GardenDesigner() {
                       <button className="gdw-btn" onClick={autoArrange}><LayoutGrid size={13} style={{ verticalAlign: -2 }} /> Auto-arrange</button>
                       <button className="gdw-btn" onClick={() => zoomPlan(1 / 1.2)} title="Zoom out 2D plan">−</button>
                       <button className="gdw-btn" onClick={() => zoomPlan(1.2)} title="Zoom in 2D plan">+</button>
+                      <button className="gdw-btn" onClick={overviewPlanViewport} title="Zoom out for full overview">Wide</button>
                       <button className="gdw-btn" onClick={resetPlanViewport} title="Fit full plan in view">Fit</button>
                     </>
                   )}
@@ -2442,7 +2446,7 @@ export default function GardenDesigner() {
               </div>
               {viewMode === "2d" ? (
                 <>
-              <p className="gdw-note gdw-noprint" style={{ margin: "0 0 8px 0" }}>Drag to place freely — beds, patios, and landscaping can all go outside the fence, into the surrounding yard. Use mouse wheel (or the − / + buttons) to zoom the 2D plan, then pan with the arrows when zoomed in. Click an item to select it, then use the arrow buttons below (or keyboard arrows) to nudge it. Click empty ground or press Esc to deselect. Click the ↻ badge to rotate a bed 90°.</p>
+              <p className="gdw-note gdw-noprint" style={{ margin: "0 0 8px 0" }}>Drag to place freely — beds, patios, and landscaping can all go outside the fence, into the surrounding yard. Use mouse wheel (or the − / + buttons) to zoom the 2D plan, including extra zoom-out for large layouts; use <strong>Wide</strong> for a quick overview, then pan with arrows when zoomed in. Click an item to select it, then use the arrow buttons below (or keyboard arrows) to nudge it. Click empty ground or press Esc to deselect. Click the ↻ badge to rotate a bed 90°.</p>
               <div className="gdw-row gdw-noprint" style={{ margin: "0 0 8px 0", alignItems: "center", gap: 6 }}>
                 <span style={{ fontSize: 12, color: "#5b5342" }}>2D zoom: {Math.round(planViewport.zoom * 100)}%</span>
                 {planViewport.zoom > 1.01 && (
