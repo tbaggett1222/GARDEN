@@ -18,8 +18,8 @@
     {
       "id": 1,
       "label": "Tomato Trellis Bed",
-      "width": 4,
-      "length": 8,
+      "width": 2.5,
+      "length": 6,
       "qty": 1,
       "courses": 3,
       "shape": "rect",
@@ -29,7 +29,7 @@
       "trellisSide": "length",
       "positions": [
         {
-          "x": 0,
+          "x": 0.75,
           "y": 2,
           "rotated": false
         }
@@ -39,8 +39,8 @@
     {
       "id": 2,
       "label": "Cucumber Trellis Bed",
-      "width": 4,
-      "length": 8,
+      "width": 2.5,
+      "length": 6,
       "qty": 1,
       "courses": 3,
       "shape": "rect",
@@ -50,7 +50,7 @@
       "trellisSide": "length",
       "positions": [
         {
-          "x": 4,
+          "x": 4.75,
           "y": 2,
           "rotated": false
         }
@@ -59,12 +59,12 @@
     },
     {
       "id": 3,
-      "label": "Salad L-Bed",
-      "width": 5,
-      "length": 6,
+      "label": "Salad Bed",
+      "width": 2.5,
+      "length": 4,
       "qty": 1,
       "courses": 2,
-      "shape": "L",
+      "shape": "rect",
       "notchWidth": 2,
       "notchDepth": 2,
       "notchCorner": "bottom-right",
@@ -74,8 +74,8 @@
       "trellisSide": "width",
       "positions": [
         {
-          "x": 1.5,
-          "y": 8,
+          "x": 0.75,
+          "y": 9,
           "rotated": false
         }
       ],
@@ -83,9 +83,9 @@
     },
     {
       "id": 4,
-      "label": "Herb Strip",
-      "width": 3,
-      "length": 5,
+      "label": "Herb Bed",
+      "width": 2.5,
+      "length": 4,
       "qty": 1,
       "courses": 2,
       "shape": "rect",
@@ -95,8 +95,8 @@
       "trellisSide": "width",
       "positions": [
         {
-          "x": 5,
-          "y": 8.5,
+          "x": 4.75,
+          "y": 9,
           "rotated": false
         }
       ],
@@ -140,7 +140,7 @@
     }
   ],
   "prices": {},
-  "savedAt": "2026-08-17T22:40:17Z",
+  "savedAt": "2026-08-18T21:39:33Z",
   "gardenSite": {
     "usdaZone": 7,
     "sunHours": 8

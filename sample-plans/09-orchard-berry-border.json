@@ -71,7 +71,7 @@
           "rotated": false
         },
         {
-          "x": 12.5,
+          "x": 12,
           "y": 16,
           "rotated": false
         }
@@ -114,7 +114,7 @@
     }
   ],
   "prices": {},
-  "savedAt": "2026-08-17T22:40:17Z",
+  "savedAt": "2026-08-18T21:39:14Z",
   "gardenSite": {
     "usdaZone": 7,
     "sunHours": 8
