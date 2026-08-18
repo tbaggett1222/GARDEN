@@ -474,15 +474,11 @@ export default function GardenDesigner() {
     if (applyThreeCamRef.current) applyThreeCamRef.current();
   }
   function setThreeZoomControl(nextPctRaw) {
-    const pct = Math.round(clamp(numOr(nextPctRaw, 40), 0, 100));
-    setThreeZoomPct(pct);
-    applyThreeZoomPct(pct);
+    setThreeZoomPct(Math.round(clamp(numOr(nextPctRaw, 40), 0, 100)));
   }
   function nudgeThreeZoom(deltaPct) {
     setThreeZoomPct((prev) => {
-      const next = Math.round(clamp(prev + deltaPct, 0, 100));
-      applyThreeZoomPct(next);
-      return next;
+      return Math.round(clamp(prev + deltaPct, 0, 100));
     });
   }
   function zoomPlan(multiplier) {
@@ -503,6 +499,10 @@ export default function GardenDesigner() {
     camStateRef.current = { theta: 0.8, phi: 1.0, radius: null };
     setViewMode("3d");
   }
+  useEffect(() => {
+    if (viewMode !== "3d") return;
+    applyThreeZoomPct(threeZoomPct);
+  }, [viewMode, threeZoomPct]);
   function onPlanWheel(e) {
     e.preventDefault();
     zoomPlan(e.deltaY < 0 ? 1.12 : 1 / 1.12);
@@ -2837,6 +2837,7 @@ export default function GardenDesigner() {
                       step={2}
                       value={threeZoomPct}
                       onChange={(e) => setThreeZoomControl(Number(e.target.value))}
+                      onInput={(e) => setThreeZoomControl(Number(e.currentTarget.value))}
                       title="Slide to zoom 3D camera"
                       style={{ width: 170 }}
                     />
