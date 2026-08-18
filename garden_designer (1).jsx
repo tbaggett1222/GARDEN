@@ -168,6 +168,28 @@ const SAMPLE_PLANS = Object.entries(SAMPLE_PLAN_MODULES)
 function fmt(n) { return n.toLocaleString(undefined, { style: "currency", currency: "USD" }); }
 function round1(n) { return Math.round(n * 10) / 10; }
 function clamp(n, min, max) { return Math.max(min, Math.min(n, max)); }
+function numOr(value, fallback = 0) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+function normalizePatio(patio) {
+  const structureType = STRUCTURE_TYPES[patio?.structureType] ? patio.structureType : "none";
+  return {
+    ...patio,
+    label: String(patio?.label || "Patio"),
+    width: clamp(numOr(patio?.width, 8), 4, 200),
+    length: clamp(numOr(patio?.length, 8), 4, 200),
+    x: numOr(patio?.x, 0),
+    y: numOr(patio?.y, 0),
+    surface: patio?.surface === "gravel" ? "gravel" : "pavers",
+    structureType,
+    structureHeight: clamp(numOr(patio?.structureHeight, 8), 7, 12),
+    roofStyle: ["hip", "gable", "flat"].includes(patio?.roofStyle) ? patio.roofStyle : "hip",
+    roofDirection: patio?.roofDirection === "rotated" ? "rotated" : "auto",
+    doorWidth: patio?.doorWidth === 6 ? 6 : 3,
+    furnishings: !!patio?.furnishings,
+  };
+}
 function landscapeLabelText(l, t) {
   const custom = String(l.label || t.label || "Landscape");
   if (GROUND_COVER_TYPES.has(l.type)) {
@@ -448,6 +470,12 @@ export default function GardenDesigner() {
   }
   function resetPlanViewport() { setPlanCamera({ zoom: 1, panX: 0, panY: 0 }); }
   function overviewPlanViewport() { setPlanCamera({ zoom: 0.5, panX: 0, panY: 0 }); }
+  function enter3dPreview() {
+    // Reset orbit baseline so radically different layouts (or outside-yard structures)
+    // never inherit a stale camera radius that can make the scene look blank.
+    camStateRef.current = { theta: 0.8, phi: 1.0, radius: null };
+    setViewMode("3d");
+  }
   function onPlanWheel(e) {
     e.preventDefault();
     zoomPlan(e.deltaY < 0 ? 1.12 : 1 / 1.12);
@@ -501,14 +529,14 @@ export default function GardenDesigner() {
   function addPatio() {
     idCounter += 1;
     const n = patios.length;
-    setPatios((ps) => [...ps, {
+    setPatios((ps) => [...ps, normalizePatio({
       id: idCounter, label: `Patio ${String.fromCharCode(65 + n)}`, width: 8, length: 8, surface: "pavers",
       structureType: "none", structureHeight: 8, roofStyle: "hip", roofDirection: "auto", doorWidth: 3, furnishings: false,
       x: round1(2 + n * 2), y: round1(2 + n * 2),
-    }]);
+    })]);
     setExpandedPatios((s) => new Set(s).add(idCounter));
   }
-  function updatePatio(id, patch) { setPatios((ps) => ps.map((p) => (p.id === id ? { ...p, ...patch } : p))); }
+  function updatePatio(id, patch) { setPatios((ps) => ps.map((p) => (p.id === id ? normalizePatio({ ...p, ...patch }) : p))); }
   function removePatio(id) { setPatios((ps) => ps.filter((p) => p.id !== id)); }
   function togglePatioExpanded(id) { setExpandedPatios((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; }); }
   function renderLandscapeItem(l) {
@@ -1069,8 +1097,8 @@ export default function GardenDesigner() {
     if (data.gates) setGates(data.gates);
     if (data.courses) setCourses(data.courses);
     if (data.beds) setBeds(data.beds);
-    if (data.patios) setPatios(data.patios);
-    else if (data.includePatio && data.patio) setPatios([{ id: ++idCounter, label: "Patio A", structureHeight: 8, roofStyle: "hip", doorWidth: 3, ...data.patio }]); // back-compat with single-patio saves
+    if (data.patios) setPatios(data.patios.map(normalizePatio));
+    else if (data.includePatio && data.patio) setPatios([normalizePatio({ id: ++idCounter, label: "Patio A", structureHeight: 8, roofStyle: "hip", doorWidth: 3, ...data.patio })]); // back-compat with single-patio saves
     if (data.yardMargin) setYardMargin(data.yardMargin);
     if (data.landscape) setLandscape(data.landscape);
     if (data.prices) setPrices({ ...DEFAULT_PRICES, ...data.prices });
@@ -1078,6 +1106,7 @@ export default function GardenDesigner() {
     if (data.irrigation) setIrrigation({ enabled: true, method: "drip", zones: 2, rowSpacingIn: 12, emitterSpacingIn: 12, emitterGph: 0.5, minutesPerDay: 35, daysPerWeek: 4, ...data.irrigation });
     if (data.renderQuality3d) setRenderQuality3d(data.renderQuality3d);
     setPlanCamera({ zoom: 1, panX: 0, panY: 0 }); // refit 2D viewport to show full enclosure + yard when loading
+    camStateRef.current = { theta: 0.8, phi: 1.0, radius: null };
     const allIds = [...(data.beds || []).map((b) => b.id), ...(data.gates || []).map((g) => g.id), ...(data.landscape || []).map((l) => l.id), ...(data.patios || []).map((p) => p.id), idCounter];
     idCounter = Math.max(...allIds);
     setSelected(null);
@@ -1721,16 +1750,24 @@ export default function GardenDesigner() {
     }
 
     // ---- camera orbit controls (manual — OrbitControls isn't available in three r128) ----
-    if (camStateRef.current.radius == null) {
-      let maxExtent = Math.max(W + yardMargin, L + yardMargin);
-      landscape.forEach((l) => {
-        maxExtent = Math.max(maxExtent, Math.abs(l.x + l.width / 2 - W / 2) + l.width / 2, Math.abs(l.y + l.length / 2 - L / 2) + l.length / 2);
-      });
-      patios.forEach((p) => {
-        maxExtent = Math.max(maxExtent, Math.abs(p.x + p.width / 2 - W / 2) + p.width / 2, Math.abs(p.y + p.length / 2 - L / 2) + p.length / 2);
-      });
-      camStateRef.current.radius = maxExtent * 1.3;
-    }
+    let maxExtent = Math.max(W + yardMargin, L + yardMargin);
+    landscape.forEach((l) => {
+      const lx = numOr(l.x, 0), ly = numOr(l.y, 0);
+      const lw = Math.max(numOr(l.width, 0), 0.5), ll = Math.max(numOr(l.length, 0), 0.5);
+      maxExtent = Math.max(maxExtent, Math.abs(lx + lw / 2 - W / 2) + lw / 2, Math.abs(ly + ll / 2 - L / 2) + ll / 2);
+    });
+    patios.forEach((p) => {
+      const px = numOr(p.x, 0), py = numOr(p.y, 0);
+      const pw = Math.max(numOr(p.width, 0), 1), pl = Math.max(numOr(p.length, 0), 1);
+      maxExtent = Math.max(maxExtent, Math.abs(px + pw / 2 - W / 2) + pw / 2, Math.abs(py + pl / 2 - L / 2) + pl / 2);
+    });
+    const minR = Math.max(Math.max(W, L) * 0.45, maxExtent * 0.55);
+    const maxR = maxExtent * 4.2;
+    const defaultR = maxExtent * 1.3;
+    const priorR = numOr(camStateRef.current.radius, defaultR);
+    camStateRef.current.radius = clamp(priorR, minR, maxR);
+    camStateRef.current.theta = numOr(camStateRef.current.theta, 0.8);
+    camStateRef.current.phi = clamp(numOr(camStateRef.current.phi, 1.0), 0.15, 1.45);
     const target = new THREE.Vector3(0, fenceHeight * 0.25, 0);
     function applyCam() {
       const { theta, phi, radius } = camStateRef.current;
@@ -1759,7 +1796,6 @@ export default function GardenDesigner() {
     function onUp() { dragging = false; dom.style.cursor = "grab"; }
     function onWheel(e) {
       e.preventDefault();
-      const minR = Math.max(W, L) * 0.4, maxR = Math.max(W + yardMargin, L + yardMargin) * 3;
       camStateRef.current.radius = Math.min(maxR, Math.max(minR, camStateRef.current.radius * (1 + e.deltaY * 0.001)));
       applyCam();
     }
@@ -2436,7 +2472,7 @@ export default function GardenDesigner() {
                 <h2 style={{ fontFamily: "'Fraunces',serif", fontSize: 17, margin: 0 }}><Ruler size={16} style={{ verticalAlign: -2, marginRight: 6 }} />Layout preview</h2>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   <button className={`gdw-btn ${viewMode === "2d" ? "active" : ""}`} onClick={() => setViewMode("2d")}><Map size={13} style={{ verticalAlign: -2 }} /> 2D Plan</button>
-                  <button className={`gdw-btn ${viewMode === "3d" ? "active" : ""}`} onClick={() => setViewMode("3d")}><Box size={13} style={{ verticalAlign: -2 }} /> 3D Preview</button>
+                  <button className={`gdw-btn ${viewMode === "3d" ? "active" : ""}`} onClick={enter3dPreview}><Box size={13} style={{ verticalAlign: -2 }} /> 3D Preview</button>
                   {viewMode === "2d" && (
                     <>
                       <button className="gdw-btn" onClick={autoArrange}><LayoutGrid size={13} style={{ verticalAlign: -2 }} /> Auto-arrange</button>
@@ -2560,7 +2596,7 @@ export default function GardenDesigner() {
                       {patio.structureType !== "none" && (
                         <rect x={patio.x + 0.35} y={patio.y + 0.35} width={patio.width - 0.7} height={patio.length - 0.7} fill="none" stroke="#8A6A45" strokeWidth={0.12} strokeDasharray="0.25,0.2" />
                       )}
-                      <text x={patio.x + patio.width / 2} y={patio.y + patio.length / 2} fontSize={0.5} textAnchor="middle" fill="#5b4632" fontFamily="Inter">{patio.structureType !== "none" ? STRUCTURE_TYPES[patio.structureType].label : patio.label}</text>
+                      <text x={patio.x + patio.width / 2} y={patio.y + patio.length / 2} fontSize={0.5} textAnchor="middle" fill="#5b4632" fontFamily="Inter">{patio.structureType !== "none" ? (STRUCTURE_TYPES[patio.structureType] || STRUCTURE_TYPES.none).label : patio.label}</text>
                     </g>
                   );
                 })}
