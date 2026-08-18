@@ -1527,51 +1527,6 @@ export default function GardenDesigner() {
     const wallThickness = 0.15;
     const bedCapDepth = 0.22;
     const bedCapThickness = 0.07;
-    const bedCageMat = mkMat({ color: "#A87A49", roughness: 0.82, metalness: 0.02, clearcoat: 0.08 });
-    const bedCageWireMat = new THREE.LineBasicMaterial({ color: "#828a84", transparent: true, opacity: cinematic ? 0.5 : 0.36 });
-    function addBedProtectionCage(wx0, wz0, cw, cl, h, cageH) {
-      const postSize = 0.14;
-      const postInset = 0.14;
-      const railH = h + cageH;
-      const meshH = Math.max(cageH - 0.28, 0.5);
-      const corners = [
-        [wx0 + postInset, wz0 + postInset],
-        [wx0 + cw - postInset, wz0 + postInset],
-        [wx0 + postInset, wz0 + cl - postInset],
-        [wx0 + cw - postInset, wz0 + cl - postInset],
-      ];
-      corners.forEach(([px, pz]) => {
-        const post = new THREE.Mesh(new THREE.BoxGeometry(postSize, cageH, postSize), bedCageMat);
-        post.position.set(px, h + cageH / 2, pz);
-        scene.add(post);
-      });
-      const railFront = new THREE.Mesh(new THREE.BoxGeometry(Math.max(cw - 2 * postInset, 0.4), 0.1, 0.12), bedCageMat);
-      railFront.position.set(wx0 + cw / 2, railH, wz0 + postInset);
-      scene.add(railFront);
-      const railBack = new THREE.Mesh(new THREE.BoxGeometry(Math.max(cw - 2 * postInset, 0.4), 0.1, 0.12), bedCageMat);
-      railBack.position.set(wx0 + cw / 2, railH, wz0 + cl - postInset);
-      scene.add(railBack);
-      const railLeft = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.1, Math.max(cl - 2 * postInset, 0.4)), bedCageMat);
-      railLeft.position.set(wx0 + postInset, railH, wz0 + cl / 2);
-      scene.add(railLeft);
-      const railRight = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.1, Math.max(cl - 2 * postInset, 0.4)), bedCageMat);
-      railRight.position.set(wx0 + cw - postInset, railH, wz0 + cl / 2);
-      scene.add(railRight);
-      const frontMesh = fencePanel(cw - 2 * postInset, meshH, 0.38, bedCageWireMat);
-      frontMesh.position.set(wx0 + postInset, h + 0.12, wz0 + postInset);
-      scene.add(frontMesh);
-      const backMesh = fencePanel(cw - 2 * postInset, meshH, 0.38, bedCageWireMat);
-      backMesh.position.set(wx0 + postInset, h + 0.12, wz0 + cl - postInset);
-      scene.add(backMesh);
-      const leftMesh = fencePanel(cl - 2 * postInset, meshH, 0.38, bedCageWireMat);
-      leftMesh.rotation.y = -Math.PI / 2;
-      leftMesh.position.set(wx0 + postInset, h + 0.12, wz0 + postInset);
-      scene.add(leftMesh);
-      const rightMesh = fencePanel(cl - 2 * postInset, meshH, 0.38, bedCageWireMat);
-      rightMesh.rotation.y = -Math.PI / 2;
-      rightMesh.position.set(wx0 + cw - postInset, h + 0.12, wz0 + postInset);
-      scene.add(rightMesh);
-    }
     layout.placed.forEach((b) => {
       const cw = b.rotated ? b.length : b.width;
       const cl = b.rotated ? b.width : b.length;
@@ -1632,14 +1587,8 @@ export default function GardenDesigner() {
         scene.add(plant);
       });
 
-      if (cinematic) {
-        // Photo-style raised-bed guard frame and wire mesh.
-        const cageH = clamp(numOr(b.trellisHeight, 6) - 0.6, 3.5, 7);
-        addBedProtectionCage(wx0, wz0, cw, cl, h, cageH);
-      }
-
       // trellis — matches this bed's chosen dimension (width or length), mounted on top of the frame
-      if (b.trellis && !cinematic) {
+      if (b.trellis) {
         const trellisH = b.trellisHeight || 6;
         const trellisMat = mkMat({ color: "#6B4A2E", roughness: 0.86, metalness: 0.02, clearcoat: 0.07 });
         const isLengthSide = b.trellisSide === "length";
@@ -2824,7 +2773,7 @@ export default function GardenDesigner() {
               ) : (
                 <>
                   <p className="gdw-note gdw-noprint" style={{ margin: "0 0 8px 0" }}>
-                    Drag to orbit, scroll to zoom. {renderQuality3d === "cinematic" ? "Cinematic mode uses physically based shading, ACES tonemapping, cedar-style bed framing with mesh guards, soft shadows, and higher pixel density for a more realistic look." : "Standard mode is optimized for speed on older devices."} This web renderer is an approximation; Unreal Engine 5 features like Nanite/Lumen and full offline path tracing are not available directly in-browser.
+                    Drag to orbit, scroll to zoom. {renderQuality3d === "cinematic" ? "Cinematic mode uses physically based shading, ACES tonemapping, cedar-style framing, soft shadows, and higher pixel density for a more realistic look." : "Standard mode is optimized for speed on older devices."} This web renderer is an approximation; Unreal Engine 5 features like Nanite/Lumen and full offline path tracing are not available directly in-browser.
                   </p>
                   <div className="gdw-row gdw-noprint" style={{ margin: "0 0 8px 0", alignItems: "center", gap: 6 }}>
                     <span style={{ fontSize: 12, color: "#5b5342" }}>3D zoom:</span>
