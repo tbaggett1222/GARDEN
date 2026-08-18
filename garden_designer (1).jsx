@@ -454,12 +454,17 @@ export default function GardenDesigner() {
     const visibleSpan = Math.min(planViewport.width, planViewport.height);
     return round1(Math.max(0.5, visibleSpan * 0.12));
   }, [planViewport.width, planViewport.height]);
+  function applyPlanZoom(nextZoomRaw, cam) {
+    const nextZoom = clamp(numOr(nextZoomRaw, 1), MIN_PLAN_ZOOM, MAX_PLAN_ZOOM);
+    const rounded = Math.round(nextZoom * 100) / 100;
+    if (nextZoom <= 1.001) return { zoom: rounded, panX: 0, panY: 0 };
+    return { ...cam, zoom: rounded };
+  }
+  function setPlanZoom(nextZoomRaw) {
+    setPlanCamera((cam) => applyPlanZoom(nextZoomRaw, cam));
+  }
   function zoomPlan(multiplier) {
-    setPlanCamera((cam) => {
-      const nextZoom = clamp((Number(cam.zoom) || 1) * multiplier, MIN_PLAN_ZOOM, MAX_PLAN_ZOOM);
-      if (nextZoom <= 1.001) return { zoom: Math.round(nextZoom * 100) / 100, panX: 0, panY: 0 };
-      return { ...cam, zoom: Math.round(nextZoom * 100) / 100 };
-    });
+    setPlanCamera((cam) => applyPlanZoom((Number(cam.zoom) || 1) * multiplier, cam));
   }
   function panPlan(dx, dy) {
     setPlanCamera((cam) => ({
@@ -2599,6 +2604,16 @@ export default function GardenDesigner() {
               <p className="gdw-note gdw-noprint" style={{ margin: "0 0 8px 0" }}>Drag to place freely — beds, patios, and landscaping can all go outside the fence, into the surrounding yard. Use mouse wheel (or the − / + buttons) to zoom the 2D plan, including extra zoom-out for large layouts; use <strong>Wide</strong> for a quick overview, then pan with arrows when zoomed in. Click an item to select it, then use the arrow buttons below (or keyboard arrows) to nudge it. Click empty ground or press Esc to deselect. Click the ↻ badge to rotate a bed 90°.</p>
               <div className="gdw-row gdw-noprint" style={{ margin: "0 0 8px 0", alignItems: "center", gap: 6 }}>
                 <span style={{ fontSize: 12, color: "#5b5342" }}>2D zoom: {Math.round(planViewport.zoom * 100)}%</span>
+                <input
+                  type="range"
+                  min={Math.round(MIN_PLAN_ZOOM * 100)}
+                  max={Math.round(MAX_PLAN_ZOOM * 100)}
+                  step={5}
+                  value={Math.round(planViewport.zoom * 100)}
+                  onChange={(e) => setPlanZoom(Number(e.target.value) / 100)}
+                  title="Slide to zoom in or out"
+                  style={{ width: 160 }}
+                />
                 {planViewport.zoom > 1.01 && (
                   <>
                     <span style={{ fontSize: 12, color: "#8a8065", marginLeft: 8 }}>Pan</span>
