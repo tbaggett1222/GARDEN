@@ -114,7 +114,23 @@
       ]
     }
   ],
-  "patios": [],
+  "patios": [
+    {
+      "id": 170,
+      "label": "Outside Rest Pergola",
+      "width": 10,
+      "length": 12,
+      "surface": "pavers",
+      "structureType": "pergola",
+      "structureHeight": 9,
+      "roofStyle": "flat",
+      "roofDirection": "auto",
+      "doorWidth": 3,
+      "furnishings": true,
+      "x": 36,
+      "y": 40
+    }
+  ],
   "yardMargin": 18,
   "landscape": [
     {
@@ -154,5 +170,5 @@
     "daysPerWeek": 4
   },
   "renderQuality3d": "cinematic",
-  "savedAt": "2026-08-17T20:15:00.000Z"
+  "savedAt": "2026-08-18T10:51:56Z"
 }

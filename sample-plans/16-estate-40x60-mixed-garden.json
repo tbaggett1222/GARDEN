@@ -158,17 +158,17 @@
   "patios": [
     {
       "id": 120,
-      "label": "Gathering Patio",
+      "label": "Outside Pergola Gathering Patio",
       "width": 10,
       "length": 12,
       "surface": "pavers",
-      "structureType": "pavilion",
+      "structureType": "pergola",
       "structureHeight": 9,
-      "roofStyle": "hip",
+      "roofStyle": "flat",
       "roofDirection": "auto",
       "doorWidth": 3,
       "furnishings": true,
-      "x": 28,
+      "x": 42,
       "y": 44
     }
   ],
@@ -211,5 +211,5 @@
     "daysPerWeek": 4
   },
   "renderQuality3d": "cinematic",
-  "savedAt": "2026-08-17T12:00:00.000Z"
+  "savedAt": "2026-08-18T10:51:56Z"
 }
