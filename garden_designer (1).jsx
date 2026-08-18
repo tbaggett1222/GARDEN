@@ -380,6 +380,7 @@ export default function GardenDesigner() {
   const [viewMode, setViewMode] = useState("2d"); // '2d' | '3d'
   const [planCamera, setPlanCamera] = useState({ zoom: 1, panX: 0, panY: 0 });
   const [renderQuality3d, setRenderQuality3d] = useState("cinematic"); // 'standard' | 'cinematic'
+  const [showBedTrellis3d, setShowBedTrellis3d] = useState(false);
   const [threeZoomPct, setThreeZoomPct] = useState(40);
   const [activeTab, setActiveTab] = useState("enclosure"); // 'enclosure' | 'beds' | 'patio' | 'landscaping' | 'trellis' | 'irrigation' | 'prices'
   const [canUndo, setCanUndo] = useState(false);
@@ -1588,7 +1589,7 @@ export default function GardenDesigner() {
       });
 
       // trellis — matches this bed's chosen dimension (width or length), mounted on top of the frame
-      if (b.trellis) {
+      if (b.trellis && showBedTrellis3d) {
         const trellisH = b.trellisHeight || 6;
         const trellisMat = mkMat({ color: "#6B4A2E", roughness: 0.86, metalness: 0.02, clearcoat: 0.07 });
         const isLengthSide = b.trellisSide === "length";
@@ -1915,7 +1916,7 @@ export default function GardenDesigner() {
       renderer.dispose();
       if (container) container.innerHTML = "";
     };
-  }, [viewMode, renderQuality3d, enclosure, layout, patios, landscape, gates, fenceHeight, postSpacing, yardMargin, fencePosts]);
+  }, [viewMode, renderQuality3d, showBedTrellis3d, enclosure, layout, patios, landscape, gates, fenceHeight, postSpacing, yardMargin, fencePosts]);
 
   function exportCSV() {
     const rows = [["Category", "Item", "Qty", "Unit", "Unit Price", "Line Total"]];
@@ -2575,6 +2576,8 @@ export default function GardenDesigner() {
                     <>
                       <button className={`gdw-btn ${renderQuality3d === "standard" ? "active" : ""}`} onClick={() => setRenderQuality3d("standard")} title="Faster 3D rendering">Standard</button>
                       <button className={`gdw-btn ${renderQuality3d === "cinematic" ? "active" : ""}`} onClick={() => setRenderQuality3d("cinematic")} title="Higher quality physically based rendering">Cinematic</button>
+                      <button className={`gdw-btn ${!showBedTrellis3d ? "active" : ""}`} onClick={() => setShowBedTrellis3d(false)} title="Hide trellis structures on beds">Trellis Off</button>
+                      <button className={`gdw-btn ${showBedTrellis3d ? "active" : ""}`} onClick={() => setShowBedTrellis3d(true)} title="Show trellis structures on beds">Trellis On</button>
                     </>
                   )}
                 </div>
@@ -2767,13 +2770,13 @@ export default function GardenDesigner() {
                 {landscape.length > 0 && <span><i className="gdw-swatch" style={{ background: "#3F6B3A" }} /> landscaping</span>}
                 <span><i className="gdw-swatch" style={{ background: "var(--wood)", borderRadius: "50%" }} /> fence post</span>
                 {layout.ringActive && <span><i className="gdw-swatch" style={{ background: "var(--gold)" }} /> {perimeterInset} ft setback line</span>}
-                {layout.placed.some((b) => b.trellis) && <span><i className="gdw-swatch" style={{ background: "#5C7A57" }} /> trellis (back edge)</span>}
+                {showBedTrellis3d && layout.placed.some((b) => b.trellis) && <span><i className="gdw-swatch" style={{ background: "#5C7A57" }} /> trellis (back edge)</span>}
               </div>
                 </>
               ) : (
                 <>
                   <p className="gdw-note gdw-noprint" style={{ margin: "0 0 8px 0" }}>
-                    Drag to orbit, scroll to zoom. {renderQuality3d === "cinematic" ? "Cinematic mode uses physically based shading, ACES tonemapping, cedar-style framing, soft shadows, and higher pixel density for a more realistic look." : "Standard mode is optimized for speed on older devices."} This web renderer is an approximation; Unreal Engine 5 features like Nanite/Lumen and full offline path tracing are not available directly in-browser.
+                    Drag to orbit, scroll to zoom. {renderQuality3d === "cinematic" ? "Cinematic mode uses physically based shading, ACES tonemapping, cedar-style framing, soft shadows, and higher pixel density for a more realistic look." : "Standard mode is optimized for speed on older devices."} Bed trellis visuals are currently <strong>{showBedTrellis3d ? "On" : "Off"}</strong>. This web renderer is an approximation; Unreal Engine 5 features like Nanite/Lumen and full offline path tracing are not available directly in-browser.
                   </p>
                   <div className="gdw-row gdw-noprint" style={{ margin: "0 0 8px 0", alignItems: "center", gap: 6 }}>
                     <span style={{ fontSize: 12, color: "#5b5342" }}>3D zoom:</span>
