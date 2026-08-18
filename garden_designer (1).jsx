@@ -168,6 +168,28 @@ const SAMPLE_PLANS = Object.entries(SAMPLE_PLAN_MODULES)
 function fmt(n) { return n.toLocaleString(undefined, { style: "currency", currency: "USD" }); }
 function round1(n) { return Math.round(n * 10) / 10; }
 function clamp(n, min, max) { return Math.max(min, Math.min(n, max)); }
+function numOr(value, fallback = 0) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+function normalizePatio(patio) {
+  const structureType = STRUCTURE_TYPES[patio?.structureType] ? patio.structureType : "none";
+  return {
+    ...patio,
+    label: String(patio?.label || "Patio"),
+    width: clamp(numOr(patio?.width, 8), 4, 200),
+    length: clamp(numOr(patio?.length, 8), 4, 200),
+    x: numOr(patio?.x, 0),
+    y: numOr(patio?.y, 0),
+    surface: patio?.surface === "gravel" ? "gravel" : "pavers",
+    structureType,
+    structureHeight: clamp(numOr(patio?.structureHeight, 8), 7, 12),
+    roofStyle: ["hip", "gable", "flat"].includes(patio?.roofStyle) ? patio.roofStyle : "hip",
+    roofDirection: patio?.roofDirection === "rotated" ? "rotated" : "auto",
+    doorWidth: patio?.doorWidth === 6 ? 6 : 3,
+    furnishings: !!patio?.furnishings,
+  };
+}
 function landscapeLabelText(l, t) {
   const custom = String(l.label || t.label || "Landscape");
   if (GROUND_COVER_TYPES.has(l.type)) {
@@ -448,6 +470,12 @@ export default function GardenDesigner() {
   }
   function resetPlanViewport() { setPlanCamera({ zoom: 1, panX: 0, panY: 0 }); }
   function overviewPlanViewport() { setPlanCamera({ zoom: 0.5, panX: 0, panY: 0 }); }
+  function enter3dPreview() {
+    // Reset orbit baseline so radically different layouts (or outside-yard structures)
+    // never inherit a stale camera radius that can make the scene look blank.
+    camStateRef.current = { theta: 0.8, phi: 1.0, radius: null };
+    setViewMode("3d");
+  }
   function onPlanWheel(e) {
     e.preventDefault();
     zoomPlan(e.deltaY < 0 ? 1.12 : 1 / 1.12);
@@ -501,14 +529,14 @@ export default function GardenDesigner() {
   function addPatio() {
     idCounter += 1;
     const n = patios.length;
-    setPatios((ps) => [...ps, {
+    setPatios((ps) => [...ps, normalizePatio({
       id: idCounter, label: `Patio ${String.fromCharCode(65 + n)}`, width: 8, length: 8, surface: "pavers",
       structureType: "none", structureHeight: 8, roofStyle: "hip", roofDirection: "auto", doorWidth: 3, furnishings: false,
       x: round1(2 + n * 2), y: round1(2 + n * 2),
-    }]);
+    })]);
     setExpandedPatios((s) => new Set(s).add(idCounter));
   }
-  function updatePatio(id, patch) { setPatios((ps) => ps.map((p) => (p.id === id ? { ...p, ...patch } : p))); }
+  function updatePatio(id, patch) { setPatios((ps) => ps.map((p) => (p.id === id ? normalizePatio({ ...p, ...patch }) : p))); }
   function removePatio(id) { setPatios((ps) => ps.filter((p) => p.id !== id)); }
   function togglePatioExpanded(id) { setExpandedPatios((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; }); }
   function renderLandscapeItem(l) {
@@ -1069,8 +1097,8 @@ export default function GardenDesigner() {
     if (data.gates) setGates(data.gates);
     if (data.courses) setCourses(data.courses);
     if (data.beds) setBeds(data.beds);
-    if (data.patios) setPatios(data.patios);
-    else if (data.includePatio && data.patio) setPatios([{ id: ++idCounter, label: "Patio A", structureHeight: 8, roofStyle: "hip", doorWidth: 3, ...data.patio }]); // back-compat with single-patio saves
+    if (data.patios) setPatios(data.patios.map(normalizePatio));
+    else if (data.includePatio && data.patio) setPatios([normalizePatio({ id: ++idCounter, label: "Patio A", structureHeight: 8, roofStyle: "hip", doorWidth: 3, ...data.patio })]); // back-compat with single-patio saves
     if (data.yardMargin) setYardMargin(data.yardMargin);
     if (data.landscape) setLandscape(data.landscape);
     if (data.prices) setPrices({ ...DEFAULT_PRICES, ...data.prices });
@@ -1078,6 +1106,7 @@ export default function GardenDesigner() {
     if (data.irrigation) setIrrigation({ enabled: true, method: "drip", zones: 2, rowSpacingIn: 12, emitterSpacingIn: 12, emitterGph: 0.5, minutesPerDay: 35, daysPerWeek: 4, ...data.irrigation });
     if (data.renderQuality3d) setRenderQuality3d(data.renderQuality3d);
     setPlanCamera({ zoom: 1, panX: 0, panY: 0 }); // refit 2D viewport to show full enclosure + yard when loading
+    camStateRef.current = { theta: 0.8, phi: 1.0, radius: null };
     const allIds = [...(data.beds || []).map((b) => b.id), ...(data.gates || []).map((g) => g.id), ...(data.landscape || []).map((l) => l.id), ...(data.patios || []).map((p) => p.id), idCounter];
     idCounter = Math.max(...allIds);
     setSelected(null);
@@ -1377,14 +1406,18 @@ export default function GardenDesigner() {
     scene.add(ground);
 
     // ---- fence walls + posts (with gaps at gate openings) ----
-    function fencePanel(len, h) {
+    const capMat = mkMat({ color: "#B98956", roughness: 0.82, metalness: 0.02, clearcoat: 0.1 });
+    const fenceSkirtMat = mkMat({ color: "#C89C66", roughness: 0.76, metalness: 0.02, clearcoat: 0.08 });
+    const fenceWireMat = new THREE.LineBasicMaterial({ color: "#6C746D", transparent: true, opacity: cinematic ? 0.5 : 0.38 });
+    const fenceSkirtH = Math.min(Math.max(fenceHeight * 0.35, 1.6), 2.6);
+    function fencePanel(len, h, spacing = 1, material = null) {
       const pts = [];
-      const nx = Math.max(1, Math.round(len)), ny = Math.max(1, Math.round(h));
+      const nx = Math.max(1, Math.round(len / spacing)), ny = Math.max(1, Math.round(h / spacing));
       for (let i = 0; i <= nx; i++) { const x = (i / nx) * len; pts.push(x, 0, 0, x, h, 0); }
       for (let j = 0; j <= ny; j++) { const y = (j / ny) * h; pts.push(0, y, 0, len, y, 0); }
       const geo = new THREE.BufferGeometry();
       geo.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
-      return new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: "#6B4A2E", transparent: true, opacity: 0.55 }));
+      return new THREE.LineSegments(geo, material || new THREE.LineBasicMaterial({ color: "#6B4A2E", transparent: true, opacity: 0.55 }));
     }
     function addWallSegments(wall, wallLen, worldStart, axis) {
       // axis: 'x' for top/bottom walls (run along world X), 'z' for left/right (run along world Z)
@@ -1392,9 +1425,28 @@ export default function GardenDesigner() {
       segs.forEach(([s, e]) => {
         const segLen = e - s;
         if (segLen <= 0) return;
-        const panel = fencePanel(segLen, fenceHeight);
-        if (axis === "x") { panel.position.set(worldStart.x + s, 0, worldStart.z); }
-        else { panel.rotation.y = -Math.PI / 2; panel.position.set(worldStart.x, 0, worldStart.z + s); }
+        const meshH = Math.max(fenceHeight - fenceSkirtH, 0.5);
+        const skirt = new THREE.Mesh(
+          new THREE.BoxGeometry(axis === "x" ? segLen : 0.36, fenceSkirtH, axis === "x" ? 0.36 : segLen),
+          fenceSkirtMat
+        );
+        const midRail = new THREE.Mesh(
+          new THREE.BoxGeometry(axis === "x" ? segLen : 0.28, 0.12, axis === "x" ? 0.28 : segLen),
+          capMat
+        );
+        const panel = fencePanel(segLen, meshH, 0.45, fenceWireMat);
+        if (axis === "x") {
+          skirt.position.set(worldStart.x + s + segLen / 2, fenceSkirtH / 2, worldStart.z);
+          midRail.position.set(worldStart.x + s + segLen / 2, fenceSkirtH + 0.06, worldStart.z);
+          panel.position.set(worldStart.x + s, fenceSkirtH, worldStart.z);
+        } else {
+          skirt.position.set(worldStart.x, fenceSkirtH / 2, worldStart.z + s + segLen / 2);
+          midRail.position.set(worldStart.x, fenceSkirtH + 0.06, worldStart.z + s + segLen / 2);
+          panel.rotation.y = -Math.PI / 2;
+          panel.position.set(worldStart.x, fenceSkirtH, worldStart.z + s);
+        }
+        scene.add(skirt);
+        scene.add(midRail);
         scene.add(panel);
       });
     }
@@ -1404,7 +1456,6 @@ export default function GardenDesigner() {
     addWallSegments("right", L, { x: W / 2, z: -L / 2 }, "z");
 
     // 2x6 top cap rail along the fence (skips gate openings) — laid flat, wide face up
-    const capMat = mkMat({ color: "#7A5637", roughness: 0.86, metalness: 0.02, clearcoat: 0.09 });
     function addCapSegments(wall, wallLen, worldStart, axis) {
       wallSegments(wallLen, gates.filter((g) => g.wall === wall)).forEach(([s, e]) => {
         const segLen = e - s;
@@ -1441,11 +1492,59 @@ export default function GardenDesigner() {
       scene.add(post);
     });
 
-    // ---- raised beds: wood frame + mounded soil + planted rows (simplified as rectangular footprints — see 2D plan for exact L-shape geometry) ----
-    const frameMat = mkMat({ color: "#8A6A45", roughness: 0.83, metalness: 0.03, clearcoat: 0.1 });
+    // ---- raised beds: cedar frame + mounded soil + planted rows (simplified as rectangular footprints — see 2D plan for exact L-shape geometry) ----
+    const frameMat = mkMat({ color: cinematic ? "#C6935D" : "#8A6A45", roughness: 0.81, metalness: 0.03, clearcoat: 0.1 });
+    const frameSeamMat = mkMat({ color: "#9A6E42", roughness: 0.9, metalness: 0.01 });
     const soilMat = mkMat({ color: "#4A3626", roughness: 1, metalness: 0, clearcoat: 0 });
     const plantColors = ["#6B9950", "#8FBF6E", "#5E8A46"];
     const wallThickness = 0.15;
+    const bedCapDepth = 0.22;
+    const bedCapThickness = 0.07;
+    const bedCageMat = mkMat({ color: "#A87A49", roughness: 0.82, metalness: 0.02, clearcoat: 0.08 });
+    const bedCageWireMat = new THREE.LineBasicMaterial({ color: "#828a84", transparent: true, opacity: cinematic ? 0.5 : 0.36 });
+    function addBedProtectionCage(wx0, wz0, cw, cl, h, cageH) {
+      const postSize = 0.14;
+      const postInset = 0.14;
+      const railH = h + cageH;
+      const meshH = Math.max(cageH - 0.28, 0.5);
+      const corners = [
+        [wx0 + postInset, wz0 + postInset],
+        [wx0 + cw - postInset, wz0 + postInset],
+        [wx0 + postInset, wz0 + cl - postInset],
+        [wx0 + cw - postInset, wz0 + cl - postInset],
+      ];
+      corners.forEach(([px, pz]) => {
+        const post = new THREE.Mesh(new THREE.BoxGeometry(postSize, cageH, postSize), bedCageMat);
+        post.position.set(px, h + cageH / 2, pz);
+        scene.add(post);
+      });
+      const railFront = new THREE.Mesh(new THREE.BoxGeometry(Math.max(cw - 2 * postInset, 0.4), 0.1, 0.12), bedCageMat);
+      railFront.position.set(wx0 + cw / 2, railH, wz0 + postInset);
+      scene.add(railFront);
+      const railBack = new THREE.Mesh(new THREE.BoxGeometry(Math.max(cw - 2 * postInset, 0.4), 0.1, 0.12), bedCageMat);
+      railBack.position.set(wx0 + cw / 2, railH, wz0 + cl - postInset);
+      scene.add(railBack);
+      const railLeft = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.1, Math.max(cl - 2 * postInset, 0.4)), bedCageMat);
+      railLeft.position.set(wx0 + postInset, railH, wz0 + cl / 2);
+      scene.add(railLeft);
+      const railRight = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.1, Math.max(cl - 2 * postInset, 0.4)), bedCageMat);
+      railRight.position.set(wx0 + cw - postInset, railH, wz0 + cl / 2);
+      scene.add(railRight);
+      const frontMesh = fencePanel(cw - 2 * postInset, meshH, 0.38, bedCageWireMat);
+      frontMesh.position.set(wx0 + postInset, h + 0.12, wz0 + postInset);
+      scene.add(frontMesh);
+      const backMesh = fencePanel(cw - 2 * postInset, meshH, 0.38, bedCageWireMat);
+      backMesh.position.set(wx0 + postInset, h + 0.12, wz0 + cl - postInset);
+      scene.add(backMesh);
+      const leftMesh = fencePanel(cl - 2 * postInset, meshH, 0.38, bedCageWireMat);
+      leftMesh.rotation.y = -Math.PI / 2;
+      leftMesh.position.set(wx0 + postInset, h + 0.12, wz0 + postInset);
+      scene.add(leftMesh);
+      const rightMesh = fencePanel(cl - 2 * postInset, meshH, 0.38, bedCageWireMat);
+      rightMesh.rotation.y = -Math.PI / 2;
+      rightMesh.position.set(wx0 + cw - postInset, h + 0.12, wz0 + postInset);
+      scene.add(rightMesh);
+    }
     layout.placed.forEach((b) => {
       const cw = b.rotated ? b.length : b.width;
       const cl = b.rotated ? b.width : b.length;
@@ -1465,6 +1564,34 @@ export default function GardenDesigner() {
       const rightW = new THREE.Mesh(new THREE.BoxGeometry(wallThickness, h, cl), frameMat);
       rightW.position.set(wx0 + cw - wallThickness / 2, h / 2, wz0 + cl / 2);
       scene.add(rightW);
+      const capFront = new THREE.Mesh(new THREE.BoxGeometry(cw + 0.08, bedCapThickness, bedCapDepth), frameMat);
+      capFront.position.set(wx0 + cw / 2, h + bedCapThickness / 2, wz0 + bedCapDepth / 2);
+      scene.add(capFront);
+      const capBack = new THREE.Mesh(new THREE.BoxGeometry(cw + 0.08, bedCapThickness, bedCapDepth), frameMat);
+      capBack.position.set(wx0 + cw / 2, h + bedCapThickness / 2, wz0 + cl - bedCapDepth / 2);
+      scene.add(capBack);
+      const capLeft = new THREE.Mesh(new THREE.BoxGeometry(bedCapDepth, bedCapThickness, cl + 0.08), frameMat);
+      capLeft.position.set(wx0 + bedCapDepth / 2, h + bedCapThickness / 2, wz0 + cl / 2);
+      scene.add(capLeft);
+      const capRight = new THREE.Mesh(new THREE.BoxGeometry(bedCapDepth, bedCapThickness, cl + 0.08), frameMat);
+      capRight.position.set(wx0 + cw - bedCapDepth / 2, h + bedCapThickness / 2, wz0 + cl / 2);
+      scene.add(capRight);
+      const seamCount = Math.max(1, Number(b.courses) || 1);
+      for (let si = 1; si < seamCount; si++) {
+        const seamY = (h * si) / seamCount;
+        const seamFront = new THREE.Mesh(new THREE.BoxGeometry(cw - 0.02, 0.03, 0.04), frameSeamMat);
+        seamFront.position.set(wx0 + cw / 2, seamY, wz0 + wallThickness + 0.02);
+        scene.add(seamFront);
+        const seamBack = new THREE.Mesh(new THREE.BoxGeometry(cw - 0.02, 0.03, 0.04), frameSeamMat);
+        seamBack.position.set(wx0 + cw / 2, seamY, wz0 + cl - wallThickness - 0.02);
+        scene.add(seamBack);
+        const seamLeft = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.03, cl - 0.02), frameSeamMat);
+        seamLeft.position.set(wx0 + wallThickness + 0.02, seamY, wz0 + cl / 2);
+        scene.add(seamLeft);
+        const seamRight = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.03, cl - 0.02), frameSeamMat);
+        seamRight.position.set(wx0 + cw - wallThickness - 0.02, seamY, wz0 + cl / 2);
+        scene.add(seamRight);
+      }
 
       // mounded soil, sitting just proud of the rim
       const soil = new THREE.Mesh(new THREE.BoxGeometry(Math.max(cw - 2 * wallThickness, 0.1), 0.14, Math.max(cl - 2 * wallThickness, 0.1)), soilMat);
@@ -1478,8 +1605,14 @@ export default function GardenDesigner() {
         scene.add(plant);
       });
 
+      if (cinematic) {
+        // Photo-style raised-bed guard frame and wire mesh.
+        const cageH = clamp(numOr(b.trellisHeight, 6) - 0.6, 3.5, 7);
+        addBedProtectionCage(wx0, wz0, cw, cl, h, cageH);
+      }
+
       // trellis — matches this bed's chosen dimension (width or length), mounted on top of the frame
-      if (b.trellis) {
+      if (b.trellis && !cinematic) {
         const trellisH = b.trellisHeight || 6;
         const trellisMat = mkMat({ color: "#6B4A2E", roughness: 0.86, metalness: 0.02, clearcoat: 0.07 });
         const isLengthSide = b.trellisSide === "length";
@@ -1721,16 +1854,24 @@ export default function GardenDesigner() {
     }
 
     // ---- camera orbit controls (manual — OrbitControls isn't available in three r128) ----
-    if (camStateRef.current.radius == null) {
-      let maxExtent = Math.max(W + yardMargin, L + yardMargin);
-      landscape.forEach((l) => {
-        maxExtent = Math.max(maxExtent, Math.abs(l.x + l.width / 2 - W / 2) + l.width / 2, Math.abs(l.y + l.length / 2 - L / 2) + l.length / 2);
-      });
-      patios.forEach((p) => {
-        maxExtent = Math.max(maxExtent, Math.abs(p.x + p.width / 2 - W / 2) + p.width / 2, Math.abs(p.y + p.length / 2 - L / 2) + p.length / 2);
-      });
-      camStateRef.current.radius = maxExtent * 1.3;
-    }
+    let maxExtent = Math.max(W + yardMargin, L + yardMargin);
+    landscape.forEach((l) => {
+      const lx = numOr(l.x, 0), ly = numOr(l.y, 0);
+      const lw = Math.max(numOr(l.width, 0), 0.5), ll = Math.max(numOr(l.length, 0), 0.5);
+      maxExtent = Math.max(maxExtent, Math.abs(lx + lw / 2 - W / 2) + lw / 2, Math.abs(ly + ll / 2 - L / 2) + ll / 2);
+    });
+    patios.forEach((p) => {
+      const px = numOr(p.x, 0), py = numOr(p.y, 0);
+      const pw = Math.max(numOr(p.width, 0), 1), pl = Math.max(numOr(p.length, 0), 1);
+      maxExtent = Math.max(maxExtent, Math.abs(px + pw / 2 - W / 2) + pw / 2, Math.abs(py + pl / 2 - L / 2) + pl / 2);
+    });
+    const minR = Math.max(Math.max(W, L) * 0.45, maxExtent * 0.55);
+    const maxR = maxExtent * 4.2;
+    const defaultR = maxExtent * 1.3;
+    const priorR = numOr(camStateRef.current.radius, defaultR);
+    camStateRef.current.radius = clamp(priorR, minR, maxR);
+    camStateRef.current.theta = numOr(camStateRef.current.theta, 0.8);
+    camStateRef.current.phi = clamp(numOr(camStateRef.current.phi, 1.0), 0.15, 1.45);
     const target = new THREE.Vector3(0, fenceHeight * 0.25, 0);
     function applyCam() {
       const { theta, phi, radius } = camStateRef.current;
@@ -1759,7 +1900,6 @@ export default function GardenDesigner() {
     function onUp() { dragging = false; dom.style.cursor = "grab"; }
     function onWheel(e) {
       e.preventDefault();
-      const minR = Math.max(W, L) * 0.4, maxR = Math.max(W + yardMargin, L + yardMargin) * 3;
       camStateRef.current.radius = Math.min(maxR, Math.max(minR, camStateRef.current.radius * (1 + e.deltaY * 0.001)));
       applyCam();
     }
@@ -2436,7 +2576,7 @@ export default function GardenDesigner() {
                 <h2 style={{ fontFamily: "'Fraunces',serif", fontSize: 17, margin: 0 }}><Ruler size={16} style={{ verticalAlign: -2, marginRight: 6 }} />Layout preview</h2>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   <button className={`gdw-btn ${viewMode === "2d" ? "active" : ""}`} onClick={() => setViewMode("2d")}><Map size={13} style={{ verticalAlign: -2 }} /> 2D Plan</button>
-                  <button className={`gdw-btn ${viewMode === "3d" ? "active" : ""}`} onClick={() => setViewMode("3d")}><Box size={13} style={{ verticalAlign: -2 }} /> 3D Preview</button>
+                  <button className={`gdw-btn ${viewMode === "3d" ? "active" : ""}`} onClick={enter3dPreview}><Box size={13} style={{ verticalAlign: -2 }} /> 3D Preview</button>
                   {viewMode === "2d" && (
                     <>
                       <button className="gdw-btn" onClick={autoArrange}><LayoutGrid size={13} style={{ verticalAlign: -2 }} /> Auto-arrange</button>
@@ -2560,7 +2700,7 @@ export default function GardenDesigner() {
                       {patio.structureType !== "none" && (
                         <rect x={patio.x + 0.35} y={patio.y + 0.35} width={patio.width - 0.7} height={patio.length - 0.7} fill="none" stroke="#8A6A45" strokeWidth={0.12} strokeDasharray="0.25,0.2" />
                       )}
-                      <text x={patio.x + patio.width / 2} y={patio.y + patio.length / 2} fontSize={0.5} textAnchor="middle" fill="#5b4632" fontFamily="Inter">{patio.structureType !== "none" ? STRUCTURE_TYPES[patio.structureType].label : patio.label}</text>
+                      <text x={patio.x + patio.width / 2} y={patio.y + patio.length / 2} fontSize={0.5} textAnchor="middle" fill="#5b4632" fontFamily="Inter">{patio.structureType !== "none" ? (STRUCTURE_TYPES[patio.structureType] || STRUCTURE_TYPES.none).label : patio.label}</text>
                     </g>
                   );
                 })}
@@ -2638,7 +2778,7 @@ export default function GardenDesigner() {
               ) : (
                 <>
                   <p className="gdw-note gdw-noprint" style={{ margin: "0 0 8px 0" }}>
-                    Drag to orbit, scroll to zoom. {renderQuality3d === "cinematic" ? "Cinematic mode uses physically based shading, ACES tonemapping, soft shadows, and higher pixel density for a more realistic look." : "Standard mode is optimized for speed on older devices."} This web renderer is an approximation; Unreal Engine 5 features like Nanite/Lumen and full offline path tracing are not available directly in-browser.
+                    Drag to orbit, scroll to zoom. {renderQuality3d === "cinematic" ? "Cinematic mode uses physically based shading, ACES tonemapping, cedar-style bed framing with mesh guards, soft shadows, and higher pixel density for a more realistic look." : "Standard mode is optimized for speed on older devices."} This web renderer is an approximation; Unreal Engine 5 features like Nanite/Lumen and full offline path tracing are not available directly in-browser.
                   </p>
                   <div ref={threeContainerRef} className="gdw-three gdw-noprint" style={{ width: "100%", borderRadius: 8, overflow: "hidden", background: "#BFE3D0" }} />
                 </>
