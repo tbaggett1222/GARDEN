@@ -29,7 +29,7 @@
       "trellisSide": "width",
       "positions": [
         {
-          "x": 1.2,
+          "x": 1.5,
           "y": 2,
           "rotated": false
         }
@@ -50,7 +50,7 @@
       "trellisSide": "width",
       "positions": [
         {
-          "x": 5.2,
+          "x": 5.5,
           "y": 2,
           "rotated": false
         }
@@ -75,7 +75,7 @@
       "positions": [
         {
           "x": 9,
-          "y": 7.5,
+          "y": 8,
           "rotated": false
         }
       ],
@@ -118,7 +118,7 @@
     }
   ],
   "prices": {},
-  "savedAt": "2026-08-17T22:40:17Z",
+  "savedAt": "2026-08-18T10:51:56Z",
   "gardenSite": {
     "usdaZone": 7,
     "sunHours": 8

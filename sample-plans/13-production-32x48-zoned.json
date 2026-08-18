@@ -114,7 +114,23 @@
       ]
     }
   ],
-  "patios": [],
+  "patios": [
+    {
+      "id": 130,
+      "label": "Outside Break Pergola",
+      "width": 8,
+      "length": 10,
+      "surface": "pavers",
+      "structureType": "pergola",
+      "structureHeight": 9,
+      "roofStyle": "flat",
+      "roofDirection": "auto",
+      "doorWidth": 3,
+      "furnishings": true,
+      "x": 34,
+      "y": 30
+    }
+  ],
   "yardMargin": 16,
   "landscape": [
     {
@@ -154,5 +170,5 @@
     "daysPerWeek": 4
   },
   "renderQuality3d": "cinematic",
-  "savedAt": "2026-08-17T12:00:00.000Z"
+  "savedAt": "2026-08-18T10:51:56Z"
 }

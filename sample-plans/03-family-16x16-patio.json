@@ -29,18 +29,18 @@
       "trellisSide": "length",
       "positions": [
         {
-          "x": 3,
+          "x": 2,
           "y": 2,
           "rotated": true
         },
         {
-          "x": 3,
-          "y": 6,
+          "x": 2,
+          "y": 7,
           "rotated": true
         },
         {
-          "x": 3,
-          "y": 10,
+          "x": 2,
+          "y": 12,
           "rotated": true
         }
       ],
@@ -72,7 +72,7 @@
     }
   ],
   "prices": {},
-  "savedAt": "2026-08-17T22:40:17Z",
+  "savedAt": "2026-08-18T10:51:56Z",
   "gardenSite": {
     "usdaZone": 7,
     "sunHours": 8

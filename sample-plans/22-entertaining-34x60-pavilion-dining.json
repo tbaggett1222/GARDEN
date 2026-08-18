@@ -1,10 +1,23 @@
 {
-  "enclosure": { "width": 34, "length": 60 },
+  "enclosure": {
+    "width": 34,
+    "length": 60
+  },
   "fenceHeight": 6,
   "postSpacing": 7,
   "gates": [
-    { "id": 1, "wall": "bottom", "offset": 11, "width": 12 },
-    { "id": 2, "wall": "left", "offset": 24, "width": 4 }
+    {
+      "id": 1,
+      "wall": "bottom",
+      "offset": 11,
+      "width": 12
+    },
+    {
+      "id": 2,
+      "wall": "left",
+      "offset": 24,
+      "width": 4
+    }
   ],
   "courses": 3,
   "beds": [
@@ -22,10 +35,26 @@
       "trellisHeight": 8,
       "trellisSide": "length",
       "positions": [
-        { "x": 4, "y": 6, "rotated": false },
-        { "x": 4, "y": 18, "rotated": false },
-        { "x": 4, "y": 30, "rotated": false },
-        { "x": 4, "y": 42, "rotated": false }
+        {
+          "x": 4,
+          "y": 6,
+          "rotated": false
+        },
+        {
+          "x": 4,
+          "y": 18,
+          "rotated": false
+        },
+        {
+          "x": 4,
+          "y": 30,
+          "rotated": false
+        },
+        {
+          "x": 4,
+          "y": 42,
+          "rotated": false
+        }
       ]
     },
     {
@@ -42,10 +71,26 @@
       "trellisHeight": 6,
       "trellisSide": "width",
       "positions": [
-        { "x": 27, "y": 6, "rotated": false },
-        { "x": 27, "y": 18, "rotated": false },
-        { "x": 27, "y": 30, "rotated": false },
-        { "x": 27, "y": 42, "rotated": false }
+        {
+          "x": 27,
+          "y": 6,
+          "rotated": false
+        },
+        {
+          "x": 27,
+          "y": 18,
+          "rotated": false
+        },
+        {
+          "x": 27,
+          "y": 30,
+          "rotated": false
+        },
+        {
+          "x": 27,
+          "y": 42,
+          "rotated": false
+        }
       ]
     },
     {
@@ -62,25 +107,33 @@
       "trellisHeight": 6,
       "trellisSide": "width",
       "positions": [
-        { "x": 14, "y": 48, "rotated": false },
-        { "x": 20, "y": 48, "rotated": false }
+        {
+          "x": 14,
+          "y": 48,
+          "rotated": false
+        },
+        {
+          "x": 20,
+          "y": 48,
+          "rotated": false
+        }
       ]
     }
   ],
   "patios": [
     {
       "id": 220,
-      "label": "North Dining Pavilion",
+      "label": "Outside North Pergola Dining",
       "width": 10,
       "length": 12,
       "surface": "pavers",
-      "structureType": "pavilion",
+      "structureType": "pergola",
       "structureHeight": 9,
-      "roofStyle": "hip",
+      "roofStyle": "flat",
       "roofDirection": "auto",
       "doorWidth": 3,
       "furnishings": true,
-      "x": 8,
+      "x": 36,
       "y": 14
     },
     {
@@ -101,11 +154,32 @@
   ],
   "yardMargin": 18,
   "landscape": [
-    { "id": 222, "type": "path", "label": "Main Axis Walk", "width": 4, "length": 56, "qty": 1, "x": 14, "y": 2 },
-    { "id": 223, "type": "tree", "label": "Photo Backdrop Trees", "width": 5, "length": 5, "qty": 4, "x": 36, "y": 10 }
+    {
+      "id": 222,
+      "type": "path",
+      "label": "Main Axis Walk",
+      "width": 4,
+      "length": 56,
+      "qty": 1,
+      "x": 14,
+      "y": 2
+    },
+    {
+      "id": 223,
+      "type": "tree",
+      "label": "Photo Backdrop Trees",
+      "width": 5,
+      "length": 5,
+      "qty": 4,
+      "x": 36,
+      "y": 10
+    }
   ],
   "prices": {},
-  "gardenSite": { "usdaZone": 7, "sunHours": 8 },
+  "gardenSite": {
+    "usdaZone": 7,
+    "sunHours": 8
+  },
   "irrigation": {
     "enabled": true,
     "method": "drip",
@@ -117,5 +191,5 @@
     "daysPerWeek": 4
   },
   "renderQuality3d": "cinematic",
-  "savedAt": "2026-08-17T20:25:00.000Z"
+  "savedAt": "2026-08-18T10:51:56Z"
 }

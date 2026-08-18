@@ -32,6 +32,7 @@ const LANDSCAPE_TYPES = {
   tunnel: { label: "Tunnel Trellis (bed to bed)", defaultW: 4, defaultL: 2, defaultH: 6, color: "#7C8B93", circle: false, unit: "ea", priceKey: "tunnelEach" },
 };
 const STRUCTURAL_LANDSCAPE_TYPES = ["arch", "doubleArch", "tunnel"]; // shown in their own "Trellis & Arches" tab instead of general Landscaping
+const GROUND_COVER_TYPES = new Set(["bed", "mulch", "grass", "path"]);
 
 const STRUCTURE_TYPES = {
   none: { label: "No structure — open patio", desc: "Just the surface below, no roof or overhead structure." },
@@ -121,18 +122,18 @@ const SAMPLE_PLAN_META = {
   "10-accessible-wide-paths.json": "Wider paths and easier access movement.",
   "11-rainwater-resilient-garden.json": "Rain/drought-resilient mixed planting strategy.",
   "12-small-space-vertical-max.json": "Vertical trellis-heavy small footprint design.",
-  "13-production-32x48-zoned.json": "Large 32x48 zoned production layout with service lanes.",
+  "13-production-32x48-zoned.json": "Large 32x48 zoned production layout with an outside-fence pergola break area.",
   "14-family-32x48-orchard.json": "32x48 family garden with orchard edge and an outside-fence pergola patio.",
-  "15-market-40x60-intensive.json": "40x60 intensive market-style layout with long rows.",
-  "16-estate-40x60-mixed-garden.json": "40x60 mixed estate garden for kitchen, flowers, and berries.",
-  "17-homestead-34x60-production.json": "34x60 homestead production layout with central service lane.",
+  "15-market-40x60-intensive.json": "40x60 intensive market-style layout with long rows and an outside-fence pergola.",
+  "16-estate-40x60-mixed-garden.json": "40x60 mixed estate garden with an outside-fence pergola gathering zone.",
+  "17-homestead-34x60-production.json": "34x60 homestead production layout with central service lane and outside pergola.",
   "18-family-34x60-learning-garden.json": "34x60 family learning layout with an outside-fence pergola and teaching beds.",
-  "19-market-40x60-zoned.json": "40x60 zoned market layout with nursery edge beds.",
-  "20-estate-40x60-entertaining.json": "40x60 estate layout balancing kitchen rows and entertaining patio.",
+  "19-market-40x60-zoned.json": "40x60 zoned market layout with nursery edge beds and outside pergola.",
+  "20-estate-40x60-entertaining.json": "40x60 estate layout balancing kitchen rows and an outside-fence pergola.",
   "21-entertaining-34x60-pergola-courtyard.json": "34x60 entertainment courtyard with an outside-fence pergola and fire lounge.",
-  "22-entertaining-34x60-pavilion-dining.json": "34x60 dual-pavilion dining layout for family and guests.",
-  "23-entertaining-40x60-event-lawn.json": "40x60 event-friendly layout with pavilion court and open lawn.",
-  "24-entertaining-40x60-gazebo-orchard.json": "40x60 gazebo and orchard entertaining layout with banquet patio.",
+  "22-entertaining-34x60-pavilion-dining.json": "34x60 hosting layout with outside pergola dining plus pavilion lounge.",
+  "23-entertaining-40x60-event-lawn.json": "40x60 event-friendly layout with open lawn and an outside catering pergola.",
+  "24-entertaining-40x60-gazebo-orchard.json": "40x60 gazebo and orchard entertaining layout with an outside banquet pergola.",
 };
 function titleCaseWords(s) { return s.replace(/\b\w/g, (c) => c.toUpperCase()); }
 const SAMPLE_PLAN_MODULES = import.meta.glob("./sample-plans/*.json", { eager: true });
@@ -167,6 +168,15 @@ const SAMPLE_PLANS = Object.entries(SAMPLE_PLAN_MODULES)
 function fmt(n) { return n.toLocaleString(undefined, { style: "currency", currency: "USD" }); }
 function round1(n) { return Math.round(n * 10) / 10; }
 function clamp(n, min, max) { return Math.max(min, Math.min(n, max)); }
+function landscapeLabelText(l, t) {
+  const custom = String(l.label || t.label || "Landscape");
+  if (GROUND_COVER_TYPES.has(l.type)) {
+    const areaSqft = round1(Math.max(Number(l.width) || 0, 0) * Math.max(Number(l.length) || 0, 0) * Math.max(Number(l.qty) || 1, 1));
+    return `${custom} • ${t.label} ground cover • ${areaSqft} sq ft`;
+  }
+  if (t.unit === "ea" && (Number(l.qty) || 1) > 1) return `${custom} • ${t.label} ×${Math.max(Number(l.qty) || 1, 1)}`;
+  return `${custom} • ${t.label}`;
+}
 function bedFootprintAreaSqft(b) {
   const width = Math.max(Number(b.width) || 0, 0);
   const length = Math.max(Number(b.length) || 0, 0);
@@ -398,7 +408,7 @@ export default function GardenDesigner() {
   function applyBedPreset(id, p) { const [w, l] = p.split("x").map(Number); updateBed(id, { width: w, length: l }); }
   function wallLength(wall) { return wall === "top" || wall === "bottom" ? enclosure.width : enclosure.length; }
   const fencePosts = useMemo(() => fencePostAnchors(enclosure.width, enclosure.length, postSpacing), [enclosure.width, enclosure.length, postSpacing]);
-  const MIN_PLAN_ZOOM = 0.35;
+  const MIN_PLAN_ZOOM = 0.2;
   const MAX_PLAN_ZOOM = 6;
   const planBaseBounds = useMemo(() => ({
     x: -1 - yardMargin,
@@ -437,7 +447,7 @@ export default function GardenDesigner() {
     }));
   }
   function resetPlanViewport() { setPlanCamera({ zoom: 1, panX: 0, panY: 0 }); }
-  function overviewPlanViewport() { setPlanCamera({ zoom: 0.7, panX: 0, panY: 0 }); }
+  function overviewPlanViewport() { setPlanCamera({ zoom: 0.5, panX: 0, panY: 0 }); }
   function onPlanWheel(e) {
     e.preventDefault();
     zoomPlan(e.deltaY < 0 ? 1.12 : 1 / 1.12);
@@ -2462,6 +2472,8 @@ export default function GardenDesigner() {
               <svg ref={svgRef} className="gdw-svg" onWheel={onPlanWheel} viewBox={`${planViewport.x} ${planViewport.y} ${planViewport.width} ${planViewport.height}`}>
                 <rect x={-yardMargin} y={-yardMargin} width={enclosure.width + 2 * yardMargin} height={enclosure.length + 2 * yardMargin} fill="#8FBF6E" onClick={() => setSelected(null)} />
                 <rect x={0} y={0} width={enclosure.width} height={enclosure.length} fill="#EFE9D6" onClick={() => setSelected(null)} />
+                <text x={-yardMargin + 0.7} y={-yardMargin + 1.1} fontSize={0.52} fill="#35592F" fontFamily="Inter" style={{ paintOrder: "stroke", stroke: "#e9f4e3", strokeWidth: 0.08 }}>Exterior landscape zone</text>
+                <text x={0.7} y={1.1} fontSize={0.5} fill="#7c6a49" fontFamily="Inter" style={{ paintOrder: "stroke", stroke: "#fff8e8", strokeWidth: 0.08 }}>Garden enclosure</text>
                 {["top", "bottom", "left", "right"].map((wall) => {
                   const len = wallLength(wall);
                   const segs = wallSegments(len, gates.filter((g) => g.wall === wall));
@@ -2533,7 +2545,9 @@ export default function GardenDesigner() {
                           {[0.25, 0.5, 0.75].map((f, i) => <line key={i} x1={l.x} y1={l.y + l.length * f} x2={l.x + l.width} y2={l.y + l.length * f} />)}
                         </g>
                       )}
-                      <text x={l.x + l.width / 2} y={l.y + l.length / 2} fontSize={0.42} textAnchor="middle" fill="#1E2E1C" fontFamily="Inter">{t.label}{t.unit === "ea" && l.qty > 1 ? ` ×${l.qty}` : ""}</text>
+                      <text x={l.x + l.width / 2} y={l.y + l.length / 2} fontSize={0.34} textAnchor="middle" fill="#1E2E1C" fontFamily="Inter" style={{ paintOrder: "stroke", stroke: "#F4F8EE", strokeWidth: 0.08 }}>
+                        {landscapeLabelText(l, t)}
+                      </text>
                     </g>
                   );
                 })}

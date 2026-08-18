@@ -1,10 +1,23 @@
 {
-  "enclosure": { "width": 40, "length": 60 },
+  "enclosure": {
+    "width": 40,
+    "length": 60
+  },
   "fenceHeight": 6,
   "postSpacing": 7,
   "gates": [
-    { "id": 1, "wall": "bottom", "offset": 14, "width": 12 },
-    { "id": 2, "wall": "top", "offset": 16, "width": 8 }
+    {
+      "id": 1,
+      "wall": "bottom",
+      "offset": 14,
+      "width": 12
+    },
+    {
+      "id": 2,
+      "wall": "top",
+      "offset": 16,
+      "width": 8
+    }
   ],
   "courses": 3,
   "beds": [
@@ -22,12 +35,36 @@
       "trellisHeight": 6,
       "trellisSide": "width",
       "positions": [
-        { "x": 3, "y": 8, "rotated": false },
-        { "x": 3, "y": 22, "rotated": false },
-        { "x": 3, "y": 36, "rotated": false },
-        { "x": 33, "y": 8, "rotated": false },
-        { "x": 33, "y": 22, "rotated": false },
-        { "x": 33, "y": 36, "rotated": false }
+        {
+          "x": 3,
+          "y": 8,
+          "rotated": false
+        },
+        {
+          "x": 3,
+          "y": 22,
+          "rotated": false
+        },
+        {
+          "x": 3,
+          "y": 36,
+          "rotated": false
+        },
+        {
+          "x": 33,
+          "y": 8,
+          "rotated": false
+        },
+        {
+          "x": 33,
+          "y": 22,
+          "rotated": false
+        },
+        {
+          "x": 33,
+          "y": 36,
+          "rotated": false
+        }
       ]
     },
     {
@@ -44,10 +81,26 @@
       "trellisHeight": 6,
       "trellisSide": "width",
       "positions": [
-        { "x": 14, "y": 46, "rotated": false },
-        { "x": 18, "y": 46, "rotated": false },
-        { "x": 22, "y": 46, "rotated": false },
-        { "x": 26, "y": 46, "rotated": false }
+        {
+          "x": 14,
+          "y": 46,
+          "rotated": false
+        },
+        {
+          "x": 18,
+          "y": 46,
+          "rotated": false
+        },
+        {
+          "x": 22,
+          "y": 46,
+          "rotated": false
+        },
+        {
+          "x": 26,
+          "y": 46,
+          "rotated": false
+        }
       ]
     }
   ],
@@ -81,15 +134,51 @@
       "furnishings": true,
       "x": 12,
       "y": 33
+    },
+    {
+      "id": 234,
+      "label": "Outside Catering Pergola",
+      "width": 12,
+      "length": 10,
+      "surface": "pavers",
+      "structureType": "pergola",
+      "structureHeight": 9,
+      "roofStyle": "flat",
+      "roofDirection": "auto",
+      "doorWidth": 3,
+      "furnishings": true,
+      "x": 42,
+      "y": 22
     }
   ],
   "yardMargin": 20,
   "landscape": [
-    { "id": 232, "type": "grass", "label": "Event Lawn", "width": 18, "length": 12, "qty": 1, "x": 11, "y": 32 },
-    { "id": 233, "type": "path", "label": "Guest Entry Walk", "width": 4, "length": 18, "qty": 1, "x": 18, "y": 0 }
+    {
+      "id": 232,
+      "type": "grass",
+      "label": "Event Lawn",
+      "width": 18,
+      "length": 12,
+      "qty": 1,
+      "x": 11,
+      "y": 32
+    },
+    {
+      "id": 233,
+      "type": "path",
+      "label": "Guest Entry Walk",
+      "width": 4,
+      "length": 18,
+      "qty": 1,
+      "x": 18,
+      "y": 0
+    }
   ],
   "prices": {},
-  "gardenSite": { "usdaZone": 7, "sunHours": 8 },
+  "gardenSite": {
+    "usdaZone": 7,
+    "sunHours": 8
+  },
   "irrigation": {
     "enabled": true,
     "method": "drip",
@@ -101,5 +190,5 @@
     "daysPerWeek": 4
   },
   "renderQuality3d": "cinematic",
-  "savedAt": "2026-08-17T20:25:00.000Z"
+  "savedAt": "2026-08-18T10:51:56Z"
 }

@@ -1,10 +1,23 @@
 {
-  "enclosure": { "width": 40, "length": 60 },
+  "enclosure": {
+    "width": 40,
+    "length": 60
+  },
   "fenceHeight": 6,
   "postSpacing": 7,
   "gates": [
-    { "id": 1, "wall": "bottom", "offset": 15, "width": 10 },
-    { "id": 2, "wall": "right", "offset": 27, "width": 4 }
+    {
+      "id": 1,
+      "wall": "bottom",
+      "offset": 15,
+      "width": 10
+    },
+    {
+      "id": 2,
+      "wall": "right",
+      "offset": 27,
+      "width": 4
+    }
   ],
   "courses": 3,
   "beds": [
@@ -22,12 +35,36 @@
       "trellisHeight": 6,
       "trellisSide": "width",
       "positions": [
-        { "x": 5, "y": 8, "rotated": false },
-        { "x": 9, "y": 8, "rotated": false },
-        { "x": 13, "y": 8, "rotated": false },
-        { "x": 5, "y": 20, "rotated": false },
-        { "x": 9, "y": 20, "rotated": false },
-        { "x": 13, "y": 20, "rotated": false }
+        {
+          "x": 5,
+          "y": 8,
+          "rotated": false
+        },
+        {
+          "x": 9,
+          "y": 8,
+          "rotated": false
+        },
+        {
+          "x": 13,
+          "y": 8,
+          "rotated": false
+        },
+        {
+          "x": 5,
+          "y": 20,
+          "rotated": false
+        },
+        {
+          "x": 9,
+          "y": 20,
+          "rotated": false
+        },
+        {
+          "x": 13,
+          "y": 20,
+          "rotated": false
+        }
       ]
     },
     {
@@ -44,10 +81,26 @@
       "trellisHeight": 6,
       "trellisSide": "width",
       "positions": [
-        { "x": 24, "y": 8, "rotated": false },
-        { "x": 30, "y": 8, "rotated": false },
-        { "x": 24, "y": 24, "rotated": false },
-        { "x": 30, "y": 24, "rotated": false }
+        {
+          "x": 24,
+          "y": 8,
+          "rotated": false
+        },
+        {
+          "x": 30,
+          "y": 8,
+          "rotated": false
+        },
+        {
+          "x": 24,
+          "y": 24,
+          "rotated": false
+        },
+        {
+          "x": 30,
+          "y": 24,
+          "rotated": false
+        }
       ]
     },
     {
@@ -64,9 +117,21 @@
       "trellisHeight": 8,
       "trellisSide": "length",
       "positions": [
-        { "x": 24, "y": 42, "rotated": false },
-        { "x": 28, "y": 42, "rotated": false },
-        { "x": 32, "y": 42, "rotated": false }
+        {
+          "x": 24,
+          "y": 42,
+          "rotated": false
+        },
+        {
+          "x": 28,
+          "y": 42,
+          "rotated": false
+        },
+        {
+          "x": 32,
+          "y": 42,
+          "rotated": false
+        }
       ]
     }
   ],
@@ -88,27 +153,48 @@
     },
     {
       "id": 241,
-      "label": "Banquet Pavilion Patio",
+      "label": "Outside Banquet Pergola",
       "width": 16,
       "length": 12,
       "surface": "pavers",
-      "structureType": "pavilion",
+      "structureType": "pergola",
       "structureHeight": 10,
-      "roofStyle": "gable",
+      "roofStyle": "flat",
       "roofDirection": "auto",
       "doorWidth": 3,
       "furnishings": true,
-      "x": 10,
+      "x": 42,
       "y": 34
     }
   ],
   "yardMargin": 20,
   "landscape": [
-    { "id": 242, "type": "tree", "label": "Orchard Accent Row", "width": 5, "length": 5, "qty": 4, "x": 44, "y": 10 },
-    { "id": 243, "type": "path", "label": "Main Axis Path", "width": 4, "length": 56, "qty": 1, "x": 18, "y": 2 }
+    {
+      "id": 242,
+      "type": "tree",
+      "label": "Orchard Accent Row",
+      "width": 5,
+      "length": 5,
+      "qty": 4,
+      "x": 44,
+      "y": 10
+    },
+    {
+      "id": 243,
+      "type": "path",
+      "label": "Main Axis Path",
+      "width": 4,
+      "length": 56,
+      "qty": 1,
+      "x": 18,
+      "y": 2
+    }
   ],
   "prices": {},
-  "gardenSite": { "usdaZone": 7, "sunHours": 8 },
+  "gardenSite": {
+    "usdaZone": 7,
+    "sunHours": 8
+  },
   "irrigation": {
     "enabled": true,
     "method": "drip",
@@ -120,5 +206,5 @@
     "daysPerWeek": 4
   },
   "renderQuality3d": "cinematic",
-  "savedAt": "2026-08-17T20:25:00.000Z"
+  "savedAt": "2026-08-18T10:51:56Z"
 }
