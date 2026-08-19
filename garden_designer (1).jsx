@@ -1004,7 +1004,15 @@ export default function GardenDesigner() {
       cursorX += bed.width + 2;
       rowH = Math.max(rowH, bed.length);
     });
-    const allPlaced = [...ringResult.placed, ...placedCenter];
+    const allPlaced = [...ringResult.placed, ...placedCenter].map((p) => {
+      const w = p.rotated ? p.length : p.width;
+      const h = p.rotated ? p.width : p.length;
+      return {
+        ...p,
+        x: clamp(p.x, 0, Math.max(enclosure.width - w, 0)),
+        y: clamp(p.y, 0, Math.max(enclosure.length - h, 0)),
+      };
+    });
     setBeds((bs) => bs.map((b) => {
       const mine = allPlaced.filter((p) => p.bedId === b.id).sort((a, c) => a.idx - c.idx).map((p) => ({ x: round1(p.x), y: round1(p.y), rotated: !!p.rotated }));
       return mine.length ? { ...b, positions: mine } : b;
@@ -2317,7 +2325,9 @@ export default function GardenDesigner() {
                           <button className={`gdw-btn ${b.zone === "perimeter" ? "active" : ""}`} style={{ padding: "3px 7px", fontSize: 11 }} onClick={() => updateBed(b.id, { zone: "perimeter" })}>Perimeter</button>
                         </div>
                         <div className="gdw-row" style={{ marginTop: 4 }}>
-                          <button className={`gdw-btn ${b.trellis ? "active" : ""}`} style={{ padding: "3px 7px", fontSize: 11 }} onClick={() => updateBed(b.id, { trellis: !b.trellis })}>{b.trellis ? "Trellis on" : "Add trellis"}</button>
+                          <span style={{ fontSize: 11, color: "#6b6350" }}>Bed trellis</span>
+                          <button className={`gdw-btn ${!b.trellis ? "active" : ""}`} style={{ padding: "3px 7px", fontSize: 11 }} onClick={() => updateBed(b.id, { trellis: false })}>Off</button>
+                          <button className={`gdw-btn ${b.trellis ? "active" : ""}`} style={{ padding: "3px 7px", fontSize: 11 }} onClick={() => updateBed(b.id, { trellis: true })}>On</button>
                           {b.trellis && (
                             <>
                               <span style={{ fontSize: 11, color: "#6b6350" }}>Height</span>
