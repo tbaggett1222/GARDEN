@@ -387,7 +387,7 @@ export default function GardenDesigner() {
   const [viewMode, setViewMode] = useState("2d"); // '2d' | '3d'
   const [planCamera, setPlanCamera] = useState({ zoom: 1, panX: 0, panY: 0 });
   const [renderQuality3d, setRenderQuality3d] = useState("cinematic"); // 'standard' | 'cinematic'
-  const [showBedTrellis3d, setShowBedTrellis3d] = useState(false);
+  const showBedTrellis3d = false;
   const [threeZoomPct, setThreeZoomPct] = useState(40);
   const [activeTab, setActiveTab] = useState("enclosure"); // 'enclosure' | 'beds' | 'patio' | 'landscaping' | 'trellis' | 'irrigation' | 'prices'
   const [canUndo, setCanUndo] = useState(false);
@@ -1931,7 +1931,7 @@ export default function GardenDesigner() {
       renderer.dispose();
       if (container) container.innerHTML = "";
     };
-  }, [viewMode, renderQuality3d, showBedTrellis3d, enclosure, layout, patios, landscape, gates, fenceHeight, postSpacing, yardMargin, fencePosts]);
+  }, [viewMode, renderQuality3d, enclosure, layout, patios, landscape, gates, fenceHeight, postSpacing, yardMargin, fencePosts]);
 
   function exportCSV() {
     const rows = [["Category", "Item", "Qty", "Unit", "Unit Price", "Line Total"]];
@@ -2765,7 +2765,6 @@ export default function GardenDesigner() {
                 {landscape.length > 0 && <span><i className="gdw-swatch" style={{ background: "#3F6B3A" }} /> landscaping</span>}
                 <span><i className="gdw-swatch" style={{ background: "var(--wood)", borderRadius: "50%" }} /> fence post</span>
                 {layout.ringActive && <span><i className="gdw-swatch" style={{ background: "var(--gold)" }} /> {perimeterInset} ft setback line</span>}
-                {showBedTrellis3d && layout.placed.some((b) => b.trellis) && <span><i className="gdw-swatch" style={{ background: "#5C7A57" }} /> trellis (back edge)</span>}
               </div>
                 </>
               ) : (
