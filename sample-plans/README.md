@@ -13,7 +13,7 @@ All included plans are quality-checked to keep beds clear of gate access lanes a
 
 ## Included plans
 
-1. `03-family-16x16-patio.json` — large-bed 16×16 layout with long trellised rows
+1. `03-family-16x16-patio.json` — balanced 16×16 layout with three compact beds and a clear entry aisle
 2. `04-market-16x32-intensive.json` — large-bed 16×32 production layout with six long rows
 3. `05-pollinator-cutflower-garden.json` — flowers + habitat focused design
 4. `06-kids-teaching-garden.json` — simple educational layout with clear zones

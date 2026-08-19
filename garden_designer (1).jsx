@@ -112,7 +112,7 @@ const CROP_PROFILES = [
 ];
 const CROP_PROFILE_BY_KEY = Object.fromEntries(CROP_PROFILES.map((c) => [c.key, c]));
 const SAMPLE_PLAN_META = {
-  "03-family-16x16-patio.json": "Large-bed 16x16 layout with long rows.",
+  "03-family-16x16-patio.json": "Balanced 16x16 layout with three compact beds and a clear entry aisle.",
   "04-market-16x32-intensive.json": "High-yield long-row 16x32 production layout.",
   "05-pollinator-cutflower-garden.json": "Pollinator habitat and cut-flower focus.",
   "06-kids-teaching-garden.json": "Simple educational zones for family learning.",

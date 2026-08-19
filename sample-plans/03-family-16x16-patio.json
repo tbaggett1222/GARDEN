@@ -17,9 +17,9 @@
   "beds": [
     {
       "id": 1,
-      "label": "Large Bed A",
-      "width": 4,
-      "length": 10,
+      "label": "Family Bed Set",
+      "width": 3,
+      "length": 6,
       "qty": 3,
       "courses": 3,
       "shape": "rect",
@@ -29,19 +29,19 @@
       "trellisSide": "length",
       "positions": [
         {
-          "x": 2,
+          "x": 1.5,
           "y": 2,
-          "rotated": true
+          "rotated": false
         },
         {
-          "x": 2,
-          "y": 7,
-          "rotated": true
+          "x": 11.5,
+          "y": 2,
+          "rotated": false
         },
         {
-          "x": 2,
-          "y": 11,
-          "rotated": true
+          "x": 6.5,
+          "y": 8,
+          "rotated": false
         }
       ],
       "cropKey": "tomato"
