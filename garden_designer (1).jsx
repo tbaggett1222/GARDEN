@@ -1004,7 +1004,15 @@ export default function GardenDesigner() {
       cursorX += bed.width + 2;
       rowH = Math.max(rowH, bed.length);
     });
-    const allPlaced = [...ringResult.placed, ...placedCenter];
+    const allPlaced = [...ringResult.placed, ...placedCenter].map((p) => {
+      const w = p.rotated ? p.length : p.width;
+      const h = p.rotated ? p.width : p.length;
+      return {
+        ...p,
+        x: clamp(p.x, 0, Math.max(enclosure.width - w, 0)),
+        y: clamp(p.y, 0, Math.max(enclosure.length - h, 0)),
+      };
+    });
     setBeds((bs) => bs.map((b) => {
       const mine = allPlaced.filter((p) => p.bedId === b.id).sort((a, c) => a.idx - c.idx).map((p) => ({ x: round1(p.x), y: round1(p.y), rotated: !!p.rotated }));
       return mine.length ? { ...b, positions: mine } : b;
@@ -2316,24 +2324,6 @@ export default function GardenDesigner() {
                           <button className={`gdw-btn ${b.zone !== "perimeter" ? "active" : ""}`} style={{ padding: "3px 7px", fontSize: 11 }} onClick={() => updateBed(b.id, { zone: "center" })}>Center</button>
                           <button className={`gdw-btn ${b.zone === "perimeter" ? "active" : ""}`} style={{ padding: "3px 7px", fontSize: 11 }} onClick={() => updateBed(b.id, { zone: "perimeter" })}>Perimeter</button>
                         </div>
-                        <div className="gdw-row" style={{ marginTop: 4 }}>
-                          <button className={`gdw-btn ${b.trellis ? "active" : ""}`} style={{ padding: "3px 7px", fontSize: 11 }} onClick={() => updateBed(b.id, { trellis: !b.trellis })}>{b.trellis ? "Trellis on" : "Add trellis"}</button>
-                          {b.trellis && (
-                            <>
-                              <span style={{ fontSize: 11, color: "#6b6350" }}>Height</span>
-                              {[6, 8].map((h) => (
-                                <button key={h} className={`gdw-btn ${(b.trellisHeight || 6) === h ? "active" : ""}`} style={{ padding: "3px 7px", fontSize: 11 }} onClick={() => updateBed(b.id, { trellisHeight: h })}>{h} ft</button>
-                              ))}
-                            </>
-                          )}
-                        </div>
-                        {b.trellis && (
-                          <div className="gdw-row" style={{ marginTop: 2 }}>
-                            <span style={{ fontSize: 11, color: "#6b6350" }}>Matches</span>
-                            <button className={`gdw-btn ${(b.trellisSide || "width") === "width" ? "active" : ""}`} style={{ padding: "3px 7px", fontSize: 11 }} onClick={() => updateBed(b.id, { trellisSide: "width" })}>Width ({b.width} ft)</button>
-                            <button className={`gdw-btn ${b.trellisSide === "length" ? "active" : ""}`} style={{ padding: "3px 7px", fontSize: 11 }} onClick={() => updateBed(b.id, { trellisSide: "length" })}>Length ({b.length} ft)</button>
-                          </div>
-                        )}
                       </>
                     )}
                   </div>
@@ -2490,7 +2480,7 @@ export default function GardenDesigner() {
               </div>
               {landscape.filter((l) => STRUCTURAL_LANDSCAPE_TYPES.includes(l.type)).map(renderLandscapeItem)}
               <div className="gdw-label" style={{ marginTop: 14 }}>Per-bed trellises</div>
-              <p className="gdw-note" style={{ margin: "0 0 6px 0" }}>A trellis attached along the back of a single bed is configured on that bed itself, in the Beds tab (look for "More options" on any bed) — it always matches that bed's width automatically.</p>
+              <p className="gdw-note" style={{ margin: "0 0 6px 0" }}>Per-bed trellis controls are hidden from the editor; this section lists trellises already present in the current plan.</p>
               {beds.filter((b) => b.trellis).length === 0 ? (
                 <p className="gdw-note" style={{ margin: 0 }}>No beds have a trellis yet.</p>
               ) : (
@@ -2583,8 +2573,6 @@ export default function GardenDesigner() {
                     <>
                       <button className={`gdw-btn ${renderQuality3d === "standard" ? "active" : ""}`} onClick={() => setRenderQuality3d("standard")} title="Faster 3D rendering">Standard</button>
                       <button className={`gdw-btn ${renderQuality3d === "cinematic" ? "active" : ""}`} onClick={() => setRenderQuality3d("cinematic")} title="Higher quality physically based rendering">Cinematic</button>
-                      <button className={`gdw-btn ${!showBedTrellis3d ? "active" : ""}`} onClick={() => setShowBedTrellis3d(false)} title="Hide trellis structures on beds">Trellis Off</button>
-                      <button className={`gdw-btn ${showBedTrellis3d ? "active" : ""}`} onClick={() => setShowBedTrellis3d(true)} title="Show trellis structures on beds">Trellis On</button>
                     </>
                   )}
                 </div>
@@ -2783,7 +2771,7 @@ export default function GardenDesigner() {
               ) : (
                 <>
                   <p className="gdw-note gdw-noprint" style={{ margin: "0 0 8px 0" }}>
-                    Drag to orbit, scroll to zoom. {renderQuality3d === "cinematic" ? "Cinematic mode uses physically based shading, ACES tonemapping, cedar-style framing, soft shadows, and higher pixel density for a more realistic look." : "Standard mode is optimized for speed on older devices."} Bed trellis visuals are currently <strong>{showBedTrellis3d ? "On" : "Off"}</strong>. This web renderer is an approximation; Unreal Engine 5 features like Nanite/Lumen and full offline path tracing are not available directly in-browser.
+                    Drag to orbit, scroll to zoom. {renderQuality3d === "cinematic" ? "Cinematic mode uses physically based shading, ACES tonemapping, cedar-style framing, soft shadows, and higher pixel density for a more realistic look." : "Standard mode is optimized for speed on older devices."} This web renderer is an approximation; Unreal Engine 5 features like Nanite/Lumen and full offline path tracing are not available directly in-browser.
                   </p>
                   <div className="gdw-row gdw-noprint" style={{ margin: "0 0 8px 0", alignItems: "center", gap: 6 }}>
                     <span style={{ fontSize: 12, color: "#5b5342" }}>3D zoom:</span>
