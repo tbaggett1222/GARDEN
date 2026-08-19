@@ -97,7 +97,7 @@ function StructureIcon({ type }) {
 }
 
 const ENCLOSURE_PRESETS = ["8x8", "8x16", "16x16", "16x32"];
-const BED_PRESETS = ["3x5", "3x6", "4x4", "4x8", "4x10"];
+const BED_PRESETS = ["3x5", "3x6", "3x8", "4x4", "4x8", "4x10"];
 const PATIO_PRESETS = ["8x8", "10x10", "12x16", "16x20"];
 const STOCK_LENGTHS = [8, 10, 12, 16];
 const CROP_PROFILES = [
@@ -349,9 +349,16 @@ export default function GardenDesigner() {
   const [gates, setGates] = useState([{ id: 1, wall: "bottom", offset: round1(16 / 2 - 1.75), width: 3.5 }]);
   const [courses, setCourses] = useState(3); // default course count used when adding a new bed
   const [perimeterInset, setPerimeterInset] = useState(4); // setback (ft) from fence to perimeter-zone beds
+  function defaultBedSizeForEnclosure({ width, length }) {
+    const W = Math.max(numOr(width, 16), 1);
+    const L = Math.max(numOr(length, 16), 1);
+    const isLargeDesign = W >= 30 || L >= 40 || (W * L) >= 1200;
+    return isLargeDesign ? { width: 3, length: 8 } : { width: 3, length: 6 };
+  }
+  const initialBedSize = defaultBedSizeForEnclosure({ width: 16, length: 16 });
   const [beds, setBeds] = useState([
-    { id: 1, label: "Bed A", width: 4, length: 8, qty: 2, courses: 3, shape: "rect", zone: "center", cropKey: "mixed", trellis: false, trellisHeight: 6, trellisSide: "width", positions: [{ x: 2, y: 2, rotated: false }, { x: 2, y: 11, rotated: false }] },
-    { id: 2, label: "Bed B", width: 3, length: 5, qty: 1, courses: 3, shape: "rect", zone: "center", cropKey: "mixed", trellis: false, trellisHeight: 6, trellisSide: "width", positions: [{ x: 7, y: 2, rotated: false }] },
+    { id: 1, label: "Bed A", width: initialBedSize.width, length: initialBedSize.length, qty: 2, courses: 3, shape: "rect", zone: "center", cropKey: "mixed", trellis: false, trellisHeight: 6, trellisSide: "width", positions: [{ x: 2, y: 2, rotated: false }, { x: 2, y: 9, rotated: false }] },
+    { id: 2, label: "Bed B", width: initialBedSize.width, length: initialBedSize.length, qty: 1, courses: 3, shape: "rect", zone: "center", cropKey: "mixed", trellis: false, trellisHeight: 6, trellisSide: "width", positions: [{ x: 7, y: 2, rotated: false }] },
   ]);
   const [patios, setPatios] = useState([]);
   const [expandedPatios, setExpandedPatios] = useState(() => new Set());
@@ -422,7 +429,7 @@ export default function GardenDesigner() {
   }
   function addBed() {
     idCounter += 1;
-    const w = 4, l = 8;
+    const { width: w, length: l } = defaultBedSizeForEnclosure(enclosure);
     // stack new beds below whatever's already placed, so two beds added back-to-back
     // don't both land on the same fixed (1,1) spot and hide on top of each other
     const cascadeY = beds.reduce((maxY, b) => Math.max(maxY, ...(b.positions || []).map((p) => p.y + (p.rotated ? b.width : b.length))), 0);
