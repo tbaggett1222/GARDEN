@@ -1536,73 +1536,152 @@ export default function GardenDesigner() {
       scene.add(post);
     });
 
-    // ---- raised beds: cedar frame + mounded soil + planted rows (simplified as rectangular footprints — see 2D plan for exact L-shape geometry) ----
+    // ---- raised beds: cedar frame + mounded soil + planted rows ----
     const frameMat = mkMat({ color: cinematic ? "#C6935D" : "#8A6A45", roughness: 0.81, metalness: 0.03, clearcoat: 0.1 });
     const frameSeamMat = mkMat({ color: "#9A6E42", roughness: 0.9, metalness: 0.01 });
     const soilMat = mkMat({ color: "#4A3626", roughness: 1, metalness: 0, clearcoat: 0 });
+    soilMat.side = THREE.DoubleSide;
     const plantColors = ["#6B9950", "#8FBF6E", "#5E8A46"];
     const wallThickness = 0.15;
     const bedCapDepth = 0.22;
     const bedCapThickness = 0.07;
     layout.placed.forEach((b) => {
-      const cw = b.rotated ? b.length : b.width;
-      const cl = b.rotated ? b.width : b.length;
+      const bw = numOr(b.width, 3);
+      const bl = numOr(b.length, 6);
+      const cw = b.rotated ? bl : bw;
+      const cl = b.rotated ? bw : bl;
       const h = round1((b.courses * boardActualIn) / 12);
       const wx0 = b.x - W / 2, wz0 = b.y - L / 2; // world position of the bed's plan corner
+      const localToWorld = (px, py) => (
+        b.rotated
+          ? [wx0 + py, wz0 + (bw - px)]
+          : [wx0 + px, wz0 + py]
+      );
 
-      // hollow frame (4 thin walls) so it reads as a bed, not a solid block
-      const front = new THREE.Mesh(new THREE.BoxGeometry(cw, h, wallThickness), frameMat);
-      front.position.set(wx0 + cw / 2, h / 2, wz0 + wallThickness / 2);
-      scene.add(front);
-      const back = new THREE.Mesh(new THREE.BoxGeometry(cw, h, wallThickness), frameMat);
-      back.position.set(wx0 + cw / 2, h / 2, wz0 + cl - wallThickness / 2);
-      scene.add(back);
-      const leftW = new THREE.Mesh(new THREE.BoxGeometry(wallThickness, h, cl), frameMat);
-      leftW.position.set(wx0 + wallThickness / 2, h / 2, wz0 + cl / 2);
-      scene.add(leftW);
-      const rightW = new THREE.Mesh(new THREE.BoxGeometry(wallThickness, h, cl), frameMat);
-      rightW.position.set(wx0 + cw - wallThickness / 2, h / 2, wz0 + cl / 2);
-      scene.add(rightW);
-      const capFront = new THREE.Mesh(new THREE.BoxGeometry(cw + 0.08, bedCapThickness, bedCapDepth), frameMat);
-      capFront.position.set(wx0 + cw / 2, h + bedCapThickness / 2, wz0 + bedCapDepth / 2);
-      scene.add(capFront);
-      const capBack = new THREE.Mesh(new THREE.BoxGeometry(cw + 0.08, bedCapThickness, bedCapDepth), frameMat);
-      capBack.position.set(wx0 + cw / 2, h + bedCapThickness / 2, wz0 + cl - bedCapDepth / 2);
-      scene.add(capBack);
-      const capLeft = new THREE.Mesh(new THREE.BoxGeometry(bedCapDepth, bedCapThickness, cl + 0.08), frameMat);
-      capLeft.position.set(wx0 + bedCapDepth / 2, h + bedCapThickness / 2, wz0 + cl / 2);
-      scene.add(capLeft);
-      const capRight = new THREE.Mesh(new THREE.BoxGeometry(bedCapDepth, bedCapThickness, cl + 0.08), frameMat);
-      capRight.position.set(wx0 + cw - bedCapDepth / 2, h + bedCapThickness / 2, wz0 + cl / 2);
-      scene.add(capRight);
-      const seamCount = Math.max(1, Number(b.courses) || 1);
-      for (let si = 1; si < seamCount; si++) {
-        const seamY = (h * si) / seamCount;
-        const seamFront = new THREE.Mesh(new THREE.BoxGeometry(cw - 0.02, 0.03, 0.04), frameSeamMat);
-        seamFront.position.set(wx0 + cw / 2, seamY, wz0 + wallThickness + 0.02);
-        scene.add(seamFront);
-        const seamBack = new THREE.Mesh(new THREE.BoxGeometry(cw - 0.02, 0.03, 0.04), frameSeamMat);
-        seamBack.position.set(wx0 + cw / 2, seamY, wz0 + cl - wallThickness - 0.02);
-        scene.add(seamBack);
-        const seamLeft = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.03, cl - 0.02), frameSeamMat);
-        seamLeft.position.set(wx0 + wallThickness + 0.02, seamY, wz0 + cl / 2);
-        scene.add(seamLeft);
-        const seamRight = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.03, cl - 0.02), frameSeamMat);
-        seamRight.position.set(wx0 + cw - wallThickness - 0.02, seamY, wz0 + cl / 2);
-        scene.add(seamRight);
+      if (b.shape === "L") {
+        const notchW = numOr(b.notchWidth, Math.max(Math.min(2, bw / 2), 0.5));
+        const notchD = numOr(b.notchDepth, Math.max(Math.min(2, bl / 2), 0.5));
+        const localCorner = displayCornerToLocal(b.notchCorner || "top-right", !!b.rotated);
+        const localVerts = lShapeVertices(bw, bl, notchW, notchD, localCorner);
+        const worldVerts = localVerts.map(([px, py]) => localToWorld(px, py));
+
+        // wall and cap segments follow each L edge so L beds do not render as square boxes
+        for (let i = 0; i < worldVerts.length; i++) {
+          const [x1, z1] = worldVerts[i];
+          const [x2, z2] = worldVerts[(i + 1) % worldVerts.length];
+          const dx = x2 - x1, dz = z2 - z1;
+          const edgeLen = Math.hypot(dx, dz);
+          if (edgeLen <= 0.02) continue;
+          const edgeAng = Math.atan2(dz, dx);
+          const cx = (x1 + x2) / 2;
+          const cz = (z1 + z2) / 2;
+
+          const wall = new THREE.Mesh(new THREE.BoxGeometry(edgeLen + 0.01, h, wallThickness), frameMat);
+          wall.position.set(cx, h / 2, cz);
+          wall.rotation.y = edgeAng;
+          scene.add(wall);
+
+          const cap = new THREE.Mesh(new THREE.BoxGeometry(edgeLen + 0.08, bedCapThickness, bedCapDepth), frameMat);
+          cap.position.set(cx, h + bedCapThickness / 2, cz);
+          cap.rotation.y = edgeAng;
+          scene.add(cap);
+        }
+        const seamCount = Math.max(1, Number(b.courses) || 1);
+        for (let si = 1; si < seamCount; si++) {
+          const seamY = (h * si) / seamCount;
+          for (let i = 0; i < worldVerts.length; i++) {
+            const [x1, z1] = worldVerts[i];
+            const [x2, z2] = worldVerts[(i + 1) % worldVerts.length];
+            const dx = x2 - x1, dz = z2 - z1;
+            const edgeLen = Math.hypot(dx, dz);
+            if (edgeLen <= 0.08) continue;
+            const seam = new THREE.Mesh(new THREE.BoxGeometry(Math.max(edgeLen - 0.02, 0.08), 0.03, 0.04), frameSeamMat);
+            seam.position.set((x1 + x2) / 2, seamY, (z1 + z2) / 2);
+            seam.rotation.y = Math.atan2(dz, dx);
+            scene.add(seam);
+          }
+        }
+
+        // soil follows the actual L footprint
+        const soilTris = THREE.ShapeUtils.triangulateShape(localVerts.map(([x, y]) => new THREE.Vector2(x, y)), []);
+        const soilPts = [];
+        soilTris.forEach((tri) => {
+          tri.forEach((idx) => {
+            const [px, py] = localVerts[idx];
+            const [sx, sz] = localToWorld(px, py);
+            soilPts.push(sx, h - 0.02, sz);
+          });
+        });
+        if (soilPts.length >= 9) {
+          const soilGeo = new THREE.BufferGeometry();
+          soilGeo.setAttribute("position", new THREE.Float32BufferAttribute(soilPts, 3));
+          soilGeo.computeVertexNormals();
+          const soil = new THREE.Mesh(soilGeo, soilMat);
+          scene.add(soil);
+        }
+
+        // planted-row markers constrained to the L footprint
+        plantDots(bw, bl, true, localVerts).forEach(([px, py], i) => {
+          const [sx, sz] = localToWorld(px, py);
+          const plant = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.22, 6), mkMat({ color: plantColors[i % plantColors.length], roughness: 0.95, metalness: 0 }));
+          plant.position.set(sx, h + 0.12, sz);
+          scene.add(plant);
+        });
+      } else {
+        // hollow frame (4 thin walls) so it reads as a bed, not a solid block
+        const front = new THREE.Mesh(new THREE.BoxGeometry(cw, h, wallThickness), frameMat);
+        front.position.set(wx0 + cw / 2, h / 2, wz0 + wallThickness / 2);
+        scene.add(front);
+        const back = new THREE.Mesh(new THREE.BoxGeometry(cw, h, wallThickness), frameMat);
+        back.position.set(wx0 + cw / 2, h / 2, wz0 + cl - wallThickness / 2);
+        scene.add(back);
+        const leftW = new THREE.Mesh(new THREE.BoxGeometry(wallThickness, h, cl), frameMat);
+        leftW.position.set(wx0 + wallThickness / 2, h / 2, wz0 + cl / 2);
+        scene.add(leftW);
+        const rightW = new THREE.Mesh(new THREE.BoxGeometry(wallThickness, h, cl), frameMat);
+        rightW.position.set(wx0 + cw - wallThickness / 2, h / 2, wz0 + cl / 2);
+        scene.add(rightW);
+        const capFront = new THREE.Mesh(new THREE.BoxGeometry(cw + 0.08, bedCapThickness, bedCapDepth), frameMat);
+        capFront.position.set(wx0 + cw / 2, h + bedCapThickness / 2, wz0 + bedCapDepth / 2);
+        scene.add(capFront);
+        const capBack = new THREE.Mesh(new THREE.BoxGeometry(cw + 0.08, bedCapThickness, bedCapDepth), frameMat);
+        capBack.position.set(wx0 + cw / 2, h + bedCapThickness / 2, wz0 + cl - bedCapDepth / 2);
+        scene.add(capBack);
+        const capLeft = new THREE.Mesh(new THREE.BoxGeometry(bedCapDepth, bedCapThickness, cl + 0.08), frameMat);
+        capLeft.position.set(wx0 + bedCapDepth / 2, h + bedCapThickness / 2, wz0 + cl / 2);
+        scene.add(capLeft);
+        const capRight = new THREE.Mesh(new THREE.BoxGeometry(bedCapDepth, bedCapThickness, cl + 0.08), frameMat);
+        capRight.position.set(wx0 + cw - bedCapDepth / 2, h + bedCapThickness / 2, wz0 + cl / 2);
+        scene.add(capRight);
+        const seamCount = Math.max(1, Number(b.courses) || 1);
+        for (let si = 1; si < seamCount; si++) {
+          const seamY = (h * si) / seamCount;
+          const seamFront = new THREE.Mesh(new THREE.BoxGeometry(cw - 0.02, 0.03, 0.04), frameSeamMat);
+          seamFront.position.set(wx0 + cw / 2, seamY, wz0 + wallThickness + 0.02);
+          scene.add(seamFront);
+          const seamBack = new THREE.Mesh(new THREE.BoxGeometry(cw - 0.02, 0.03, 0.04), frameSeamMat);
+          seamBack.position.set(wx0 + cw / 2, seamY, wz0 + cl - wallThickness - 0.02);
+          scene.add(seamBack);
+          const seamLeft = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.03, cl - 0.02), frameSeamMat);
+          seamLeft.position.set(wx0 + wallThickness + 0.02, seamY, wz0 + cl / 2);
+          scene.add(seamLeft);
+          const seamRight = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.03, cl - 0.02), frameSeamMat);
+          seamRight.position.set(wx0 + cw - wallThickness - 0.02, seamY, wz0 + cl / 2);
+          scene.add(seamRight);
+        }
+
+        // mounded soil, sitting just proud of the rim
+        const soil = new THREE.Mesh(new THREE.BoxGeometry(Math.max(cw - 2 * wallThickness, 0.1), 0.14, Math.max(cl - 2 * wallThickness, 0.1)), soilMat);
+        soil.position.set(wx0 + cw / 2, h - 0.02, wz0 + cl / 2);
+        scene.add(soil);
+
+        // small planted-row markers
+        plantDots(cw, cl, false, null).forEach(([lx, lz], i) => {
+          const plant = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.22, 6), mkMat({ color: plantColors[i % plantColors.length], roughness: 0.95, metalness: 0 }));
+          plant.position.set(wx0 + lx, h + 0.12, wz0 + lz);
+          scene.add(plant);
+        });
       }
-
-      // mounded soil, sitting just proud of the rim
-      const soil = new THREE.Mesh(new THREE.BoxGeometry(Math.max(cw - 2 * wallThickness, 0.1), 0.14, Math.max(cl - 2 * wallThickness, 0.1)), soilMat);
-      soil.position.set(wx0 + cw / 2, h - 0.02, wz0 + cl / 2);
-      scene.add(soil);
-
-      // small planted-row markers
-      plantDots(cw, cl, false, null).forEach(([lx, lz], i) => {
-        const plant = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.22, 6), mkMat({ color: plantColors[i % plantColors.length], roughness: 0.95, metalness: 0 }));
-        plant.position.set(wx0 + lx, h + 0.12, wz0 + lz);
-        scene.add(plant);
-      });
 
       // trellis — matches this bed's chosen dimension (width or length), mounted on top of the frame
       if (b.trellis && showBedTrellis3d) {
