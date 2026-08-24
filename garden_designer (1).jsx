@@ -1554,16 +1554,18 @@ export default function GardenDesigner() {
       const wx0 = b.x - W / 2, wz0 = b.y - L / 2; // world position of the bed's plan corner
       const localToWorld = (px, py) => (
         b.rotated
-          ? [wx0 + py, wz0 + (bw - px)]
+          ? [wx0 + bl - py, wz0 + px]
           : [wx0 + px, wz0 + py]
       );
 
-      if (b.shape === "L") {
+      const isL = String(b.shape || "").toUpperCase() === "L";
+      if (isL) {
         const notchW = numOr(b.notchWidth, Math.max(Math.min(2, bw / 2), 0.5));
         const notchD = numOr(b.notchDepth, Math.max(Math.min(2, bl / 2), 0.5));
         const localCorner = displayCornerToLocal(b.notchCorner || "top-right", !!b.rotated);
         const localVerts = lShapeVertices(bw, bl, notchW, notchD, localCorner);
         const worldVerts = localVerts.map(([px, py]) => localToWorld(px, py));
+        const topOutlinePts = [...worldVerts, worldVerts[0]].flatMap(([x, z]) => [x, h + bedCapThickness + 0.01, z]);
 
         // wall and cap segments follow each L edge so L beds do not render as square boxes
         for (let i = 0; i < worldVerts.length; i++) {
@@ -1601,6 +1603,10 @@ export default function GardenDesigner() {
             scene.add(seam);
           }
         }
+        const outlineGeo = new THREE.BufferGeometry();
+        outlineGeo.setAttribute("position", new THREE.Float32BufferAttribute(topOutlinePts, 3));
+        const outline = new THREE.Line(outlineGeo, new THREE.LineBasicMaterial({ color: "#7A5432", transparent: true, opacity: 0.88 }));
+        scene.add(outline);
 
         // soil follows the actual L footprint
         const soilTris = THREE.ShapeUtils.triangulateShape(localVerts.map(([x, y]) => new THREE.Vector2(x, y)), []);
