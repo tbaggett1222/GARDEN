@@ -134,6 +134,7 @@ const SAMPLE_PLAN_META = {
   "22-entertaining-34x60-pavilion-dining.json": "34x60 hosting layout with outside pergola dining plus pavilion lounge.",
   "23-entertaining-40x60-event-lawn.json": "40x60 event-friendly layout with open lawn and an outside catering pergola.",
   "24-entertaining-40x60-gazebo-orchard.json": "40x60 gazebo and orchard entertaining layout with an outside banquet pergola.",
+  "25-tractor-ready-40x60-pebble-corner-l-beds.json": "40x60 tractor-ready layout with 8 ft fencing, 6 ft double gate, pebble ground cover, and 3 ft tall L-corner beds.",
 };
 function titleCaseWords(s) { return s.replace(/\b\w/g, (c) => c.toUpperCase()); }
 const SAMPLE_PLAN_MODULES = import.meta.glob("./sample-plans/*.json", { eager: true });
