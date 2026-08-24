@@ -1,0 +1,223 @@
+{
+  "enclosure": {
+    "width": 40,
+    "length": 60
+  },
+  "fenceHeight": 8,
+  "postSpacing": 8,
+  "gates": [
+    {
+      "id": 1,
+      "wall": "bottom",
+      "offset": 17,
+      "width": 6
+    }
+  ],
+  "courses": 3,
+  "beds": [
+    {
+      "id": 1,
+      "label": "Corner Bed NW",
+      "width": 8,
+      "length": 8,
+      "qty": 1,
+      "courses": 3,
+      "shape": "L",
+      "notchWidth": 5,
+      "notchDepth": 5,
+      "notchCorner": "bottom-right",
+      "zone": "center",
+      "cropKey": "mixed",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [
+        {
+          "x": 0,
+          "y": 0,
+          "rotated": false
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "label": "Corner Bed NE",
+      "width": 8,
+      "length": 8,
+      "qty": 1,
+      "courses": 3,
+      "shape": "L",
+      "notchWidth": 5,
+      "notchDepth": 5,
+      "notchCorner": "bottom-left",
+      "zone": "center",
+      "cropKey": "mixed",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [
+        {
+          "x": 32,
+          "y": 0,
+          "rotated": false
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "label": "Corner Bed SW",
+      "width": 8,
+      "length": 8,
+      "qty": 1,
+      "courses": 3,
+      "shape": "L",
+      "notchWidth": 5,
+      "notchDepth": 5,
+      "notchCorner": "top-right",
+      "zone": "center",
+      "cropKey": "mixed",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [
+        {
+          "x": 0,
+          "y": 52,
+          "rotated": false
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "label": "Corner Bed SE",
+      "width": 8,
+      "length": 8,
+      "qty": 1,
+      "courses": 3,
+      "shape": "L",
+      "notchWidth": 5,
+      "notchDepth": 5,
+      "notchCorner": "top-left",
+      "zone": "center",
+      "cropKey": "mixed",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [
+        {
+          "x": 32,
+          "y": 52,
+          "rotated": false
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "label": "Tractor Access Rows",
+      "width": 3,
+      "length": 8,
+      "qty": 9,
+      "courses": 3,
+      "shape": "rect",
+      "zone": "center",
+      "cropKey": "tomato",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [
+        {
+          "x": 12,
+          "y": 12,
+          "rotated": false
+        },
+        {
+          "x": 19,
+          "y": 12,
+          "rotated": false
+        },
+        {
+          "x": 26,
+          "y": 12,
+          "rotated": false
+        },
+        {
+          "x": 12,
+          "y": 23,
+          "rotated": false
+        },
+        {
+          "x": 19,
+          "y": 23,
+          "rotated": false
+        },
+        {
+          "x": 26,
+          "y": 23,
+          "rotated": false
+        },
+        {
+          "x": 12,
+          "y": 34,
+          "rotated": false
+        },
+        {
+          "x": 19,
+          "y": 34,
+          "rotated": false
+        },
+        {
+          "x": 26,
+          "y": 34,
+          "rotated": false
+        }
+      ]
+    }
+  ],
+  "patios": [
+    {
+      "id": 250,
+      "label": "Pebble Ground Cover",
+      "width": 40,
+      "length": 60,
+      "surface": "gravel",
+      "structureType": "none",
+      "structureHeight": 8,
+      "roofStyle": "hip",
+      "roofDirection": "auto",
+      "doorWidth": 3,
+      "furnishings": false,
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "yardMargin": 18,
+  "landscape": [
+    {
+      "id": 251,
+      "type": "path",
+      "label": "6 ft Tractor Entry Lane",
+      "width": 6,
+      "length": 14,
+      "qty": 1,
+      "x": 17,
+      "y": 46
+    }
+  ],
+  "prices": {},
+  "gardenSite": {
+    "usdaZone": 7,
+    "sunHours": 8
+  },
+  "irrigation": {
+    "enabled": true,
+    "method": "drip",
+    "zones": 6,
+    "rowSpacingIn": 12,
+    "emitterSpacingIn": 12,
+    "emitterGph": 0.5,
+    "minutesPerDay": 42,
+    "daysPerWeek": 4
+  },
+  "renderQuality3d": "cinematic",
+  "savedAt": "2026-08-24T14:40:00Z"
+}

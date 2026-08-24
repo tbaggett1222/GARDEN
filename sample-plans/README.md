@@ -35,6 +35,7 @@ All included plans are quality-checked to keep beds clear of gate access lanes a
 20. `22-entertaining-34x60-pavilion-dining.json` — 34×60 dual-pavilion dining and guest hosting layout
 21. `23-entertaining-40x60-event-lawn.json` — 40×60 event lawn with a pavilion court for gatherings
 22. `24-entertaining-40x60-gazebo-orchard.json` — 40×60 gazebo + orchard entertaining plan with banquet patio
+23. `25-tractor-ready-40x60-pebble-corner-l-beds.json` — 40×60 tractor-ready plan with pebble ground cover, 8 ft fence, and 6 ft double gate
 
 ## Best plan by goal (quick picker)
 
@@ -60,3 +61,4 @@ All included plans are quality-checked to keep beds clear of gate access lanes a
 - **34×60 pavilion hosting layout:** `22-entertaining-34x60-pavilion-dining.json`
 - **40×60 event lawn + pavilion:** `23-entertaining-40x60-event-lawn.json`
 - **40×60 gazebo + orchard hosting:** `24-entertaining-40x60-gazebo-orchard.json`
+- **40×60 tractor-ready pebble ground + corner L-beds:** `25-tractor-ready-40x60-pebble-corner-l-beds.json`
