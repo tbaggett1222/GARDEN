@@ -1000,9 +1000,9 @@ export default function GardenDesigner() {
     // patios keep their own manually-placed positions — auto-arrange only affects beds
     const placedCenter = [];
     taggedCenter.forEach((bed) => {
-      if (cursorX + bed.width > cx0 + innerW) { cursorX = cx0; cursorY += rowH + 2; rowH = 0; }
+      if (cursorX + bed.width > cx0 + innerW) { cursorX = cx0; cursorY += rowH + gap; rowH = 0; }
       placedCenter.push({ ...bed, x: cursorX, y: cursorY, rotated: false });
-      cursorX += bed.width + 2;
+      cursorX += bed.width + gap;
       rowH = Math.max(rowH, bed.length);
     });
     const allPlaced = [...ringResult.placed, ...placedCenter].map((p) => {
