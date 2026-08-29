@@ -96,7 +96,7 @@ function StructureIcon({ type }) {
   );
 }
 
-const ENCLOSURE_PRESETS = ["8x8", "8x16", "16x16", "16x32"];
+const ENCLOSURE_PRESETS = ["8x8", "8x16", "16x16", "16x32", "32x48", "40x60"];
 const BED_PRESETS = ["3x5", "3x6", "3x8", "4x4", "4x8", "4x10"];
 const PATIO_PRESETS = ["8x8", "10x10", "12x16", "16x20"];
 const STOCK_LENGTHS = [8, 10, 12, 16];
