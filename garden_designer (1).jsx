@@ -135,6 +135,9 @@ const SAMPLE_PLAN_META = {
   "23-entertaining-40x60-event-lawn.json": "40x60 event-friendly layout with open lawn and an outside catering pergola.",
   "24-entertaining-40x60-gazebo-orchard.json": "40x60 gazebo and orchard entertaining layout with an outside banquet pergola.",
   "25-tractor-ready-40x60-pebble-corner-l-beds.json": "40x60 tractor-ready layout with 8 ft fencing, 6 ft double gate, pebble ground cover, and 3 ft tall L-corner beds.",
+  "26-market-40x60-long-rows.json": "40x60 market garden with long production rows, a center tractor lane, and an outside-fence pergola break.",
+  "27-family-40x60-orchard-lawn.json": "40x60 family garden with kitchen beds, a berry row, an orchard edge, play lawn, and a pergola patio.",
+  "28-permaculture-40x60-guild-beds.json": "40x60 permaculture layout with guild blocks, polyculture rows, a pollinator border, and an outside pergola.",
 };
 function titleCaseWords(s) { return s.replace(/\b\w/g, (c) => c.toUpperCase()); }
 const SAMPLE_PLAN_MODULES = import.meta.glob("./sample-plans/*.json", { eager: true });
@@ -142,6 +145,7 @@ const SAMPLE_PLANS = Object.entries(SAMPLE_PLAN_MODULES)
   .map(([path, mod]) => {
     const file = path.split("/").pop() || path;
     const data = mod.default || mod;
+    const area = data?.enclosure ? (Number(data.enclosure.width) || 0) * (Number(data.enclosure.length) || 0) : 0;
     const size = data?.enclosure ? `${data.enclosure.width}×${data.enclosure.length} ft` : "";
     const hasOutsidePergola = !!(data?.enclosure && Array.isArray(data?.patios) && data.patios.some((p) => (
       p?.structureType === "pergola"
@@ -155,6 +159,7 @@ const SAMPLE_PLANS = Object.entries(SAMPLE_PLAN_MODULES)
     return {
       file,
       data,
+      area,
       label: titleCaseWords(file
         .replace(/^\d{2}-/, "")
         .replace(/\.json$/, "")
@@ -164,7 +169,9 @@ const SAMPLE_PLANS = Object.entries(SAMPLE_PLAN_MODULES)
       hasOutsidePergola,
     };
   })
-  .sort((a, b) => a.file.localeCompare(b.file));
+  // Show the biggest gardens first so large layouts (e.g. 40x60) are easy to find
+  // in the Load menu instead of being buried below the smaller starter plans.
+  .sort((a, b) => (b.area - a.area) || a.file.localeCompare(b.file));
 
 function fmt(n) { return n.toLocaleString(undefined, { style: "currency", currency: "USD" }); }
 function round1(n) { return Math.round(n * 10) / 10; }
@@ -2136,7 +2143,7 @@ export default function GardenDesigner() {
         .gdw-structcard:hover{border-color:var(--leaf);}
         .gdw-structcard.active{border-color:var(--leaf);background:#F0F5EC;box-shadow:0 0 0 1px var(--leaf) inset;}
         .gdw-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:18px;padding:10px 14px;background:var(--panel);border:1px solid var(--line);border-radius:10px;}
-        .gdw-loadmenu{position:absolute;top:110%;left:0;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,0.18);min-width:270px;max-height:300px;overflow-y:auto;z-index:20;padding:6px;}
+        .gdw-loadmenu{position:absolute;top:110%;left:0;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,0.18);min-width:270px;max-height:min(560px,70vh);overflow-y:auto;z-index:20;padding:6px;}
         .gdw-loadrow{display:flex;justify-content:space-between;align-items:center;padding:4px 6px;border-radius:5px;gap:6px;}
         .gdw-loadrow:hover{background:#F0EADB;}
         .gdw-loadname{background:none;border:none;text-align:left;flex:1;cursor:pointer;font-size:12.5px;color:var(--ink);padding:2px 0;}
