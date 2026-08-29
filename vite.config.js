@@ -3,6 +3,11 @@ import react from "@vitejs/plugin-react";
 import legacy from "@vitejs/plugin-legacy";
 
 export default defineConfig(() => ({
+  // Stamp the build time so the running app can display which build it is,
+  // making stale-cache situations easy to spot and confirm.
+  define: {
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  },
   plugins: [
     react(),
     legacy({
