@@ -1,0 +1,179 @@
+{
+  "enclosure": {
+    "width": 40,
+    "length": 60
+  },
+  "fenceHeight": 6,
+  "postSpacing": 8,
+  "gates": [
+    {
+      "id": 1,
+      "wall": "bottom",
+      "offset": 15,
+      "width": 10
+    },
+    {
+      "id": 2,
+      "wall": "top",
+      "offset": 18,
+      "width": 4
+    }
+  ],
+  "courses": 3,
+  "beds": [
+    {
+      "id": 1,
+      "label": "Long Row Crops",
+      "width": 4,
+      "length": 12,
+      "qty": 10,
+      "courses": 3,
+      "shape": "rect",
+      "zone": "center",
+      "cropKey": "tomato",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [
+        {
+          "x": 4,
+          "y": 6,
+          "rotated": false
+        },
+        {
+          "x": 11,
+          "y": 6,
+          "rotated": false
+        },
+        {
+          "x": 18,
+          "y": 6,
+          "rotated": false
+        },
+        {
+          "x": 25,
+          "y": 6,
+          "rotated": false
+        },
+        {
+          "x": 32,
+          "y": 6,
+          "rotated": false
+        },
+        {
+          "x": 4,
+          "y": 22,
+          "rotated": false
+        },
+        {
+          "x": 11,
+          "y": 22,
+          "rotated": false
+        },
+        {
+          "x": 18,
+          "y": 22,
+          "rotated": false
+        },
+        {
+          "x": 25,
+          "y": 22,
+          "rotated": false
+        },
+        {
+          "x": 32,
+          "y": 22,
+          "rotated": false
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "label": "Salad Succession",
+      "width": 3,
+      "length": 10,
+      "qty": 5,
+      "courses": 2,
+      "shape": "rect",
+      "zone": "center",
+      "cropKey": "lettuce",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [
+        {
+          "x": 4,
+          "y": 40,
+          "rotated": false
+        },
+        {
+          "x": 11,
+          "y": 40,
+          "rotated": false
+        },
+        {
+          "x": 18,
+          "y": 40,
+          "rotated": false
+        },
+        {
+          "x": 25,
+          "y": 40,
+          "rotated": false
+        },
+        {
+          "x": 32,
+          "y": 40,
+          "rotated": false
+        }
+      ]
+    }
+  ],
+  "patios": [
+    {
+      "id": 260,
+      "label": "Outside Pergola Break",
+      "width": 10,
+      "length": 12,
+      "surface": "pavers",
+      "structureType": "pergola",
+      "structureHeight": 9,
+      "roofStyle": "flat",
+      "roofDirection": "auto",
+      "doorWidth": 3,
+      "furnishings": true,
+      "x": 42,
+      "y": 40
+    }
+  ],
+  "yardMargin": 20,
+  "landscape": [
+    {
+      "id": 261,
+      "type": "path",
+      "label": "Center Tractor Lane",
+      "width": 4,
+      "length": 56,
+      "qty": 1,
+      "x": 18,
+      "y": 2
+    }
+  ],
+  "irrigation": {
+    "enabled": true,
+    "method": "drip",
+    "zones": 5,
+    "rowSpacingIn": 12,
+    "emitterSpacingIn": 12,
+    "emitterGph": 0.5,
+    "minutesPerDay": 40,
+    "daysPerWeek": 4
+  },
+  "savedAt": "2026-08-29T12:00:00Z",
+  "prices": {},
+  "gardenSite": {
+    "usdaZone": 7,
+    "sunHours": 8
+  },
+  "renderQuality3d": "cinematic"
+}

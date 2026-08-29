@@ -1,0 +1,184 @@
+{
+  "enclosure": {
+    "width": 40,
+    "length": 60
+  },
+  "fenceHeight": 6,
+  "postSpacing": 8,
+  "gates": [
+    {
+      "id": 1,
+      "wall": "bottom",
+      "offset": 16,
+      "width": 8
+    }
+  ],
+  "courses": 3,
+  "beds": [
+    {
+      "id": 1,
+      "label": "Guild Blocks",
+      "width": 6,
+      "length": 6,
+      "qty": 6,
+      "courses": 3,
+      "shape": "rect",
+      "zone": "center",
+      "cropKey": "mixed",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [
+        {
+          "x": 4,
+          "y": 6,
+          "rotated": false
+        },
+        {
+          "x": 13,
+          "y": 6,
+          "rotated": false
+        },
+        {
+          "x": 4,
+          "y": 16,
+          "rotated": false
+        },
+        {
+          "x": 13,
+          "y": 16,
+          "rotated": false
+        },
+        {
+          "x": 4,
+          "y": 26,
+          "rotated": false
+        },
+        {
+          "x": 13,
+          "y": 26,
+          "rotated": false
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "label": "Polyculture Rows",
+      "width": 4,
+      "length": 12,
+      "qty": 4,
+      "courses": 3,
+      "shape": "rect",
+      "zone": "center",
+      "cropKey": "tomato",
+      "trellis": true,
+      "trellisHeight": 7,
+      "trellisSide": "length",
+      "positions": [
+        {
+          "x": 24,
+          "y": 6,
+          "rotated": false
+        },
+        {
+          "x": 31,
+          "y": 6,
+          "rotated": false
+        },
+        {
+          "x": 24,
+          "y": 22,
+          "rotated": false
+        },
+        {
+          "x": 31,
+          "y": 22,
+          "rotated": false
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "label": "Pollinator Border",
+      "width": 3,
+      "length": 14,
+      "qty": 4,
+      "courses": 2,
+      "shape": "rect",
+      "zone": "center",
+      "cropKey": "mixed",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [
+        {
+          "x": 4,
+          "y": 44,
+          "rotated": false
+        },
+        {
+          "x": 12,
+          "y": 44,
+          "rotated": false
+        },
+        {
+          "x": 20,
+          "y": 44,
+          "rotated": false
+        },
+        {
+          "x": 28,
+          "y": 44,
+          "rotated": false
+        }
+      ]
+    }
+  ],
+  "patios": [
+    {
+      "id": 280,
+      "label": "Outside Gathering Pergola",
+      "width": 10,
+      "length": 12,
+      "surface": "gravel",
+      "structureType": "pergola",
+      "structureHeight": 9,
+      "roofStyle": "flat",
+      "roofDirection": "auto",
+      "doorWidth": 3,
+      "furnishings": true,
+      "x": 42,
+      "y": 30
+    }
+  ],
+  "yardMargin": 20,
+  "landscape": [
+    {
+      "id": 281,
+      "type": "tree",
+      "label": "Fruit Trees",
+      "width": 5,
+      "length": 5,
+      "qty": 3,
+      "x": 43,
+      "y": 6
+    }
+  ],
+  "irrigation": {
+    "enabled": true,
+    "method": "drip",
+    "zones": 5,
+    "rowSpacingIn": 12,
+    "emitterSpacingIn": 12,
+    "emitterGph": 0.5,
+    "minutesPerDay": 40,
+    "daysPerWeek": 4
+  },
+  "savedAt": "2026-08-29T12:00:00Z",
+  "prices": {},
+  "gardenSite": {
+    "usdaZone": 7,
+    "sunHours": 8
+  },
+  "renderQuality3d": "cinematic"
+}
