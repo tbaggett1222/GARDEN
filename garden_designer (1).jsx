@@ -2197,6 +2197,9 @@ export default function GardenDesigner() {
           <h1 className="gdw-title">Raised Bed Garden Designer</h1>
         </div>
         <p className="gdw-sub gdw-noprint">Set your fence, add beds, drop in a patio if you want one — then take the priced shopping list below to Home Depot or Lowes. Toggle to 3D any time to see it in space.</p>
+        <p className="gdw-sub gdw-noprint" style={{ fontSize: 11, opacity: 0.5, marginTop: -8 }}>
+          Build {(typeof __BUILD_TIME__ !== "undefined" ? __BUILD_TIME__ : "dev").replace("T", " ").slice(0, 16)} UTC
+        </p>
 
         <div className="gdw-print-header">
           <h1 style={{ fontFamily: "'Fraunces',serif", fontSize: 22, margin: "0 0 4px 0" }}>Raised Bed Garden Plan{reportName ? ` — ${reportName}` : ""}</h1>
