@@ -173,6 +173,37 @@ function numOr(value, fallback = 0) {
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
 }
+// Safeguard: when a design is loaded, nudge any bed whose footprint sits on or
+// crosses the enclosure fence back inside, keeping a small clearance. Beds that
+// are already comfortably inside are left untouched, so hand-placed layouts are
+// preserved. Uses the axis-aligned bounding box (rotation and L-shape aware).
+const BED_FENCE_CLEARANCE = 1; // preferred gap (ft) from the fence when correcting
+function insetBedsWithinEnclosure(beds, enclosure) {
+  const W = Math.max(numOr(enclosure?.width, 0), 0);
+  const L = Math.max(numOr(enclosure?.length, 0), 0);
+  if (!Array.isArray(beds) || W <= 0 || L <= 0) return beds;
+  const EPS = 1e-6;
+  return beds.map((bed) => {
+    if (!Array.isArray(bed?.positions)) return bed;
+    let changed = false;
+    const positions = bed.positions.map((pos) => {
+      const fw = pos?.rotated ? numOr(bed.length) : numOr(bed.width);
+      const fh = pos?.rotated ? numOr(bed.width) : numOr(bed.length);
+      const x = numOr(pos?.x);
+      const y = numOr(pos?.y);
+      const onFence = x < EPS || y < EPS || x + fw > W - EPS || y + fh > L - EPS;
+      if (!onFence) return pos;
+      const cx = Math.min(BED_FENCE_CLEARANCE, Math.max((W - fw) / 2, 0));
+      const cy = Math.min(BED_FENCE_CLEARANCE, Math.max((L - fh) / 2, 0));
+      const nx = round1(clamp(x, cx, Math.max(W - fw - cx, cx)));
+      const ny = round1(clamp(y, cy, Math.max(L - fh - cy, cy)));
+      if (nx === x && ny === y) return pos;
+      changed = true;
+      return { ...pos, x: nx, y: ny };
+    });
+    return changed ? { ...bed, positions } : bed;
+  });
+}
 function normalizePatio(patio) {
   const structureType = STRUCTURE_TYPES[patio?.structureType] ? patio.structureType : "none";
   return {
@@ -1140,7 +1171,7 @@ export default function GardenDesigner() {
     if (data.postSpacing) setPostSpacing(data.postSpacing);
     if (data.gates) setGates(data.gates);
     if (data.courses) setCourses(data.courses);
-    if (data.beds) setBeds(data.beds);
+    if (data.beds) setBeds(insetBedsWithinEnclosure(data.beds, data.enclosure || enclosure));
     if (data.patios) setPatios(data.patios.map(normalizePatio));
     else if (data.includePatio && data.patio) setPatios([normalizePatio({ id: ++idCounter, label: "Patio A", structureHeight: 8, roofStyle: "hip", doorWidth: 3, ...data.patio })]); // back-compat with single-patio saves
     if (data.yardMargin) setYardMargin(data.yardMargin);
