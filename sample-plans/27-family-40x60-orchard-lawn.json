@@ -1,0 +1,200 @@
+{
+  "enclosure": {
+    "width": 40,
+    "length": 60
+  },
+  "fenceHeight": 6,
+  "postSpacing": 7,
+  "gates": [
+    {
+      "id": 1,
+      "wall": "bottom",
+      "offset": 17,
+      "width": 6
+    },
+    {
+      "id": 2,
+      "wall": "left",
+      "offset": 26,
+      "width": 4
+    }
+  ],
+  "courses": 3,
+  "beds": [
+    {
+      "id": 1,
+      "label": "Kitchen Beds",
+      "width": 4,
+      "length": 8,
+      "qty": 6,
+      "courses": 3,
+      "shape": "rect",
+      "zone": "center",
+      "cropKey": "pepper",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [
+        {
+          "x": 4,
+          "y": 6,
+          "rotated": false
+        },
+        {
+          "x": 11,
+          "y": 6,
+          "rotated": false
+        },
+        {
+          "x": 4,
+          "y": 18,
+          "rotated": false
+        },
+        {
+          "x": 11,
+          "y": 18,
+          "rotated": false
+        },
+        {
+          "x": 4,
+          "y": 30,
+          "rotated": false
+        },
+        {
+          "x": 11,
+          "y": 30,
+          "rotated": false
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "label": "Berry Rows",
+      "width": 3,
+      "length": 10,
+      "qty": 4,
+      "courses": 2,
+      "shape": "rect",
+      "zone": "center",
+      "cropKey": "mixed",
+      "trellis": true,
+      "trellisHeight": 6,
+      "trellisSide": "length",
+      "positions": [
+        {
+          "x": 4,
+          "y": 46,
+          "rotated": false
+        },
+        {
+          "x": 10,
+          "y": 46,
+          "rotated": false
+        },
+        {
+          "x": 16,
+          "y": 46,
+          "rotated": false
+        },
+        {
+          "x": 22,
+          "y": 46,
+          "rotated": false
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "label": "Orchard Squares",
+      "width": 5,
+      "length": 5,
+      "qty": 4,
+      "courses": 3,
+      "shape": "rect",
+      "zone": "center",
+      "cropKey": "squash",
+      "trellis": false,
+      "trellisHeight": 6,
+      "trellisSide": "width",
+      "positions": [
+        {
+          "x": 31,
+          "y": 6,
+          "rotated": false
+        },
+        {
+          "x": 31,
+          "y": 15,
+          "rotated": false
+        },
+        {
+          "x": 31,
+          "y": 24,
+          "rotated": false
+        },
+        {
+          "x": 31,
+          "y": 33,
+          "rotated": false
+        }
+      ]
+    }
+  ],
+  "patios": [
+    {
+      "id": 270,
+      "label": "Family Lawn Patio",
+      "width": 12,
+      "length": 12,
+      "surface": "pavers",
+      "structureType": "pergola",
+      "structureHeight": 9,
+      "roofStyle": "gable",
+      "roofDirection": "auto",
+      "doorWidth": 3,
+      "furnishings": true,
+      "x": 44,
+      "y": 20
+    }
+  ],
+  "yardMargin": 20,
+  "landscape": [
+    {
+      "id": 271,
+      "type": "tree",
+      "label": "Shade Trees",
+      "width": 5,
+      "length": 5,
+      "qty": 2,
+      "x": 44,
+      "y": 6
+    },
+    {
+      "id": 272,
+      "type": "path",
+      "label": "Play Lawn Path",
+      "width": 6,
+      "length": 20,
+      "qty": 1,
+      "x": 24,
+      "y": 34
+    }
+  ],
+  "irrigation": {
+    "enabled": true,
+    "method": "drip",
+    "zones": 4,
+    "rowSpacingIn": 12,
+    "emitterSpacingIn": 12,
+    "emitterGph": 0.5,
+    "minutesPerDay": 38,
+    "daysPerWeek": 4
+  },
+  "savedAt": "2026-08-29T12:00:00Z",
+  "prices": {},
+  "gardenSite": {
+    "usdaZone": 7,
+    "sunHours": 8
+  },
+  "renderQuality3d": "cinematic"
+}
