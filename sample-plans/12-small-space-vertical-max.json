@@ -29,7 +29,7 @@
       "trellisSide": "length",
       "positions": [
         {
-          "x": 0.75,
+          "x": 1,
           "y": 2,
           "rotated": false
         }
@@ -50,7 +50,7 @@
       "trellisSide": "length",
       "positions": [
         {
-          "x": 4.75,
+          "x": 4.5,
           "y": 2,
           "rotated": false
         }
@@ -74,7 +74,7 @@
       "trellisSide": "width",
       "positions": [
         {
-          "x": 0.75,
+          "x": 1,
           "y": 9,
           "rotated": false
         }
@@ -95,7 +95,7 @@
       "trellisSide": "width",
       "positions": [
         {
-          "x": 4.75,
+          "x": 4.5,
           "y": 9,
           "rotated": false
         }
