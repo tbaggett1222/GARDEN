@@ -659,6 +659,11 @@ export default function GardenDesigner() {
   const camStateRef = useRef({ theta: 0.8, phi: 1.0, radius: null });
   const threeZoomBoundsRef = useRef({ minR: 1, maxR: 1 });
   const applyThreeCamRef = useRef(null);
+  const [pick3d, setPick3d] = useState(null); // 3D-selected item: { kind, id, label, removable }
+  const [hover3d, setHover3d] = useState(null); // 3D hover tooltip: { label, x, y }
+  const threePickClearRef = useRef(null); // clears the 3D selection highlight box
+  const pick3dRef = useRef(null);
+  useEffect(() => { pick3dRef.current = pick3d; }, [pick3d]);
   const historyRef = useRef([]);
   const historyHashRef = useRef([]);
   const historyIdxRef = useRef(-1);
@@ -834,6 +839,31 @@ export default function GardenDesigner() {
   }
   function updatePatio(id, patch) { setPatios((ps) => ps.map((p) => (p.id === id ? normalizePatio({ ...p, ...patch }) : p))); }
   function removePatio(id) { setPatios((ps) => ps.filter((p) => p.id !== id)); }
+  function remove3dItem(kind, id) {
+    if (kind === "bed") removeBed(id);
+    else if (kind === "patio") removePatio(id);
+    else if (kind === "landscape") removeLandscape(id);
+    else if (kind === "gate") removeGate(id);
+    setPick3d(null);
+    setHover3d(null);
+    if (threePickClearRef.current) threePickClearRef.current();
+  }
+  useEffect(() => {
+    function onKey(e) {
+      if (viewMode !== "3d" || !pick3d) return;
+      const tag = e.target && e.target.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (e.key === "Delete" || e.key === "Backspace") {
+        if (pick3d.removable) { e.preventDefault(); remove3dItem(pick3d.kind, pick3d.id); }
+      } else if (e.key === "Escape") {
+        setPick3d(null); setHover3d(null);
+        if (threePickClearRef.current) threePickClearRef.current();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewMode, pick3d]);
   function togglePatioExpanded(id) { setExpandedPatios((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; }); }
   function renderLandscapeItem(l) {
     const t = LANDSCAPE_TYPES[l.type];
@@ -1674,6 +1704,23 @@ export default function GardenDesigner() {
     // never washes out the garden itself (which grew hazy on large plans).
     scene.fog = new THREE.Fog("#cfe0e2", Math.max(W, L) * 2.8, Math.max(W, L) * 7.5);
 
+    // Invisible pick proxies (one axis-aligned box per selectable item) used only
+    // for raycasting — never added to the scene, so they don't render, cast
+    // shadows, or affect AO. Lets us identify/remove items from the 3D view.
+    const pickables = [];
+    const pickBoxGeo = new THREE.BoxGeometry(1, 1, 1);
+    const pickProxyMat = new THREE.MeshBasicMaterial();
+    const bedLabelById = {};
+    beds.forEach((b) => { bedLabelById[b.id] = b.label; });
+    function addPickProxy(cx, cy, cz, sx, sy, sz, info) {
+      const m = new THREE.Mesh(pickBoxGeo, pickProxyMat);
+      m.position.set(cx, cy, cz);
+      m.scale.set(Math.max(sx, 0.2), Math.max(sy, 0.2), Math.max(sz, 0.2));
+      m.userData.pick = info;
+      m.updateMatrixWorld(true);
+      pickables.push(m);
+    }
+
     const mkMat = (params = {}) => {
       const { clearcoat, transmission, ...shared } = params;
       if (cinematic) {
@@ -1808,6 +1855,9 @@ export default function GardenDesigner() {
         post.position.set(px - W / 2, fenceHeight / 2, py - L / 2);
         scene.add(post);
       });
+      const gcx = (ep.x1 + ep.x2) / 2 - W / 2, gcz = (ep.y1 + ep.y2) / 2 - L / 2;
+      const gHoriz = g.wall === "top" || g.wall === "bottom";
+      addPickProxy(gcx, fenceHeight / 2, gcz, gHoriz ? g.width : 0.9, fenceHeight, gHoriz ? 0.9 : g.width, { kind: "gate", id: g.id, label: `Gate — ${g.width} ft (${g.wall})`, removable: true });
     });
 
     const postMat = mkMat({ color: "#6B4A2E", map: woodTex, normalMap: woodNormal, normalScale: woodNormalScale, roughness: 0.84, metalness: 0.02, clearcoat: 0.08 });
@@ -1883,6 +1933,8 @@ export default function GardenDesigner() {
           ? [wx0 + bl - py, wz0 + px]
           : [wx0 + px, wz0 + py]
       );
+
+      addPickProxy(wx0 + cw / 2, (h + 0.7) / 2, wz0 + cl / 2, cw, h + 0.7, cl, { kind: "bed", id: b.bedId, label: bedLabelById[b.bedId] || "Raised bed", removable: true });
 
       const isL = String(b.shape || "").toUpperCase() === "L";
       if (isL) {
@@ -2072,6 +2124,8 @@ export default function GardenDesigner() {
       const slab = new THREE.Mesh(new THREE.BoxGeometry(patio.width, 0.08, patio.length), mkMat({ color: patioColor, map: patioTex, roughness: isGravel ? 0.95 : 0.72, metalness: 0.02 }));
       slab.position.set(patio.x + patio.width / 2 - W / 2, 0.04, patio.y + patio.length / 2 - L / 2);
       scene.add(slab);
+      const patioStructH = patio.structureType !== "none" ? (numOr(patio.structureHeight, 8) + 1) : 0.4;
+      addPickProxy(patio.x + patio.width / 2 - W / 2, patioStructH / 2, patio.y + patio.length / 2 - L / 2, patio.width, patioStructH, patio.length, { kind: "patio", id: patio.id, label: (patio.label || "Patio") + (patio.structureType !== "none" && STRUCTURE_TYPES[patio.structureType] ? ` (${STRUCTURE_TYPES[patio.structureType].label})` : ""), removable: true });
       if (patio.structureType !== "none") {
         const postMat3 = mkMat({ color: "#6B4A2E", roughness: 0.84, metalness: 0.03, clearcoat: 0.08 });
         const roofColor = patio.structureType === "gazebo" ? "#7A5637" : "#5C4A38";
@@ -2200,6 +2254,10 @@ export default function GardenDesigner() {
     landscape.forEach((l) => {
       const t = LANDSCAPE_TYPES[l.type];
       const wx = l.x + l.width / 2 - W / 2, wz = l.y + l.length / 2 - L / 2;
+      const lH = l.type === "tree"
+        ? (1.4 + Math.max(numOr(l.width, 1), 1))
+        : (numOr(l.height, 0) || (["bed", "mulch", "grass", "path"].includes(l.type) ? 0.3 : Math.max(numOr(l.width, 1), 1)));
+      addPickProxy(wx, lH / 2, wz, Math.max(numOr(l.width, 0.6), 0.6), lH, Math.max(numOr(l.length, 0.6), 0.6), { kind: "landscape", id: l.id, label: l.label || (t && t.label) || "Landscaping", removable: true });
       if (l.type === "tree") {
         const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 1.4, 8), mkMat({ color: "#6B4A2E", roughness: 0.86, metalness: 0.02, clearcoat: 0.08 }));
         trunk.position.set(wx, 0.7, wz);
@@ -2320,20 +2378,64 @@ export default function GardenDesigner() {
     setThreeZoomPct(radiusToPct(camStateRef.current.radius));
     applyCam();
 
-    let dragging = false, lastX = 0, lastY = 0;
     const dom = renderer.domElement;
     dom.style.cursor = "grab";
     dom.style.touchAction = "none";
-    function onDown(e) { dragging = true; lastX = e.clientX; lastY = e.clientY; dom.style.cursor = "grabbing"; }
-    function onMove(e) {
-      if (!dragging) return;
-      const dx = e.clientX - lastX, dy = e.clientY - lastY;
-      lastX = e.clientX; lastY = e.clientY;
-      camStateRef.current.theta -= dx * 0.006;
-      camStateRef.current.phi = Math.min(1.45, Math.max(0.15, camStateRef.current.phi - dy * 0.006));
-      applyCam();
+
+    // ---- pick / identify / highlight ----
+    const raycaster = new THREE.Raycaster();
+    const ndc = new THREE.Vector2();
+    let selHelper = null;
+    function highlight(info) {
+      if (selHelper) { scene.remove(selHelper); selHelper = null; }
+      if (!info) return;
+      const proxy = pickables.find((m) => m.userData.pick.kind === info.kind && m.userData.pick.id === info.id);
+      if (!proxy) return;
+      const box = new THREE.Box3().setFromObject(proxy);
+      selHelper = new THREE.Box3Helper(box, new THREE.Color(0xffd54a));
+      if (selHelper.material) { selHelper.material.depthTest = false; selHelper.material.transparent = true; }
+      selHelper.renderOrder = 999;
+      scene.add(selHelper);
     }
-    function onUp() { dragging = false; dom.style.cursor = "grab"; }
+    threePickClearRef.current = () => highlight(null);
+    if (pick3dRef.current) highlight(pick3dRef.current); // restore highlight after a rebuild
+    function pickAt(clientX, clientY) {
+      const r = dom.getBoundingClientRect();
+      if (clientX < r.left || clientX > r.right || clientY < r.top || clientY > r.bottom) return { outside: true, pick: null };
+      ndc.x = ((clientX - r.left) / r.width) * 2 - 1;
+      ndc.y = -((clientY - r.top) / r.height) * 2 + 1;
+      raycaster.setFromCamera(ndc, camera);
+      const hits = raycaster.intersectObjects(pickables, false);
+      return { outside: false, pick: hits.length ? hits[0].object.userData.pick : null, cx: clientX - r.left, cy: clientY - r.top };
+    }
+
+    let dragging = false, lastX = 0, lastY = 0, downX = 0, downY = 0, moved = false;
+    function onDown(e) { dragging = true; moved = false; downX = e.clientX; downY = e.clientY; lastX = e.clientX; lastY = e.clientY; dom.style.cursor = "grabbing"; }
+    function onMove(e) {
+      if (dragging) {
+        const dx = e.clientX - lastX, dy = e.clientY - lastY;
+        lastX = e.clientX; lastY = e.clientY;
+        if (Math.hypot(e.clientX - downX, e.clientY - downY) > 4) moved = true;
+        camStateRef.current.theta -= dx * 0.006;
+        camStateRef.current.phi = Math.min(1.45, Math.max(0.15, camStateRef.current.phi - dy * 0.006));
+        applyCam();
+        return;
+      }
+      const res = pickAt(e.clientX, e.clientY);
+      if (res.outside) { setHover3d(null); return; }
+      if (res.pick) { dom.style.cursor = "pointer"; setHover3d({ label: res.pick.label, x: res.cx, y: res.cy }); }
+      else { dom.style.cursor = "grab"; setHover3d(null); }
+    }
+    function onUp(e) {
+      const wasDragging = dragging;
+      dragging = false;
+      dom.style.cursor = "grab";
+      if (wasDragging && !moved) {
+        const res = pickAt(e.clientX, e.clientY);
+        const info = res.outside ? null : (res.pick || null);
+        if (!res.outside) { highlight(info); setPick3d(info); if (!info) setHover3d(null); }
+      }
+    }
     function onWheel(e) {
       e.preventDefault();
       camStateRef.current.radius = Math.min(maxR, Math.max(minR, camStateRef.current.radius * (1 + e.deltaY * 0.001)));
@@ -2389,6 +2491,7 @@ export default function GardenDesigner() {
       dom.removeEventListener("wheel", onWheel);
       window.removeEventListener("resize", onResize);
       applyThreeCamRef.current = null;
+      threePickClearRef.current = null;
       if (composer) composer.dispose();
       renderer.dispose();
       if (container) container.innerHTML = "";
@@ -2462,6 +2565,12 @@ export default function GardenDesigner() {
         .gdw-section{margin-bottom:14px;}
         .gdw-section-title{font-weight:700;font-size:13.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--wood);border-bottom:1px solid var(--line);padding-bottom:4px;margin-bottom:2px;display:flex;justify-content:space-between;}
         .gdw-note{font-size:12px;color:#6b6350;font-style:italic;margin:4px 0 6px 0;}
+        .gdw-3d-tip{position:absolute;pointer-events:none;background:rgba(38,34,24,0.92);color:#fff;font-size:12px;font-weight:600;padding:3px 8px;border-radius:6px;white-space:nowrap;z-index:5;box-shadow:0 2px 8px rgba(0,0,0,0.25);}
+        .gdw-3d-panel{position:absolute;top:10px;left:10px;background:rgba(255,255,255,0.96);border:1px solid var(--line);border-radius:8px;padding:8px 10px;z-index:6;box-shadow:0 4px 14px rgba(0,0,0,0.18);max-width:70%;}
+        .gdw-3d-panel-name{font-size:12.5px;font-weight:600;color:var(--ink);margin-bottom:6px;}
+        .gdw-3d-panel-actions{display:flex;gap:6px;}
+        .gdw-btn-danger{border-color:#d98a6e;color:#a23b1e;}
+        .gdw-btn-danger:hover{background:#fbeae4;}
         table.gdw-table{width:100%;border-collapse:collapse;font-size:13px;min-width:420px;}
         table.gdw-table td{padding:5px 4px;border-bottom:1px solid #ECE4CC;}
         table.gdw-table td.num{text-align:right;font-family:'IBM Plex Mono',monospace;white-space:nowrap;}
@@ -3235,7 +3344,7 @@ export default function GardenDesigner() {
               ) : (
                 <>
                   <p className="gdw-note gdw-noprint" style={{ margin: "0 0 8px 0" }}>
-                    Drag to orbit, scroll to zoom. {renderQuality3d === "cinematic" ? "Cinematic mode uses physically based shading, ACES tonemapping, cedar-style framing, soft shadows, and higher pixel density for a more realistic look." : "Standard mode is optimized for speed on older devices."} This web renderer is an approximation; Unreal Engine 5 features like Nanite/Lumen and full offline path tracing are not available directly in-browser.
+                    Drag to orbit, scroll to zoom. Click any item to identify it, then use Remove (or press Delete) to take it out of the design. {renderQuality3d === "cinematic" ? "Cinematic mode uses physically based shading, ACES tonemapping, cedar-style framing, soft shadows, and higher pixel density for a more realistic look." : "Standard mode is optimized for speed on older devices."} This web renderer is an approximation; Unreal Engine 5 features like Nanite/Lumen and full offline path tracing are not available directly in-browser.
                   </p>
                   <div className="gdw-row gdw-noprint" style={{ margin: "0 0 8px 0", alignItems: "center", gap: 6 }}>
                     <span style={{ fontSize: 12, color: "#5b5342" }}>3D zoom:</span>
@@ -3255,7 +3364,25 @@ export default function GardenDesigner() {
                     <span style={{ fontSize: 11, color: "#8a8065" }}>Close</span>
                     <button className="gdw-btn" onClick={() => nudgeThreeZoom(8)} title="Zoom in 3D preview">+</button>
                   </div>
-                  <div ref={threeContainerRef} className="gdw-three gdw-noprint" style={{ width: "100%", borderRadius: 8, overflow: "hidden", background: "#BFE3D0" }} />
+                  <div className="gdw-noprint" style={{ position: "relative" }}>
+                    <div ref={threeContainerRef} className="gdw-three gdw-noprint" style={{ width: "100%", borderRadius: 8, overflow: "hidden", background: "#BFE3D0" }} />
+                    {hover3d && !pick3d && (
+                      <div className="gdw-3d-tip" style={{ left: hover3d.x + 14, top: hover3d.y + 14 }}>{hover3d.label}</div>
+                    )}
+                    {pick3d && (
+                      <div className="gdw-3d-panel">
+                        <div className="gdw-3d-panel-name">{pick3d.label}</div>
+                        <div className="gdw-3d-panel-actions">
+                          {pick3d.removable && (
+                            <button className="gdw-btn gdw-btn-danger" onClick={() => remove3dItem(pick3d.kind, pick3d.id)}>
+                              <Trash2 size={13} style={{ verticalAlign: -2, marginRight: 4 }} />Remove
+                            </button>
+                          )}
+                          <button className="gdw-btn" onClick={() => { setPick3d(null); setHover3d(null); if (threePickClearRef.current) threePickClearRef.current(); }}>Close</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </>
               )}
             </div>
