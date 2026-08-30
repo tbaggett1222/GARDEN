@@ -1,5 +1,9 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import * as THREE from "three";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { GTAOPass } from "three/addons/postprocessing/GTAOPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { Plus, Trash2, Download, Copy, Leaf, Ruler, ShoppingCart, Fence, Sprout, Home as HomeIcon, RotateCw, LayoutGrid, Box, Map, ChevronDown, ChevronRight, Save, FolderOpen, Printer, Droplets } from "lucide-react";
 
 // ---------- Default unit prices (approx. Home Depot / Lowes, editable in-app) ----------
@@ -237,6 +241,65 @@ function _makeCanvasTexture(key, size, draw) {
   tex.wrapT = THREE.RepeatWrapping;
   _gdTexCache[key] = tex;
   return tex;
+}
+// Build a tangent-space normal map from a grayscale height field so wood/soil
+// pick up real relief under the light. Kept as linear data (no color space).
+function _makeNormalTexture(key, size, drawHeight, strength = 2) {
+  if (_gdTexCache[key]) return _gdTexCache[key];
+  const hc = document.createElement("canvas");
+  hc.width = size; hc.height = size;
+  const hx = hc.getContext("2d");
+  hx.fillStyle = "#808080";
+  hx.fillRect(0, 0, size, size);
+  drawHeight(hx, size);
+  const src = hx.getImageData(0, 0, size, size).data;
+  const H = (x, y) => src[(((y + size) % size) * size + ((x + size) % size)) * 4] / 255;
+  const nc = document.createElement("canvas");
+  nc.width = size; nc.height = size;
+  const nx = nc.getContext("2d");
+  const out = nx.createImageData(size, size);
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const dx = (H(x - 1, y) - H(x + 1, y)) * strength;
+      const dy = (H(x, y - 1) - H(x, y + 1)) * strength;
+      let nX = -dx, nY = -dy, nZ = 1;
+      const len = Math.hypot(nX, nY, nZ) || 1;
+      const i = (y * size + x) * 4;
+      out.data[i] = Math.round((nX / len * 0.5 + 0.5) * 255);
+      out.data[i + 1] = Math.round((nY / len * 0.5 + 0.5) * 255);
+      out.data[i + 2] = Math.round((nZ / len * 0.5 + 0.5) * 255);
+      out.data[i + 3] = 255;
+    }
+  }
+  nx.putImageData(out, 0, 0);
+  const tex = new THREE.CanvasTexture(nc);
+  tex.colorSpace = THREE.NoColorSpace;
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  _gdTexCache[key] = tex;
+  return tex;
+}
+function woodNormalTexture() {
+  return _makeNormalTexture("woodN", 256, (ctx, s) => {
+    const rnd = _seededRandom(29);
+    for (let y = 0; y < s; y++) {
+      const v = 128 + Math.sin(y * 0.12) * 20 + (rnd() - 0.5) * 26;
+      const c = Math.max(0, Math.min(255, v)) | 0;
+      ctx.strokeStyle = `rgb(${c},${c},${c})`;
+      ctx.beginPath(); ctx.moveTo(0, y + 0.5); ctx.lineTo(s, y + 0.5); ctx.stroke();
+    }
+  }, 2.2);
+}
+function soilNormalTexture() {
+  return _makeNormalTexture("soilN", 256, (ctx, s) => {
+    const rnd = _seededRandom(19);
+    for (let i = 0; i < 2600; i++) {
+      const x = rnd() * s, y = rnd() * s, r = 0.6 + rnd() * 2.6;
+      const v = rnd() > 0.5 ? 175 + rnd() * 60 : 55 + rnd() * 50;
+      ctx.fillStyle = `rgb(${v | 0},${v | 0},${v | 0})`;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    }
+  }, 2.6);
 }
 function grassTexture() {
   return _makeCanvasTexture("grass", 512, (ctx, s) => {
@@ -1607,7 +1670,9 @@ export default function GardenDesigner() {
     const pmrem = new THREE.PMREMGenerator(renderer);
     scene.environment = pmrem.fromEquirectangular(skyTex).texture;
     pmrem.dispose();
-    scene.fog = new THREE.Fog("#cfe0e2", Math.max(W, L) * 1.7, Math.max(W, L) * 4.8);
+    // Gentle horizon haze only — kept well beyond typical camera distance so it
+    // never washes out the garden itself (which grew hazy on large plans).
+    scene.fog = new THREE.Fog("#cfe0e2", Math.max(W, L) * 2.8, Math.max(W, L) * 7.5);
 
     const mkMat = (params = {}) => {
       const { clearcoat, transmission, ...shared } = params;
@@ -1663,10 +1728,14 @@ export default function GardenDesigner() {
     const woodTex = woodTexture();
     woodTex.repeat.set(2, 2);
     woodTex.anisotropy = maxAniso;
+    const woodNormal = woodNormalTexture();
+    woodNormal.repeat.set(2, 2);
+    woodNormal.anisotropy = maxAniso;
+    const woodNormalScale = new THREE.Vector2(0.7, 0.7);
 
     // ---- fence walls + posts (with gaps at gate openings) ----
-    const capMat = mkMat({ color: "#B98956", map: woodTex, roughness: 0.82, metalness: 0.02, clearcoat: 0.1 });
-    const fenceSkirtMat = mkMat({ color: "#C89C66", map: woodTex, roughness: 0.76, metalness: 0.02, clearcoat: 0.08 });
+    const capMat = mkMat({ color: "#B98956", map: woodTex, normalMap: woodNormal, normalScale: woodNormalScale, roughness: 0.82, metalness: 0.02, clearcoat: 0.1 });
+    const fenceSkirtMat = mkMat({ color: "#C89C66", map: woodTex, normalMap: woodNormal, normalScale: woodNormalScale, roughness: 0.76, metalness: 0.02, clearcoat: 0.08 });
     const fenceWireMat = new THREE.LineBasicMaterial({ color: "#6C746D", transparent: true, opacity: cinematic ? 0.5 : 0.38 });
     const fenceSkirtH = Math.min(Math.max(fenceHeight * 0.35, 1.6), 2.6);
     function fencePanel(len, h, spacing = 1, material = null) {
@@ -1741,7 +1810,7 @@ export default function GardenDesigner() {
       });
     });
 
-    const postMat = mkMat({ color: "#6B4A2E", map: woodTex, roughness: 0.84, metalness: 0.02, clearcoat: 0.08 });
+    const postMat = mkMat({ color: "#6B4A2E", map: woodTex, normalMap: woodNormal, normalScale: woodNormalScale, roughness: 0.84, metalness: 0.02, clearcoat: 0.08 });
     fencePosts.forEach((p) => {
       const inGate = gates.some((g) => g.wall === p.wall && p.wallOffset > g.offset && p.wallOffset < g.offset + g.width);
       if (inGate) return;
@@ -1752,30 +1821,52 @@ export default function GardenDesigner() {
     });
 
     // ---- raised beds: cedar frame + mounded soil + planted rows ----
-    const frameMat = mkMat({ color: cinematic ? "#C6935D" : "#8A6A45", map: woodTex, roughness: 0.81, metalness: 0.03, clearcoat: 0.1 });
+    const frameMat = mkMat({ color: cinematic ? "#C6935D" : "#8A6A45", map: woodTex, normalMap: woodNormal, normalScale: woodNormalScale, roughness: 0.81, metalness: 0.03, clearcoat: 0.1 });
     const frameSeamMat = mkMat({ color: "#9A6E42", roughness: 0.9, metalness: 0.01 });
     const soilTex = soilTexture();
     soilTex.repeat.set(2, 2);
     soilTex.anisotropy = maxAniso;
-    const soilMat = mkMat({ color: "#c7a686", map: soilTex, roughness: 1, metalness: 0, clearcoat: 0 });
+    const soilNormal = soilNormalTexture();
+    soilNormal.repeat.set(2, 2);
+    soilNormal.anisotropy = maxAniso;
+    const soilMat = mkMat({ color: "#c7a686", map: soilTex, normalMap: soilNormal, normalScale: new THREE.Vector2(1.2, 1.2), roughness: 1, metalness: 0, clearcoat: 0 });
     soilMat.side = THREE.DoubleSide;
-    // Collect all planted rows and render them as one instanced "bush" mesh:
-    // far more realistic than uniform cones, and a big draw-call win on big plans.
-    const plantInstances = [];
+    // Collect planted rows by crop-specific archetype, then render each archetype
+    // as one instanced mesh (organic shapes + big draw-call win on large plans).
+    const plantGroups = {};
     const plantRnd = _seededRandom(101);
-    const plantPalette = ["#5f9048", "#79ab5b", "#4e7d3b", "#8bbd68", "#6b9e4e", "#57893f"];
-    function pushPlant(x, z, h, i, tall) {
-      const s = 0.85 + plantRnd() * 0.6;
-      const heightMul = tall ? 1.5 + plantRnd() * 0.9 : 1;
-      plantInstances.push({
+    const CROP_ARCH = { tomato: "tall", pepper: "tall", beans: "tall", lettuce: "leafy", carrot: "root", onion: "root", squash: "vine" };
+    const ARCH_PALETTE = {
+      bush: ["#5f9048", "#79ab5b", "#4e7d3b", "#6b9e4e", "#57893f"],
+      tall: ["#4e7d3b", "#5f9048", "#3f6b30", "#588a3f"],
+      leafy: ["#8bbd68", "#9ccb74", "#7cae5a", "#a6d07f"],
+      root: ["#6b9e4e", "#79ab5b", "#5f9048"],
+      vine: ["#5b8a55", "#6d9a5f", "#4f7d49", "#7aa564"],
+    };
+    function pushPlant(x, z, h, i, bed) {
+      const arch = bed && bed.trellis ? "tall" : (CROP_ARCH[bed && bed.cropKey] || "bush");
+      const s = 0.9 + plantRnd() * 0.5;
+      const pal = ARCH_PALETTE[arch];
+      (plantGroups[arch] || (plantGroups[arch] = [])).push({
         x: x + (plantRnd() - 0.5) * 0.28,
         z: z + (plantRnd() - 0.5) * 0.28,
-        y: h + 0.08,
+        y: h + 0.05,
         s,
-        sy: s * heightMul,
+        sy: s * (0.85 + plantRnd() * 0.4),
         rotY: plantRnd() * Math.PI * 2,
-        color: plantPalette[(i + Math.floor(plantRnd() * 3)) % plantPalette.length],
+        color: pal[(i + Math.floor(plantRnd() * pal.length)) % pal.length],
       });
+    }
+    function archGeometry(arch) {
+      let g;
+      if (arch === "tall") { g = new THREE.IcosahedronGeometry(0.2, 1); g.scale(0.85, 2.6, 0.85); }        // upright, ~1 ft (tomatoes/peppers/beans)
+      else if (arch === "leafy") { g = new THREE.SphereGeometry(0.28, 10, 7); g.scale(1, 0.42, 1); }        // broad low rosette (lettuce/greens)
+      else if (arch === "root") { g = new THREE.ConeGeometry(0.14, 0.5, 5); }                               // upright frond tuft (carrot/onion)
+      else if (arch === "vine") { g = new THREE.IcosahedronGeometry(0.34, 1); g.scale(1.25, 0.42, 1.25); }  // big sprawling leaves (squash)
+      else { g = new THREE.IcosahedronGeometry(0.22, 1); g.scale(1, 0.85, 1); }                             // rounded bush (mixed)
+      g.computeBoundingBox();
+      g.translate(0, -g.boundingBox.min.y, 0); // rest the base on the soil
+      return g;
     }
     const wallThickness = 0.15;
     const bedCapDepth = 0.22;
@@ -1864,7 +1955,7 @@ export default function GardenDesigner() {
         // planted-row markers constrained to the L footprint
         plantDots(bw, bl, true, localVerts).forEach(([px, py], i) => {
           const [sx, sz] = localToWorld(px, py);
-          pushPlant(sx, sz, h, i, b.trellis);
+          pushPlant(sx, sz, h, i, b);
         });
       } else {
         // hollow frame (4 thin walls) so it reads as a bed, not a solid block
@@ -1916,7 +2007,7 @@ export default function GardenDesigner() {
 
         // small planted-row markers
         plantDots(cw, cl, false, null).forEach(([lx, lz], i) => {
-          pushPlant(wx0 + lx, wz0 + lz, h, i, b.trellis);
+          pushPlant(wx0 + lx, wz0 + lz, h, i, b);
         });
       }
 
@@ -1946,27 +2037,29 @@ export default function GardenDesigner() {
       }
     });
 
-    // ---- planted rows, drawn as one instanced bush mesh ----
-    if (plantInstances.length) {
-      const bushGeo = new THREE.IcosahedronGeometry(0.17, 1);
-      bushGeo.scale(1, 0.82, 1); // slightly domed foliage mound
-      const bushMat = mkMat({ color: 0xffffff, roughness: 0.9, metalness: 0, clearcoat: 0 });
-      const bushes = new THREE.InstancedMesh(bushGeo, bushMat, plantInstances.length);
+    // ---- planted rows: one instanced mesh per crop archetype ----
+    {
       const dummy = new THREE.Object3D();
       const col = new THREE.Color();
-      plantInstances.forEach((p, idx) => {
-        dummy.position.set(p.x, p.y, p.z);
-        dummy.rotation.set(0, p.rotY, 0);
-        dummy.scale.set(p.s, p.sy, p.s);
-        dummy.updateMatrix();
-        bushes.setMatrixAt(idx, dummy.matrix);
-        bushes.setColorAt(idx, col.set(p.color));
+      Object.entries(plantGroups).forEach(([arch, list]) => {
+        if (!list.length) return;
+        const geo = archGeometry(arch);
+        const mat = mkMat({ color: 0xffffff, roughness: 0.9, metalness: 0, clearcoat: 0 });
+        const inst = new THREE.InstancedMesh(geo, mat, list.length);
+        list.forEach((p, idx) => {
+          dummy.position.set(p.x, p.y, p.z);
+          dummy.rotation.set(0, p.rotY, 0);
+          dummy.scale.set(p.s, p.sy, p.s);
+          dummy.updateMatrix();
+          inst.setMatrixAt(idx, dummy.matrix);
+          inst.setColorAt(idx, col.set(p.color));
+        });
+        inst.instanceMatrix.needsUpdate = true;
+        if (inst.instanceColor) inst.instanceColor.needsUpdate = true;
+        inst.castShadow = cinematic;
+        inst.receiveShadow = cinematic;
+        scene.add(inst);
       });
-      bushes.instanceMatrix.needsUpdate = true;
-      if (bushes.instanceColor) bushes.instanceColor.needsUpdate = true;
-      bushes.castShadow = cinematic;
-      bushes.receiveShadow = cinematic;
-      scene.add(bushes);
     }
 
     // ---- patios ----
@@ -2255,13 +2348,37 @@ export default function GardenDesigner() {
       const w2 = container.clientWidth || 600, h2 = container.clientHeight || height;
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, cinematic ? 2 : 1.25));
       renderer.setSize(w2, h2);
+      if (composer) composer.setSize(w2, h2);
       camera.aspect = w2 / h2;
       camera.updateProjectionMatrix();
     }
     window.addEventListener("resize", onResize);
 
+    // Ambient-occlusion contact shadows (cinematic only) via GTAO post-processing.
+    // Wrapped defensively so any addon/GPU hiccup falls back to a plain render.
+    let composer = null;
+    if (cinematic) {
+      try {
+        composer = new EffectComposer(renderer);
+        composer.addPass(new RenderPass(scene, camera));
+        const gtao = new GTAOPass(scene, camera, width, height);
+        if (GTAOPass.OUTPUT) gtao.output = GTAOPass.OUTPUT.Default;
+        try {
+          gtao.updateGtaoMaterial({ radius: 0.85, distanceExponent: 1.0, thickness: 1.0, scale: 1.0, samples: 16, distanceFallOff: 1.0, screenSpaceRadius: false });
+        } catch (e) { /* keep GTAO defaults */ }
+        composer.addPass(gtao);
+        composer.addPass(new OutputPass());
+      } catch (e) {
+        composer = null;
+      }
+    }
+
     let raf;
-    function loop() { renderer.render(scene, camera); raf = requestAnimationFrame(loop); }
+    function loop() {
+      if (composer) composer.render();
+      else renderer.render(scene, camera);
+      raf = requestAnimationFrame(loop);
+    }
     loop();
 
     return () => {
@@ -2272,6 +2389,7 @@ export default function GardenDesigner() {
       dom.removeEventListener("wheel", onWheel);
       window.removeEventListener("resize", onResize);
       applyThreeCamRef.current = null;
+      if (composer) composer.dispose();
       renderer.dispose();
       if (container) container.innerHTML = "";
     };
