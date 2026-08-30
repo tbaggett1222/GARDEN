@@ -211,6 +211,165 @@ function insetBedsWithinEnclosure(beds, enclosure) {
     return changed ? { ...bed, positions } : bed;
   });
 }
+
+// ---------- Procedural, offline-safe textures + sky for the 3D preview ----------
+// Everything here is generated with a 2D canvas at runtime (no external image
+// assets / network), then cached module-wide so repeated scene rebuilds reuse
+// the same GPU textures instead of leaking new ones.
+const _gdTexCache = {};
+function _seededRandom(seed) {
+  let s = seed >>> 0;
+  return () => {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    return s / 4294967296;
+  };
+}
+function _makeCanvasTexture(key, size, draw) {
+  if (_gdTexCache[key]) return _gdTexCache[key];
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  draw(ctx, size);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  _gdTexCache[key] = tex;
+  return tex;
+}
+function grassTexture() {
+  return _makeCanvasTexture("grass", 512, (ctx, s) => {
+    const rnd = _seededRandom(7);
+    const g = ctx.createLinearGradient(0, 0, s, s);
+    g.addColorStop(0, "#6f9e56");
+    g.addColorStop(1, "#5f9049");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, s, s);
+    // mottled patches for uneven turf
+    for (let i = 0; i < 120; i++) {
+      const x = rnd() * s, y = rnd() * s, r = 12 + rnd() * 60;
+      ctx.globalAlpha = 0.05 + rnd() * 0.08;
+      ctx.fillStyle = rnd() > 0.5 ? "#7cae60" : "#4d7d3c";
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    }
+    // fine blades
+    ctx.globalAlpha = 0.5;
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 2600; i++) {
+      const x = rnd() * s, y = rnd() * s, len = 2 + rnd() * 5, ang = -Math.PI / 2 + (rnd() - 0.5) * 0.9;
+      const shade = 55 + Math.floor(rnd() * 70);
+      ctx.strokeStyle = `rgb(${Math.floor(shade * 0.6)},${shade + 40},${Math.floor(shade * 0.5)})`;
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(ang) * len, y + Math.sin(ang) * len); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  });
+}
+function soilTexture() {
+  return _makeCanvasTexture("soil", 256, (ctx, s) => {
+    const rnd = _seededRandom(19);
+    ctx.fillStyle = "#5b4230";
+    ctx.fillRect(0, 0, s, s);
+    for (let i = 0; i < 2400; i++) {
+      const x = rnd() * s, y = rnd() * s, r = 0.6 + rnd() * 2.4;
+      const v = rnd();
+      ctx.globalAlpha = 0.35 + rnd() * 0.4;
+      ctx.fillStyle = v > 0.66 ? "#6d5038" : v > 0.33 ? "#48331f" : "#7a5a3d";
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  });
+}
+function woodTexture() {
+  // Light, near-neutral grain so a material `color` tints it to the right wood tone.
+  return _makeCanvasTexture("wood", 256, (ctx, s) => {
+    const rnd = _seededRandom(29);
+    ctx.fillStyle = "#cdb597";
+    ctx.fillRect(0, 0, s, s);
+    for (let y = 0; y < s; y += 1) {
+      const n = Math.sin(y * 0.12) * 6 + (rnd() - 0.5) * 4;
+      const b = 165 + n + (rnd() - 0.5) * 22;
+      ctx.strokeStyle = `rgb(${Math.floor(b)},${Math.floor(b * 0.9)},${Math.floor(b * 0.72)})`;
+      ctx.globalAlpha = 0.5;
+      ctx.beginPath(); ctx.moveTo(0, y + 0.5); ctx.lineTo(s, y + 0.5); ctx.stroke();
+    }
+    // occasional darker grain streaks
+    ctx.globalAlpha = 0.18;
+    ctx.strokeStyle = "#8f7550";
+    for (let i = 0; i < 26; i++) {
+      const y = rnd() * s;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.bezierCurveTo(s * 0.3, y + (rnd() - 0.5) * 8, s * 0.7, y + (rnd() - 0.5) * 8, s, y); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  });
+}
+function gravelTexture() {
+  return _makeCanvasTexture("gravel", 256, (ctx, s) => {
+    const rnd = _seededRandom(41);
+    ctx.fillStyle = "#a9a091";
+    ctx.fillRect(0, 0, s, s);
+    for (let i = 0; i < 1400; i++) {
+      const x = rnd() * s, y = rnd() * s, r = 1 + rnd() * 3.2;
+      const v = 130 + Math.floor(rnd() * 90);
+      ctx.globalAlpha = 0.5 + rnd() * 0.4;
+      ctx.fillStyle = `rgb(${v},${v - 6},${v - 18})`;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  });
+}
+function paverTexture() {
+  return _makeCanvasTexture("paver", 256, (ctx, s) => {
+    const rnd = _seededRandom(53);
+    ctx.fillStyle = "#b3a07d";
+    ctx.fillRect(0, 0, s, s);
+    const n = 4, cell = s / n;
+    for (let gy = 0; gy < n; gy++) {
+      for (let gx = 0; gx < n; gx++) {
+        const v = 190 + Math.floor((rnd() - 0.5) * 40);
+        ctx.fillStyle = `rgb(${v},${Math.floor(v * 0.9)},${Math.floor(v * 0.72)})`;
+        ctx.fillRect(gx * cell + 1.5, gy * cell + 1.5, cell - 3, cell - 3);
+      }
+    }
+    ctx.strokeStyle = "rgba(90,74,52,0.5)";
+    ctx.lineWidth = 2;
+    for (let i = 0; i <= n; i++) {
+      ctx.beginPath(); ctx.moveTo(i * cell, 0); ctx.lineTo(i * cell, s); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, i * cell); ctx.lineTo(s, i * cell); ctx.stroke();
+    }
+  });
+}
+function skyEquirectTexture() {
+  // 2:1 equirectangular vertical gradient used for both the sky background and,
+  // via PMREM, soft image-based lighting. Warm sun glow up top, greenish ground
+  // bounce below the horizon.
+  if (_gdTexCache.sky) return _gdTexCache.sky;
+  const w = 1024, h = 512;
+  const canvas = document.createElement("canvas");
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  const g = ctx.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0.0, "#4f86c6");   // zenith
+  g.addColorStop(0.35, "#7fadde");
+  g.addColorStop(0.5, "#cfe2ec");   // horizon haze
+  g.addColorStop(0.52, "#d7e6d2");
+  g.addColorStop(1.0, "#93a877");   // ground bounce
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, h);
+  // soft sun glow
+  const sun = ctx.createRadialGradient(w * 0.68, h * 0.2, 0, w * 0.68, h * 0.2, h * 0.5);
+  sun.addColorStop(0, "rgba(255,247,225,0.85)");
+  sun.addColorStop(0.25, "rgba(255,244,214,0.35)");
+  sun.addColorStop(1, "rgba(255,244,214,0)");
+  ctx.fillStyle = sun;
+  ctx.fillRect(0, 0, w, h);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.mapping = THREE.EquirectangularReflectionMapping;
+  _gdTexCache.sky = tex;
+  return tex;
+}
+
 function normalizePatio(patio) {
   const structureType = STRUCTURE_TYPES[patio?.structureType] ? patio.structureType : "none";
   return {
@@ -1428,20 +1587,27 @@ export default function GardenDesigner() {
     const width = container.clientWidth || 600, height = container.clientHeight || 460;
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(cinematic ? "#B8D2C2" : "#BFE3D0");
-    scene.fog = new THREE.Fog(cinematic ? "#B8D2C2" : "#BFE3D0", Math.max(W, L) * 1.3, Math.max(W, L) * 4.2);
 
     const camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 500);
     const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, cinematic ? 2 : 1.25));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = cinematic ? 1.03 : 1.08;
-    renderer.physicallyCorrectLights = true;
+    renderer.toneMappingExposure = cinematic ? 1.0 : 1.05;
     renderer.shadowMap.enabled = cinematic;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.setSize(width, height);
     container.appendChild(renderer.domElement);
+    const maxAniso = renderer.capabilities.getMaxAnisotropy();
+
+    // Gradient sky as the background + soft image-based lighting (PMREM) so PBR
+    // materials pick up realistic sky/ground bounce instead of flat fills.
+    const skyTex = skyEquirectTexture();
+    scene.background = skyTex;
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromEquirectangular(skyTex).texture;
+    pmrem.dispose();
+    scene.fog = new THREE.Fog("#cfe0e2", Math.max(W, L) * 1.7, Math.max(W, L) * 4.8);
 
     const mkMat = (params = {}) => {
       const { clearcoat, transmission, ...shared } = params;
@@ -1450,18 +1616,21 @@ export default function GardenDesigner() {
           roughness: 0.82,
           metalness: 0.03,
           clearcoat: 0.04,
+          envMapIntensity: 0.9,
           ...shared,
           ...(clearcoat !== undefined ? { clearcoat } : {}),
           ...(transmission !== undefined ? { transmission } : {}),
         });
       }
-      return new THREE.MeshStandardMaterial(shared);
+      return new THREE.MeshStandardMaterial({ envMapIntensity: 0.9, ...shared });
     };
 
-    scene.add(new THREE.AmbientLight(0xffffff, cinematic ? 0.4 : 0.65));
-    const skyFill = new THREE.HemisphereLight(0xd6e8ff, 0x6c7a63, cinematic ? 0.72 : 0.45);
+    // Env map already provides soft fill, so keep ambient/hemisphere low and let
+    // a stronger sun read as crisp, directional sunlight.
+    scene.add(new THREE.AmbientLight(0xffffff, cinematic ? 0.16 : 0.38));
+    const skyFill = new THREE.HemisphereLight(0xdcecff, 0x6c7a63, cinematic ? 0.4 : 0.32);
     scene.add(skyFill);
-    const sun = new THREE.DirectionalLight(0xfff5e8, cinematic ? 1.45 : 0.85);
+    const sun = new THREE.DirectionalLight(0xfff2df, cinematic ? 2.1 : 1.25);
     sun.position.set(W * 0.6, Math.max(W, L) * 0.9, L * 0.4);
     sun.castShadow = cinematic;
     if (cinematic) {
@@ -1479,17 +1648,25 @@ export default function GardenDesigner() {
     scene.add(sun);
 
     const groundSize = Math.max(W + 2 * yardMargin, L + 2 * yardMargin) * 1.8;
+    const groundTex = grassTexture();
+    groundTex.repeat.set(groundSize / 6, groundSize / 6);
+    groundTex.anisotropy = maxAniso;
     const ground = new THREE.Mesh(
       new THREE.PlaneGeometry(groundSize, groundSize),
-      mkMat({ color: "#82A96B", roughness: cinematic ? 0.92 : 0.86, metalness: 0.0, clearcoat: 0.0 })
+      mkMat({ color: "#ffffff", map: groundTex, roughness: cinematic ? 0.95 : 0.9, metalness: 0.0, clearcoat: 0.0 })
     );
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = cinematic;
     scene.add(ground);
 
+    // shared wood grain for beds, fence and posts (material color tints the grain)
+    const woodTex = woodTexture();
+    woodTex.repeat.set(2, 2);
+    woodTex.anisotropy = maxAniso;
+
     // ---- fence walls + posts (with gaps at gate openings) ----
-    const capMat = mkMat({ color: "#B98956", roughness: 0.82, metalness: 0.02, clearcoat: 0.1 });
-    const fenceSkirtMat = mkMat({ color: "#C89C66", roughness: 0.76, metalness: 0.02, clearcoat: 0.08 });
+    const capMat = mkMat({ color: "#B98956", map: woodTex, roughness: 0.82, metalness: 0.02, clearcoat: 0.1 });
+    const fenceSkirtMat = mkMat({ color: "#C89C66", map: woodTex, roughness: 0.76, metalness: 0.02, clearcoat: 0.08 });
     const fenceWireMat = new THREE.LineBasicMaterial({ color: "#6C746D", transparent: true, opacity: cinematic ? 0.5 : 0.38 });
     const fenceSkirtH = Math.min(Math.max(fenceHeight * 0.35, 1.6), 2.6);
     function fencePanel(len, h, spacing = 1, material = null) {
@@ -1564,7 +1741,7 @@ export default function GardenDesigner() {
       });
     });
 
-    const postMat = mkMat({ color: "#6B4A2E", roughness: 0.84, metalness: 0.02, clearcoat: 0.08 });
+    const postMat = mkMat({ color: "#6B4A2E", map: woodTex, roughness: 0.84, metalness: 0.02, clearcoat: 0.08 });
     fencePosts.forEach((p) => {
       const inGate = gates.some((g) => g.wall === p.wall && p.wallOffset > g.offset && p.wallOffset < g.offset + g.width);
       if (inGate) return;
@@ -1575,11 +1752,31 @@ export default function GardenDesigner() {
     });
 
     // ---- raised beds: cedar frame + mounded soil + planted rows ----
-    const frameMat = mkMat({ color: cinematic ? "#C6935D" : "#8A6A45", roughness: 0.81, metalness: 0.03, clearcoat: 0.1 });
+    const frameMat = mkMat({ color: cinematic ? "#C6935D" : "#8A6A45", map: woodTex, roughness: 0.81, metalness: 0.03, clearcoat: 0.1 });
     const frameSeamMat = mkMat({ color: "#9A6E42", roughness: 0.9, metalness: 0.01 });
-    const soilMat = mkMat({ color: "#4A3626", roughness: 1, metalness: 0, clearcoat: 0 });
+    const soilTex = soilTexture();
+    soilTex.repeat.set(2, 2);
+    soilTex.anisotropy = maxAniso;
+    const soilMat = mkMat({ color: "#c7a686", map: soilTex, roughness: 1, metalness: 0, clearcoat: 0 });
     soilMat.side = THREE.DoubleSide;
-    const plantColors = ["#6B9950", "#8FBF6E", "#5E8A46"];
+    // Collect all planted rows and render them as one instanced "bush" mesh:
+    // far more realistic than uniform cones, and a big draw-call win on big plans.
+    const plantInstances = [];
+    const plantRnd = _seededRandom(101);
+    const plantPalette = ["#5f9048", "#79ab5b", "#4e7d3b", "#8bbd68", "#6b9e4e", "#57893f"];
+    function pushPlant(x, z, h, i, tall) {
+      const s = 0.85 + plantRnd() * 0.6;
+      const heightMul = tall ? 1.5 + plantRnd() * 0.9 : 1;
+      plantInstances.push({
+        x: x + (plantRnd() - 0.5) * 0.28,
+        z: z + (plantRnd() - 0.5) * 0.28,
+        y: h + 0.08,
+        s,
+        sy: s * heightMul,
+        rotY: plantRnd() * Math.PI * 2,
+        color: plantPalette[(i + Math.floor(plantRnd() * 3)) % plantPalette.length],
+      });
+    }
     const wallThickness = 0.15;
     const bedCapDepth = 0.22;
     const bedCapThickness = 0.07;
@@ -1667,9 +1864,7 @@ export default function GardenDesigner() {
         // planted-row markers constrained to the L footprint
         plantDots(bw, bl, true, localVerts).forEach(([px, py], i) => {
           const [sx, sz] = localToWorld(px, py);
-          const plant = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.22, 6), mkMat({ color: plantColors[i % plantColors.length], roughness: 0.95, metalness: 0 }));
-          plant.position.set(sx, h + 0.12, sz);
-          scene.add(plant);
+          pushPlant(sx, sz, h, i, b.trellis);
         });
       } else {
         // hollow frame (4 thin walls) so it reads as a bed, not a solid block
@@ -1721,9 +1916,7 @@ export default function GardenDesigner() {
 
         // small planted-row markers
         plantDots(cw, cl, false, null).forEach(([lx, lz], i) => {
-          const plant = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.22, 6), mkMat({ color: plantColors[i % plantColors.length], roughness: 0.95, metalness: 0 }));
-          plant.position.set(wx0 + lx, h + 0.12, wz0 + lz);
-          scene.add(plant);
+          pushPlant(wx0 + lx, wz0 + lz, h, i, b.trellis);
         });
       }
 
@@ -1753,10 +1946,37 @@ export default function GardenDesigner() {
       }
     });
 
+    // ---- planted rows, drawn as one instanced bush mesh ----
+    if (plantInstances.length) {
+      const bushGeo = new THREE.IcosahedronGeometry(0.17, 1);
+      bushGeo.scale(1, 0.82, 1); // slightly domed foliage mound
+      const bushMat = mkMat({ color: 0xffffff, roughness: 0.9, metalness: 0, clearcoat: 0 });
+      const bushes = new THREE.InstancedMesh(bushGeo, bushMat, plantInstances.length);
+      const dummy = new THREE.Object3D();
+      const col = new THREE.Color();
+      plantInstances.forEach((p, idx) => {
+        dummy.position.set(p.x, p.y, p.z);
+        dummy.rotation.set(0, p.rotY, 0);
+        dummy.scale.set(p.s, p.sy, p.s);
+        dummy.updateMatrix();
+        bushes.setMatrixAt(idx, dummy.matrix);
+        bushes.setColorAt(idx, col.set(p.color));
+      });
+      bushes.instanceMatrix.needsUpdate = true;
+      if (bushes.instanceColor) bushes.instanceColor.needsUpdate = true;
+      bushes.castShadow = cinematic;
+      bushes.receiveShadow = cinematic;
+      scene.add(bushes);
+    }
+
     // ---- patios ----
     patios.forEach((patio) => {
-      const patioColor = patio.surface === "gravel" ? "#B9AF9C" : "#D9C9A8";
-      const slab = new THREE.Mesh(new THREE.BoxGeometry(patio.width, 0.08, patio.length), mkMat({ color: patioColor, roughness: patio.surface === "gravel" ? 0.95 : 0.72, metalness: 0.02 }));
+      const isGravel = patio.surface === "gravel";
+      const patioColor = isGravel ? "#B9AF9C" : "#D9C9A8";
+      const patioTex = isGravel ? gravelTexture() : paverTexture();
+      patioTex.repeat.set(Math.max(1, Math.round(patio.width / 4)), Math.max(1, Math.round(patio.length / 4)));
+      patioTex.anisotropy = maxAniso;
+      const slab = new THREE.Mesh(new THREE.BoxGeometry(patio.width, 0.08, patio.length), mkMat({ color: patioColor, map: patioTex, roughness: isGravel ? 0.95 : 0.72, metalness: 0.02 }));
       slab.position.set(patio.x + patio.width / 2 - W / 2, 0.04, patio.y + patio.length / 2 - L / 2);
       scene.add(slab);
       if (patio.structureType !== "none") {
