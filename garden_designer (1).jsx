@@ -18,7 +18,7 @@ const DEFAULT_PRICES = {
   trellisPostEach: 9, trellisMeshSqft: 2.75, trellisHardwareEach: 8,
   soilBag: 6.5, soilBulkCY: 55,
   paver16: 4.25, paverBaseBag: 4.75, sandBag: 4.25,
-  gravelBulkCY: 48, structPergolaLow: 18, structPergolaHigh: 35, structArborLow: 14, structArborHigh: 26, structPavilionLow: 30, structPavilionHigh: 55, structGazeboLow: 35, structGazeboHigh: 70, structCabinLow: 55, structCabinHigh: 130,
+  gravelBulkCY: 48, structPergolaLow: 18, structPergolaHigh: 35, structArborLow: 14, structArborHigh: 26, structPavilionLow: 30, structPavilionHigh: 55, structGazeboLow: 35, structGazeboHigh: 70, structCabinLow: 55, structCabinHigh: 130, structGreenhouseLow: 45, structGreenhouseHigh: 110,
   furnishingsEach: 450, exteriorDoorEach: 220,
   treeEach: 120, shrubEach: 28, flowerBedSqft: 8, mulchBulkCY: 45, sodSqft: 0.55, pathSqft: 6, archEach: 140, doubleArchEach: 230, tunnelEach: 65,
   dripMainlineRoll100: 38, dripTubingRoll100: 34, soakerHose50: 26, dripEmitterEach: 0.45, dripFittingPack: 14, irrigationTimerEach: 42, pressureRegulatorEach: 19, filterEach: 16, backflowPreventerEach: 12, zoneValveEach: 18,
@@ -45,6 +45,7 @@ const STRUCTURE_TYPES = {
   pavilion: { label: "Pavilion / Pole Barn", lowKey: "structPavilionLow", highKey: "structPavilionHigh", desc: "Open-sided post-frame structure with a solid roof — bigger gathering spaces, usually needs a permit." },
   gazebo: { label: "Gazebo", lowKey: "structGazeboLow", highKey: "structGazeboHigh", desc: "Fully enclosed roof, often octagonal — full shade and rain cover, commonly a prefab kit." },
   cabin: { label: "Garden House (walls + door)", lowKey: "structCabinLow", highKey: "structCabinHigh", enclosed: true, desc: "An actual small building — four walls, a roof, and a door. Room for a table and chairs to sit and eat inside, not just shade. Usually needs a permit; check local setback rules." },
+  greenhouse: { label: "Greenhouse (glass house)", lowKey: "structGreenhouseLow", highKey: "structGreenhouseHigh", enclosed: true, desc: "A glass-walled house with a gabled glass roof and a white frame — for starting seeds and season extension. Usually a prefab kit; check siting for sun and drainage." },
 };
 
 // Small original line-art icons for the structure picker — not photos, since hotlinked
@@ -87,6 +88,16 @@ function StructureIcon({ type }) {
       <polygon points="4,22 40,4 76,22" fill={roof} />
       <rect x={34} y={30} width={12} height={14} fill={dark} />
       <circle cx={43} cy={37} r={1} fill="#D9C9A8" />
+    </svg>
+  );
+  if (type === "greenhouse") return (
+    <svg viewBox="0 0 80 56" width="100%" height="42">
+      <rect x={12} y={22} width={56} height={22} fill="#dCEBE8" stroke="#9fb3ad" strokeWidth={1.5} />
+      <polygon points="10,22 40,6 70,22" fill="#e6f1ef" stroke="#9fb3ad" strokeWidth={1.5} />
+      <line x1={40} y1={6} x2={40} y2={44} stroke="#9fb3ad" strokeWidth={1.5} />
+      <line x1={26} y1={22} x2={26} y2={44} stroke="#9fb3ad" strokeWidth={1} />
+      <line x1={54} y1={22} x2={54} y2={44} stroke="#9fb3ad" strokeWidth={1} />
+      <line x1={12} y1={33} x2={68} y2={33} stroke="#9fb3ad" strokeWidth={1} />
     </svg>
   );
   return (
@@ -142,6 +153,7 @@ const SAMPLE_PLAN_META = {
   "26-market-40x60-long-rows.json": "40x60 market garden with long production rows, a center tractor lane, and an outside-fence pergola break.",
   "27-family-40x60-orchard-lawn.json": "40x60 family garden with kitchen beds, a berry row, an orchard edge, play lawn, and a pergola patio.",
   "28-permaculture-40x60-guild-beds.json": "40x60 permaculture layout with guild blocks, polyculture rows, a pollinator border, and an outside pergola.",
+  "29-golden-hour-garden-retreat.json": "Dusk retreat replicating a greenhouse, rose-arbor raised-bed garden, fire-pit gathering, and a garden studio — loads in golden-hour mode with string lights.",
 };
 function titleCaseWords(s) { return s.replace(/\b\w/g, (c) => c.toUpperCase()); }
 const SAMPLE_PLAN_MODULES = import.meta.glob("./sample-plans/*.json", { eager: true });
@@ -402,34 +414,53 @@ function paverTexture() {
     }
   });
 }
-function skyEquirectTexture() {
+function skyEquirectTexture(golden) {
   // 2:1 equirectangular vertical gradient used for both the sky background and,
-  // via PMREM, soft image-based lighting. Warm sun glow up top, greenish ground
-  // bounce below the horizon.
-  if (_gdTexCache.sky) return _gdTexCache.sky;
+  // via PMREM, soft image-based lighting. `golden` swaps a bright daytime sky for
+  // a warm golden-hour sunset to match dusk-lit reference designs.
+  const key = golden ? "skyGolden" : "sky";
+  if (_gdTexCache[key]) return _gdTexCache[key];
   const w = 1024, h = 512;
   const canvas = document.createElement("canvas");
   canvas.width = w; canvas.height = h;
   const ctx = canvas.getContext("2d");
   const g = ctx.createLinearGradient(0, 0, 0, h);
-  g.addColorStop(0.0, "#4f86c6");   // zenith
-  g.addColorStop(0.35, "#7fadde");
-  g.addColorStop(0.5, "#cfe2ec");   // horizon haze
-  g.addColorStop(0.52, "#d7e6d2");
-  g.addColorStop(1.0, "#93a877");   // ground bounce
+  if (golden) {
+    g.addColorStop(0.0, "#39406e");   // dusk zenith (deep blue-violet)
+    g.addColorStop(0.32, "#7c6a95");  // mauve
+    g.addColorStop(0.48, "#d98f6a");  // warm haze
+    g.addColorStop(0.6, "#f4b268");   // bright gold band at horizon
+    g.addColorStop(0.68, "#eec489");
+    g.addColorStop(1.0, "#6e6446");   // warm ground bounce
+  } else {
+    g.addColorStop(0.0, "#4f86c6");   // zenith
+    g.addColorStop(0.35, "#7fadde");
+    g.addColorStop(0.5, "#cfe2ec");   // horizon haze
+    g.addColorStop(0.52, "#d7e6d2");
+    g.addColorStop(1.0, "#93a877");   // ground bounce
+  }
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
-  // soft sun glow
-  const sun = ctx.createRadialGradient(w * 0.68, h * 0.2, 0, w * 0.68, h * 0.2, h * 0.5);
-  sun.addColorStop(0, "rgba(255,247,225,0.85)");
-  sun.addColorStop(0.25, "rgba(255,244,214,0.35)");
-  sun.addColorStop(1, "rgba(255,244,214,0)");
+  // soft sun glow — low near the horizon at golden hour, high and pale by day
+  const sunX = golden ? w * 0.26 : w * 0.68;
+  const sunY = golden ? h * 0.5 : h * 0.2;
+  const sun = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, h * (golden ? 0.62 : 0.5));
+  if (golden) {
+    sun.addColorStop(0, "rgba(255,236,188,0.98)");
+    sun.addColorStop(0.18, "rgba(255,196,120,0.6)");
+    sun.addColorStop(0.5, "rgba(240,150,90,0.25)");
+    sun.addColorStop(1, "rgba(240,150,90,0)");
+  } else {
+    sun.addColorStop(0, "rgba(255,247,225,0.85)");
+    sun.addColorStop(0.25, "rgba(255,244,214,0.35)");
+    sun.addColorStop(1, "rgba(255,244,214,0)");
+  }
   ctx.fillStyle = sun;
   ctx.fillRect(0, 0, w, h);
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.mapping = THREE.EquirectangularReflectionMapping;
-  _gdTexCache.sky = tex;
+  _gdTexCache[key] = tex;
   return tex;
 }
 
@@ -648,6 +679,7 @@ export default function GardenDesigner() {
   const [viewMode, setViewMode] = useState("2d"); // '2d' | '3d'
   const [planCamera, setPlanCamera] = useState({ zoom: 1, panX: 0, panY: 0 });
   const [renderQuality3d, setRenderQuality3d] = useState("cinematic"); // 'standard' | 'cinematic'
+  const [ambiance3d, setAmbiance3d] = useState("day"); // 'day' | 'golden' (golden-hour dusk with string lights)
   const showBedTrellis3d = false;
   const [threeZoomPct, setThreeZoomPct] = useState(40);
   const [activeTab, setActiveTab] = useState("enclosure"); // 'enclosure' | 'beds' | 'patio' | 'landscaping' | 'trellis' | 'irrigation' | 'prices'
@@ -1324,7 +1356,7 @@ export default function GardenDesigner() {
     setSavedReports([...names].sort());
   }
   function buildSnapshot(includeTimestamp = true) {
-    const snapshot = { enclosure, fenceHeight, postSpacing, gates, courses, beds, patios, yardMargin, landscape, prices, gardenSite, irrigation, renderQuality3d };
+    const snapshot = { enclosure, fenceHeight, postSpacing, gates, courses, beds, patios, yardMargin, landscape, prices, gardenSite, irrigation, renderQuality3d, ambiance3d };
     if (includeTimestamp) snapshot.savedAt = new Date().toISOString();
     return snapshot;
   }
@@ -1439,6 +1471,7 @@ export default function GardenDesigner() {
     if (data.gardenSite) setGardenSite({ usdaZone: 7, sunHours: 8, ...data.gardenSite });
     if (data.irrigation) setIrrigation({ enabled: true, method: "drip", zones: 2, rowSpacingIn: 12, emitterSpacingIn: 12, emitterGph: 0.5, minutesPerDay: 35, daysPerWeek: 4, ...data.irrigation });
     if (data.renderQuality3d) setRenderQuality3d(data.renderQuality3d);
+    if (data.ambiance3d) setAmbiance3d(data.ambiance3d);
     setPlanCamera({ zoom: 1, panX: 0, panY: 0 }); // refit 2D viewport to show full enclosure + yard when loading
     camStateRef.current = { theta: 0.8, phi: 1.0, radius: null };
     const allIds = [...(data.beds || []).map((b) => b.id), ...(data.gates || []).map((g) => g.id), ...(data.landscape || []).map((l) => l.id), ...(data.patios || []).map((p) => p.id), idCounter];
@@ -1676,6 +1709,7 @@ export default function GardenDesigner() {
     const container = threeContainerRef.current;
     container.innerHTML = "";
     const cinematic = renderQuality3d === "cinematic";
+    const golden = ambiance3d === "golden"; // warm dusk + string lights
     const W = enclosure.width, L = enclosure.length;
     const width = container.clientWidth || 600, height = container.clientHeight || 460;
 
@@ -1686,7 +1720,7 @@ export default function GardenDesigner() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, cinematic ? 2 : 1.25));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = cinematic ? 1.0 : 1.05;
+    renderer.toneMappingExposure = (cinematic ? 1.0 : 1.05) * (golden ? 1.12 : 1);
     renderer.shadowMap.enabled = cinematic;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.setSize(width, height);
@@ -1695,14 +1729,14 @@ export default function GardenDesigner() {
 
     // Gradient sky as the background + soft image-based lighting (PMREM) so PBR
     // materials pick up realistic sky/ground bounce instead of flat fills.
-    const skyTex = skyEquirectTexture();
+    const skyTex = skyEquirectTexture(golden);
     scene.background = skyTex;
     const pmrem = new THREE.PMREMGenerator(renderer);
     scene.environment = pmrem.fromEquirectangular(skyTex).texture;
     pmrem.dispose();
     // Gentle horizon haze only — kept well beyond typical camera distance so it
     // never washes out the garden itself (which grew hazy on large plans).
-    scene.fog = new THREE.Fog("#cfe0e2", Math.max(W, L) * 2.8, Math.max(W, L) * 7.5);
+    scene.fog = new THREE.Fog(golden ? "#e7c49a" : "#cfe0e2", Math.max(W, L) * 2.8, Math.max(W, L) * 7.5);
 
     // Invisible pick proxies (one axis-aligned box per selectable item) used only
     // for raycasting — never added to the scene, so they don't render, cast
@@ -1738,12 +1772,14 @@ export default function GardenDesigner() {
     };
 
     // Env map already provides soft fill, so keep ambient/hemisphere low and let
-    // a stronger sun read as crisp, directional sunlight.
-    scene.add(new THREE.AmbientLight(0xffffff, cinematic ? 0.16 : 0.38));
-    const skyFill = new THREE.HemisphereLight(0xdcecff, 0x6c7a63, cinematic ? 0.4 : 0.32);
+    // a stronger sun read as crisp, directional sunlight. Golden hour warms the
+    // fill and drops the sun low on the horizon for long, warm shadows.
+    scene.add(new THREE.AmbientLight(golden ? 0xffdcae : 0xffffff, golden ? (cinematic ? 0.22 : 0.42) : (cinematic ? 0.16 : 0.38)));
+    const skyFill = new THREE.HemisphereLight(golden ? 0xffd6a0 : 0xdcecff, golden ? 0x4a4432 : 0x6c7a63, golden ? (cinematic ? 0.5 : 0.4) : (cinematic ? 0.4 : 0.32));
     scene.add(skyFill);
-    const sun = new THREE.DirectionalLight(0xfff2df, cinematic ? 2.1 : 1.25);
-    sun.position.set(W * 0.6, Math.max(W, L) * 0.9, L * 0.4);
+    const sun = new THREE.DirectionalLight(golden ? 0xffb066 : 0xfff2df, golden ? (cinematic ? 2.3 : 1.5) : (cinematic ? 2.1 : 1.25));
+    if (golden) sun.position.set(-W * 0.9, Math.max(W, L) * 0.34, -L * 0.3);
+    else sun.position.set(W * 0.6, Math.max(W, L) * 0.9, L * 0.4);
     sun.castShadow = cinematic;
     if (cinematic) {
       sun.shadow.mapSize.set(2048, 2048);
@@ -2139,7 +2175,7 @@ export default function GardenDesigner() {
             post.position.set(px, postH / 2, pz);
             scene.add(post);
           });
-        } else {
+        } else if (patio.structureType !== "greenhouse") {
           const corners = [
             [patio.x + inset, patio.y + inset], [patio.x + patio.width - inset, patio.y + inset],
             [patio.x + inset, patio.y + patio.length - inset], [patio.x + patio.width - inset, patio.y + patio.length - inset],
@@ -2192,7 +2228,45 @@ export default function GardenDesigner() {
             });
           }
         }
-        if (patio.structureType === "pergola" || patio.structureType === "arbor") {
+        if (patio.structureType === "greenhouse") {
+          // glass walls + white frame + gabled glass roof
+          const wallH = postH, glassT = 0.06;
+          const ghFrame = mkMat({ color: "#eef1ee", roughness: 0.5, metalness: 0.06, clearcoat: 0.1 });
+          const ghGlass = mkMat({ color: "#d6ebe8", roughness: 0.06, metalness: 0.0, transmission: cinematic ? 0.72 : 0.0, opacity: cinematic ? 0.42 : 0.5, transparent: true, clearcoat: 0.35, emissive: golden ? 0xffcaa0 : 0x000000, emissiveIntensity: golden ? 0.4 : 0 });
+          const addGh = (mat, w2, h2, d2, x, y, z, rot) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w2, h2, d2), mat); m.position.set(x, y, z); if (rot) { if (rot.z) m.rotation.z = rot.z; if (rot.x) m.rotation.x = rot.x; } scene.add(m); };
+          addGh(ghGlass, patio.width, wallH, glassT, wx0 + patio.width / 2, wallH / 2, wz0);
+          addGh(ghGlass, patio.width, wallH, glassT, wx0 + patio.width / 2, wallH / 2, wz0 + patio.length);
+          addGh(ghGlass, glassT, wallH, patio.length, wx0, wallH / 2, wz0 + patio.length / 2);
+          addGh(ghGlass, glassT, wallH, patio.length, wx0 + patio.width, wallH / 2, wz0 + patio.length / 2);
+          // top plate frame ring + corner posts
+          addGh(ghFrame, patio.width + 0.12, 0.12, 0.12, wx0 + patio.width / 2, wallH, wz0);
+          addGh(ghFrame, patio.width + 0.12, 0.12, 0.12, wx0 + patio.width / 2, wallH, wz0 + patio.length);
+          addGh(ghFrame, 0.12, 0.12, patio.length, wx0, wallH, wz0 + patio.length / 2);
+          addGh(ghFrame, 0.12, 0.12, patio.length, wx0 + patio.width, wallH, wz0 + patio.length / 2);
+          [[wx0, wz0], [wx0 + patio.width, wz0], [wx0, wz0 + patio.length], [wx0 + patio.width, wz0 + patio.length]].forEach(([px, pz]) => addGh(ghFrame, 0.1, wallH, 0.1, px, wallH / 2, pz));
+          // vertical mullions along front/back
+          const mull = Math.max(2, Math.round(patio.width / 2.5));
+          for (let i = 1; i < mull; i++) { const mx = wx0 + (i / mull) * patio.width; addGh(ghFrame, 0.07, wallH, 0.07, mx, wallH / 2, wz0); addGh(ghFrame, 0.07, wallH, 0.07, mx, wallH / 2, wz0 + patio.length); }
+          // gabled glass roof (ridge along the longer axis)
+          const cx = wx0 + patio.width / 2, cz = wz0 + patio.length / 2;
+          const ridgeAlongZ = patio.length >= patio.width;
+          const span = ridgeAlongZ ? patio.width : patio.length;
+          const ridgeLen = (ridgeAlongZ ? patio.length : patio.width) + 0.2;
+          const peak = span * 0.32;
+          const slopeLen = Math.hypot(span / 2, peak);
+          const theta = Math.atan2(peak, span / 2);
+          if (ridgeAlongZ) {
+            addGh(ghGlass, slopeLen, 0.05, ridgeLen, cx - span / 4, wallH + peak / 2, cz, { z: theta });
+            addGh(ghGlass, slopeLen, 0.05, ridgeLen, cx + span / 4, wallH + peak / 2, cz, { z: -theta });
+          } else {
+            addGh(ghGlass, ridgeLen, 0.05, slopeLen, cx, wallH + peak / 2, cz - span / 4, { x: -theta });
+            addGh(ghGlass, ridgeLen, 0.05, slopeLen, cx, wallH + peak / 2, cz + span / 4, { x: theta });
+          }
+          addGh(ghFrame, ridgeAlongZ ? 0.1 : ridgeLen, 0.1, ridgeAlongZ ? ridgeLen : 0.1, cx, wallH + peak, cz);
+        }
+        if (patio.structureType === "greenhouse") {
+          // roof already built above
+        } else if (patio.structureType === "pergola" || patio.structureType === "arbor") {
           const beamCount = Math.max(Math.round(patio.length / 1.2), 3);
           for (let i = 0; i <= beamCount; i++) {
             const bz = patio.y + inset + (i / beamCount) * (patio.length - 2 * inset);
@@ -2337,6 +2411,52 @@ export default function GardenDesigner() {
         if (!obj.isMesh) return;
         if (obj !== ground) obj.castShadow = true;
         obj.receiveShadow = true;
+      });
+    }
+
+    // ---- golden-hour string lights: warm bulbs draped along the fence top ----
+    if (golden) {
+      const bulbGeo = new THREE.SphereGeometry(0.09, 8, 6);
+      const bulbMat = new THREE.MeshStandardMaterial({ color: 0xfff1cf, emissive: 0xffca6e, emissiveIntensity: 2.8, roughness: 0.5, metalness: 0 });
+      const topY = fenceHeight + 0.18;
+      const droop = Math.min(0.7, fenceHeight * 0.14);
+      const strands = [
+        [[-W / 2, -L / 2], [W / 2, -L / 2]],
+        [[W / 2, -L / 2], [W / 2, L / 2]],
+        [[W / 2, L / 2], [-W / 2, L / 2]],
+        [[-W / 2, L / 2], [-W / 2, -L / 2]],
+      ];
+      const bulbPos = [];
+      strands.forEach(([a, b]) => {
+        const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+        const n = Math.max(4, Math.round(len / 1.6));
+        for (let i = 0; i <= n; i++) {
+          const t = i / n;
+          bulbPos.push([a[0] + (b[0] - a[0]) * t, topY - Math.sin(t * Math.PI) * droop, a[1] + (b[1] - a[1]) * t]);
+        }
+      });
+      if (bulbPos.length) {
+        const bulbs = new THREE.InstancedMesh(bulbGeo, bulbMat, bulbPos.length);
+        const dmy = new THREE.Object3D();
+        bulbPos.forEach((p, i) => { dmy.position.set(p[0], p[1], p[2]); dmy.updateMatrix(); bulbs.setMatrixAt(i, dmy.matrix); });
+        bulbs.instanceMatrix.needsUpdate = true;
+        bulbs.castShadow = false; bulbs.receiveShadow = false;
+        scene.add(bulbs);
+      }
+      // a few warm point lights for glow (kept low-count for performance)
+      const reach = Math.max(W, L) * 0.9;
+      [[0, topY, 0], [-W * 0.28, topY, 0], [W * 0.28, topY, 0]].forEach(([gx, gy, gz]) => {
+        const pl = new THREE.PointLight(0xffb060, cinematic ? 1.3 : 0.8, reach, 2);
+        pl.position.set(gx, gy, gz);
+        scene.add(pl);
+      });
+      // warm interior glow for enclosed buildings (garden house / greenhouse)
+      patios.forEach((p) => {
+        if (p.structureType === "cabin" || p.structureType === "greenhouse") {
+          const gl = new THREE.PointLight(0xffcf87, 2.2, Math.max(p.width, p.length) * 1.6, 2);
+          gl.position.set(p.x + p.width / 2 - W / 2, (numOr(p.structureHeight, 8)) * 0.5, p.y + p.length / 2 - L / 2);
+          scene.add(gl);
+        }
       });
     }
 
@@ -2496,7 +2616,7 @@ export default function GardenDesigner() {
       renderer.dispose();
       if (container) container.innerHTML = "";
     };
-  }, [viewMode, renderQuality3d, enclosure, layout, patios, landscape, gates, fenceHeight, postSpacing, yardMargin, fencePosts]);
+  }, [viewMode, renderQuality3d, ambiance3d, enclosure, layout, patios, landscape, gates, fenceHeight, postSpacing, yardMargin, fencePosts]);
 
   function exportCSV() {
     const rows = [["Category", "Item", "Qty", "Unit", "Unit Price", "Line Total"]];
@@ -2985,12 +3105,12 @@ export default function GardenDesigner() {
                       <>
                         <div className="gdw-note" style={{ margin: "0 0 6px 0" }}>{st.desc}</div>
                         <div className="gdw-row">
-                          <span style={{ fontSize: 11, color: "#6b6350" }}>{patio.structureType === "cabin" ? "Wall height" : "Post/eave height"}</span>
+                          <span style={{ fontSize: 11, color: "#6b6350" }}>{st.enclosed ? "Wall height" : "Post/eave height"}</span>
                           {[7, 8, 9, 10].map((h) => (
                             <button key={h} className={`gdw-btn ${(patio.structureHeight || 8) === h ? "active" : ""}`} style={{ padding: "3px 7px", fontSize: 11 }} onClick={() => updatePatio(patio.id, { structureHeight: h })}>{h} ft</button>
                           ))}
                         </div>
-                        {patio.structureType !== "gazebo" && (
+                        {patio.structureType !== "gazebo" && patio.structureType !== "greenhouse" && (
                           <div className="gdw-row">
                             <span style={{ fontSize: 11, color: "#6b6350" }}>Roof style</span>
                             {["hip", "gable", "flat"].map((r) => (
@@ -3147,6 +3267,8 @@ export default function GardenDesigner() {
                     <>
                       <button className={`gdw-btn ${renderQuality3d === "standard" ? "active" : ""}`} onClick={() => setRenderQuality3d("standard")} title="Faster 3D rendering">Standard</button>
                       <button className={`gdw-btn ${renderQuality3d === "cinematic" ? "active" : ""}`} onClick={() => setRenderQuality3d("cinematic")} title="Higher quality physically based rendering">Cinematic</button>
+                      <button className={`gdw-btn ${ambiance3d === "day" ? "active" : ""}`} onClick={() => setAmbiance3d("day")} title="Bright daytime lighting">Day</button>
+                      <button className={`gdw-btn ${ambiance3d === "golden" ? "active" : ""}`} onClick={() => setAmbiance3d("golden")} title="Warm golden-hour dusk with string lights">Golden hour</button>
                     </>
                   )}
                 </div>
