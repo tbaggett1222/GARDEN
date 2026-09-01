@@ -402,34 +402,53 @@ function paverTexture() {
     }
   });
 }
-function skyEquirectTexture() {
+function skyEquirectTexture(golden) {
   // 2:1 equirectangular vertical gradient used for both the sky background and,
-  // via PMREM, soft image-based lighting. Warm sun glow up top, greenish ground
-  // bounce below the horizon.
-  if (_gdTexCache.sky) return _gdTexCache.sky;
+  // via PMREM, soft image-based lighting. `golden` swaps a bright daytime sky for
+  // a warm golden-hour sunset to match dusk-lit reference designs.
+  const key = golden ? "skyGolden" : "sky";
+  if (_gdTexCache[key]) return _gdTexCache[key];
   const w = 1024, h = 512;
   const canvas = document.createElement("canvas");
   canvas.width = w; canvas.height = h;
   const ctx = canvas.getContext("2d");
   const g = ctx.createLinearGradient(0, 0, 0, h);
-  g.addColorStop(0.0, "#4f86c6");   // zenith
-  g.addColorStop(0.35, "#7fadde");
-  g.addColorStop(0.5, "#cfe2ec");   // horizon haze
-  g.addColorStop(0.52, "#d7e6d2");
-  g.addColorStop(1.0, "#93a877");   // ground bounce
+  if (golden) {
+    g.addColorStop(0.0, "#39406e");   // dusk zenith (deep blue-violet)
+    g.addColorStop(0.32, "#7c6a95");  // mauve
+    g.addColorStop(0.48, "#d98f6a");  // warm haze
+    g.addColorStop(0.6, "#f4b268");   // bright gold band at horizon
+    g.addColorStop(0.68, "#eec489");
+    g.addColorStop(1.0, "#6e6446");   // warm ground bounce
+  } else {
+    g.addColorStop(0.0, "#4f86c6");   // zenith
+    g.addColorStop(0.35, "#7fadde");
+    g.addColorStop(0.5, "#cfe2ec");   // horizon haze
+    g.addColorStop(0.52, "#d7e6d2");
+    g.addColorStop(1.0, "#93a877");   // ground bounce
+  }
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
-  // soft sun glow
-  const sun = ctx.createRadialGradient(w * 0.68, h * 0.2, 0, w * 0.68, h * 0.2, h * 0.5);
-  sun.addColorStop(0, "rgba(255,247,225,0.85)");
-  sun.addColorStop(0.25, "rgba(255,244,214,0.35)");
-  sun.addColorStop(1, "rgba(255,244,214,0)");
+  // soft sun glow — low near the horizon at golden hour, high and pale by day
+  const sunX = golden ? w * 0.26 : w * 0.68;
+  const sunY = golden ? h * 0.5 : h * 0.2;
+  const sun = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, h * (golden ? 0.62 : 0.5));
+  if (golden) {
+    sun.addColorStop(0, "rgba(255,236,188,0.98)");
+    sun.addColorStop(0.18, "rgba(255,196,120,0.6)");
+    sun.addColorStop(0.5, "rgba(240,150,90,0.25)");
+    sun.addColorStop(1, "rgba(240,150,90,0)");
+  } else {
+    sun.addColorStop(0, "rgba(255,247,225,0.85)");
+    sun.addColorStop(0.25, "rgba(255,244,214,0.35)");
+    sun.addColorStop(1, "rgba(255,244,214,0)");
+  }
   ctx.fillStyle = sun;
   ctx.fillRect(0, 0, w, h);
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.mapping = THREE.EquirectangularReflectionMapping;
-  _gdTexCache.sky = tex;
+  _gdTexCache[key] = tex;
   return tex;
 }
 
@@ -648,6 +667,7 @@ export default function GardenDesigner() {
   const [viewMode, setViewMode] = useState("2d"); // '2d' | '3d'
   const [planCamera, setPlanCamera] = useState({ zoom: 1, panX: 0, panY: 0 });
   const [renderQuality3d, setRenderQuality3d] = useState("cinematic"); // 'standard' | 'cinematic'
+  const [ambiance3d, setAmbiance3d] = useState("day"); // 'day' | 'golden' (golden-hour dusk with string lights)
   const showBedTrellis3d = false;
   const [threeZoomPct, setThreeZoomPct] = useState(40);
   const [activeTab, setActiveTab] = useState("enclosure"); // 'enclosure' | 'beds' | 'patio' | 'landscaping' | 'trellis' | 'irrigation' | 'prices'
@@ -1324,7 +1344,7 @@ export default function GardenDesigner() {
     setSavedReports([...names].sort());
   }
   function buildSnapshot(includeTimestamp = true) {
-    const snapshot = { enclosure, fenceHeight, postSpacing, gates, courses, beds, patios, yardMargin, landscape, prices, gardenSite, irrigation, renderQuality3d };
+    const snapshot = { enclosure, fenceHeight, postSpacing, gates, courses, beds, patios, yardMargin, landscape, prices, gardenSite, irrigation, renderQuality3d, ambiance3d };
     if (includeTimestamp) snapshot.savedAt = new Date().toISOString();
     return snapshot;
   }
@@ -1439,6 +1459,7 @@ export default function GardenDesigner() {
     if (data.gardenSite) setGardenSite({ usdaZone: 7, sunHours: 8, ...data.gardenSite });
     if (data.irrigation) setIrrigation({ enabled: true, method: "drip", zones: 2, rowSpacingIn: 12, emitterSpacingIn: 12, emitterGph: 0.5, minutesPerDay: 35, daysPerWeek: 4, ...data.irrigation });
     if (data.renderQuality3d) setRenderQuality3d(data.renderQuality3d);
+    if (data.ambiance3d) setAmbiance3d(data.ambiance3d);
     setPlanCamera({ zoom: 1, panX: 0, panY: 0 }); // refit 2D viewport to show full enclosure + yard when loading
     camStateRef.current = { theta: 0.8, phi: 1.0, radius: null };
     const allIds = [...(data.beds || []).map((b) => b.id), ...(data.gates || []).map((g) => g.id), ...(data.landscape || []).map((l) => l.id), ...(data.patios || []).map((p) => p.id), idCounter];
@@ -1676,6 +1697,7 @@ export default function GardenDesigner() {
     const container = threeContainerRef.current;
     container.innerHTML = "";
     const cinematic = renderQuality3d === "cinematic";
+    const golden = ambiance3d === "golden"; // warm dusk + string lights
     const W = enclosure.width, L = enclosure.length;
     const width = container.clientWidth || 600, height = container.clientHeight || 460;
 
@@ -1686,7 +1708,7 @@ export default function GardenDesigner() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, cinematic ? 2 : 1.25));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = cinematic ? 1.0 : 1.05;
+    renderer.toneMappingExposure = (cinematic ? 1.0 : 1.05) * (golden ? 1.12 : 1);
     renderer.shadowMap.enabled = cinematic;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.setSize(width, height);
@@ -1695,14 +1717,14 @@ export default function GardenDesigner() {
 
     // Gradient sky as the background + soft image-based lighting (PMREM) so PBR
     // materials pick up realistic sky/ground bounce instead of flat fills.
-    const skyTex = skyEquirectTexture();
+    const skyTex = skyEquirectTexture(golden);
     scene.background = skyTex;
     const pmrem = new THREE.PMREMGenerator(renderer);
     scene.environment = pmrem.fromEquirectangular(skyTex).texture;
     pmrem.dispose();
     // Gentle horizon haze only — kept well beyond typical camera distance so it
     // never washes out the garden itself (which grew hazy on large plans).
-    scene.fog = new THREE.Fog("#cfe0e2", Math.max(W, L) * 2.8, Math.max(W, L) * 7.5);
+    scene.fog = new THREE.Fog(golden ? "#e7c49a" : "#cfe0e2", Math.max(W, L) * 2.8, Math.max(W, L) * 7.5);
 
     // Invisible pick proxies (one axis-aligned box per selectable item) used only
     // for raycasting — never added to the scene, so they don't render, cast
@@ -1738,12 +1760,14 @@ export default function GardenDesigner() {
     };
 
     // Env map already provides soft fill, so keep ambient/hemisphere low and let
-    // a stronger sun read as crisp, directional sunlight.
-    scene.add(new THREE.AmbientLight(0xffffff, cinematic ? 0.16 : 0.38));
-    const skyFill = new THREE.HemisphereLight(0xdcecff, 0x6c7a63, cinematic ? 0.4 : 0.32);
+    // a stronger sun read as crisp, directional sunlight. Golden hour warms the
+    // fill and drops the sun low on the horizon for long, warm shadows.
+    scene.add(new THREE.AmbientLight(golden ? 0xffdcae : 0xffffff, golden ? (cinematic ? 0.22 : 0.42) : (cinematic ? 0.16 : 0.38)));
+    const skyFill = new THREE.HemisphereLight(golden ? 0xffd6a0 : 0xdcecff, golden ? 0x4a4432 : 0x6c7a63, golden ? (cinematic ? 0.5 : 0.4) : (cinematic ? 0.4 : 0.32));
     scene.add(skyFill);
-    const sun = new THREE.DirectionalLight(0xfff2df, cinematic ? 2.1 : 1.25);
-    sun.position.set(W * 0.6, Math.max(W, L) * 0.9, L * 0.4);
+    const sun = new THREE.DirectionalLight(golden ? 0xffb066 : 0xfff2df, golden ? (cinematic ? 2.3 : 1.5) : (cinematic ? 2.1 : 1.25));
+    if (golden) sun.position.set(-W * 0.9, Math.max(W, L) * 0.34, -L * 0.3);
+    else sun.position.set(W * 0.6, Math.max(W, L) * 0.9, L * 0.4);
     sun.castShadow = cinematic;
     if (cinematic) {
       sun.shadow.mapSize.set(2048, 2048);
@@ -2340,6 +2364,52 @@ export default function GardenDesigner() {
       });
     }
 
+    // ---- golden-hour string lights: warm bulbs draped along the fence top ----
+    if (golden) {
+      const bulbGeo = new THREE.SphereGeometry(0.09, 8, 6);
+      const bulbMat = new THREE.MeshStandardMaterial({ color: 0xfff1cf, emissive: 0xffca6e, emissiveIntensity: 2.8, roughness: 0.5, metalness: 0 });
+      const topY = fenceHeight + 0.18;
+      const droop = Math.min(0.7, fenceHeight * 0.14);
+      const strands = [
+        [[-W / 2, -L / 2], [W / 2, -L / 2]],
+        [[W / 2, -L / 2], [W / 2, L / 2]],
+        [[W / 2, L / 2], [-W / 2, L / 2]],
+        [[-W / 2, L / 2], [-W / 2, -L / 2]],
+      ];
+      const bulbPos = [];
+      strands.forEach(([a, b]) => {
+        const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+        const n = Math.max(4, Math.round(len / 1.6));
+        for (let i = 0; i <= n; i++) {
+          const t = i / n;
+          bulbPos.push([a[0] + (b[0] - a[0]) * t, topY - Math.sin(t * Math.PI) * droop, a[1] + (b[1] - a[1]) * t]);
+        }
+      });
+      if (bulbPos.length) {
+        const bulbs = new THREE.InstancedMesh(bulbGeo, bulbMat, bulbPos.length);
+        const dmy = new THREE.Object3D();
+        bulbPos.forEach((p, i) => { dmy.position.set(p[0], p[1], p[2]); dmy.updateMatrix(); bulbs.setMatrixAt(i, dmy.matrix); });
+        bulbs.instanceMatrix.needsUpdate = true;
+        bulbs.castShadow = false; bulbs.receiveShadow = false;
+        scene.add(bulbs);
+      }
+      // a few warm point lights for glow (kept low-count for performance)
+      const reach = Math.max(W, L) * 0.9;
+      [[0, topY, 0], [-W * 0.28, topY, 0], [W * 0.28, topY, 0]].forEach(([gx, gy, gz]) => {
+        const pl = new THREE.PointLight(0xffb060, cinematic ? 1.3 : 0.8, reach, 2);
+        pl.position.set(gx, gy, gz);
+        scene.add(pl);
+      });
+      // warm interior glow for enclosed buildings (garden house / greenhouse)
+      patios.forEach((p) => {
+        if (p.structureType === "cabin" || p.structureType === "greenhouse") {
+          const gl = new THREE.PointLight(0xffcf87, 2.2, Math.max(p.width, p.length) * 1.6, 2);
+          gl.position.set(p.x + p.width / 2 - W / 2, (numOr(p.structureHeight, 8)) * 0.5, p.y + p.length / 2 - L / 2);
+          scene.add(gl);
+        }
+      });
+    }
+
     // ---- camera orbit controls (manual — OrbitControls isn't available in three r128) ----
     let maxExtent = Math.max(W + yardMargin, L + yardMargin);
     landscape.forEach((l) => {
@@ -2496,7 +2566,7 @@ export default function GardenDesigner() {
       renderer.dispose();
       if (container) container.innerHTML = "";
     };
-  }, [viewMode, renderQuality3d, enclosure, layout, patios, landscape, gates, fenceHeight, postSpacing, yardMargin, fencePosts]);
+  }, [viewMode, renderQuality3d, ambiance3d, enclosure, layout, patios, landscape, gates, fenceHeight, postSpacing, yardMargin, fencePosts]);
 
   function exportCSV() {
     const rows = [["Category", "Item", "Qty", "Unit", "Unit Price", "Line Total"]];
@@ -3147,6 +3217,8 @@ export default function GardenDesigner() {
                     <>
                       <button className={`gdw-btn ${renderQuality3d === "standard" ? "active" : ""}`} onClick={() => setRenderQuality3d("standard")} title="Faster 3D rendering">Standard</button>
                       <button className={`gdw-btn ${renderQuality3d === "cinematic" ? "active" : ""}`} onClick={() => setRenderQuality3d("cinematic")} title="Higher quality physically based rendering">Cinematic</button>
+                      <button className={`gdw-btn ${ambiance3d === "day" ? "active" : ""}`} onClick={() => setAmbiance3d("day")} title="Bright daytime lighting">Day</button>
+                      <button className={`gdw-btn ${ambiance3d === "golden" ? "active" : ""}`} onClick={() => setAmbiance3d("golden")} title="Warm golden-hour dusk with string lights">Golden hour</button>
                     </>
                   )}
                 </div>
