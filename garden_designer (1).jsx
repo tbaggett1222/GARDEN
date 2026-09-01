@@ -20,13 +20,14 @@ const DEFAULT_PRICES = {
   paver16: 4.25, paverBaseBag: 4.75, sandBag: 4.25,
   gravelBulkCY: 48, structPergolaLow: 18, structPergolaHigh: 35, structArborLow: 14, structArborHigh: 26, structPavilionLow: 30, structPavilionHigh: 55, structGazeboLow: 35, structGazeboHigh: 70, structCabinLow: 55, structCabinHigh: 130, structGreenhouseLow: 45, structGreenhouseHigh: 110,
   furnishingsEach: 450, exteriorDoorEach: 220,
-  treeEach: 120, shrubEach: 28, flowerBedSqft: 8, mulchBulkCY: 45, sodSqft: 0.55, pathSqft: 6, archEach: 140, doubleArchEach: 230, tunnelEach: 65,
+  treeEach: 120, shrubEach: 28, flowerBedSqft: 8, mulchBulkCY: 45, sodSqft: 0.55, pathSqft: 6, archEach: 140, doubleArchEach: 230, tunnelEach: 65, firepitEach: 350,
   dripMainlineRoll100: 38, dripTubingRoll100: 34, soakerHose50: 26, dripEmitterEach: 0.45, dripFittingPack: 14, irrigationTimerEach: 42, pressureRegulatorEach: 19, filterEach: 16, backflowPreventerEach: 12, zoneValveEach: 18,
 };
 
 const LANDSCAPE_TYPES = {
   tree: { label: "Tree", defaultW: 4, defaultL: 4, color: "#3F6B3A", circle: true, unit: "ea", priceKey: "treeEach" },
   shrub: { label: "Shrub", defaultW: 2, defaultL: 2, color: "#5C8A52", circle: true, unit: "ea", priceKey: "shrubEach" },
+  firepit: { label: "Fire Pit + Seating", defaultW: 4, defaultL: 4, defaultH: 1.5, color: "#6b6560", circle: true, unit: "ea", priceKey: "firepitEach" },
   bed: { label: "Flower Bed", defaultW: 3, defaultL: 6, color: "#C98FB3", circle: false, unit: "sqft", priceKey: "flowerBedSqft" },
   mulch: { label: "Mulch Border", defaultW: 2, defaultL: 10, color: "#7A5230", circle: false, unit: "cy", priceKey: "mulchBulkCY" },
   grass: { label: "Grass / Sod", defaultW: 10, defaultL: 10, color: "#8FBF6E", circle: false, unit: "sqft", priceKey: "sodSqft" },
@@ -2343,6 +2344,55 @@ export default function GardenDesigner() {
         const bush = new THREE.Mesh(new THREE.SphereGeometry(l.width / 2, 10, 8), mkMat({ color: t.color, roughness: 0.96, metalness: 0 }));
         bush.position.set(wx, l.width / 2, wz);
         scene.add(bush);
+      } else if (l.type === "firepit") {
+        const r = Math.max(numOr(l.width, 4), 2) / 2;
+        // low stone ring
+        const ring = new THREE.Mesh(new THREE.CylinderGeometry(r, r * 1.05, 1.1, 22, 1, true), mkMat({ color: "#6b6560", roughness: 0.95, metalness: 0.02 }));
+        ring.position.set(wx, 0.55, wz);
+        scene.add(ring);
+        const base = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.92, r * 0.92, 0.12, 22), mkMat({ color: "#2a241f", roughness: 1, metalness: 0 }));
+        base.position.set(wx, 0.5, wz);
+        scene.add(base);
+        // crossed logs
+        const logMat = mkMat({ color: "#5b4630", roughness: 0.9 });
+        [[-0.18, 0.5], [0.18, -0.4]].forEach(([off, ang]) => {
+          const log = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, r * 1.4, 6), logMat);
+          log.rotation.z = Math.PI / 2; log.rotation.y = ang;
+          log.position.set(wx, 0.64, wz + off);
+          scene.add(log);
+        });
+        // vivid unlit flame (toneMapped:false keeps it saturated instead of
+        // clipping to white) with a hotter inner core; taller at golden hour
+        const flameH = golden ? 1.7 : 1.1;
+        const flameOuterMat = new THREE.MeshBasicMaterial({ color: 0xff6a12 }); flameOuterMat.toneMapped = false;
+        const flameInnerMat = new THREE.MeshBasicMaterial({ color: 0xffd23a }); flameInnerMat.toneMapped = false;
+        const flameOuter = new THREE.Mesh(new THREE.ConeGeometry(r * 0.5, flameH, 12), flameOuterMat);
+        flameOuter.position.set(wx, 0.62 + flameH / 2, wz); flameOuter.castShadow = false;
+        scene.add(flameOuter);
+        const flameInner = new THREE.Mesh(new THREE.ConeGeometry(r * 0.28, flameH * 0.62, 10), flameInnerMat);
+        flameInner.position.set(wx, 0.62 + (flameH * 0.62) / 2, wz); flameInner.castShadow = false;
+        scene.add(flameInner);
+        // fire glow — always on, stronger at golden hour
+        const fl = new THREE.PointLight(0xff7a2a, golden ? 3.4 : 1.6, r * 9, 2);
+        fl.position.set(wx, 1.2, wz);
+        scene.add(fl);
+        // ring of simple Adirondack-style chairs facing the fire
+        const chairMat = mkMat({ color: "#b98a5e", roughness: 0.82, metalness: 0.02, clearcoat: 0.05 });
+        const chairR = r + 2.4, chairN = 5;
+        for (let i = 0; i < chairN; i++) {
+          const a = (i / chairN) * Math.PI * 2 + 0.4;
+          const cxp = wx + Math.cos(a) * chairR, czp = wz + Math.sin(a) * chairR;
+          const face = -a + Math.PI / 2;
+          const seat = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.12, 1.0), chairMat);
+          seat.position.set(cxp, 0.78, czp);
+          seat.rotation.y = face;
+          scene.add(seat);
+          const back = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.25, 0.12), chairMat);
+          back.position.set(cxp + Math.cos(a) * 0.45, 1.3, czp + Math.sin(a) * 0.45);
+          back.rotation.y = face;
+          back.rotation.x = 0.16;
+          scene.add(back);
+        }
       } else if (l.type === "arch") {
         const archMat = mkMat({ color: t.color, roughness: 0.83, metalness: 0.02, clearcoat: 0.06 });
         const archH = l.height || 7, postSpan = l.width * 0.7;

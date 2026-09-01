@@ -102,6 +102,17 @@
   "yardMargin": 24,
   "landscape": [
     {
+      "id": 129,
+      "type": "firepit",
+      "label": "Fire Pit",
+      "width": 4,
+      "length": 4,
+      "height": 1.5,
+      "qty": 1,
+      "x": 10,
+      "y": 28.5
+    },
+    {
       "id": 130,
       "type": "doubleArch",
       "label": "Rose Arbor",
