@@ -1,0 +1,244 @@
+{
+  "enclosure": {
+    "width": 26,
+    "length": 20
+  },
+  "fenceHeight": 6,
+  "postSpacing": 8,
+  "gates": [
+    {
+      "id": 1,
+      "wall": "bottom",
+      "offset": 11,
+      "width": 4
+    }
+  ],
+  "courses": 3,
+  "beds": [
+    {
+      "id": 1,
+      "label": "Rose & Kitchen Beds",
+      "width": 4,
+      "length": 10,
+      "qty": 4,
+      "courses": 3,
+      "shape": "rect",
+      "zone": "center",
+      "cropKey": "tomato",
+      "trellis": true,
+      "trellisHeight": 7,
+      "trellisSide": "length",
+      "positions": [
+        {
+          "x": 2,
+          "y": 3,
+          "rotated": false
+        },
+        {
+          "x": 8,
+          "y": 3,
+          "rotated": false
+        },
+        {
+          "x": 14,
+          "y": 3,
+          "rotated": false
+        },
+        {
+          "x": 20,
+          "y": 3,
+          "rotated": false
+        }
+      ]
+    }
+  ],
+  "patios": [
+    {
+      "id": 120,
+      "label": "Greenhouse",
+      "width": 10,
+      "length": 16,
+      "x": -15,
+      "y": 2,
+      "surface": "pavers",
+      "structureType": "greenhouse",
+      "structureHeight": 9,
+      "roofStyle": "gable",
+      "roofDirection": "auto",
+      "doorWidth": 3,
+      "furnishings": true
+    },
+    {
+      "id": 121,
+      "label": "Garden Studio",
+      "width": 12,
+      "length": 12,
+      "x": 30,
+      "y": 3,
+      "surface": "pavers",
+      "structureType": "cabin",
+      "structureHeight": 9,
+      "roofStyle": "gable",
+      "roofDirection": "auto",
+      "doorWidth": 6,
+      "furnishings": true
+    },
+    {
+      "id": 122,
+      "label": "Fire Pit Gathering",
+      "width": 10,
+      "length": 9,
+      "x": 7,
+      "y": 26,
+      "surface": "gravel",
+      "structureType": "none",
+      "structureHeight": 9,
+      "roofStyle": "gable",
+      "roofDirection": "auto",
+      "doorWidth": 3,
+      "furnishings": true
+    }
+  ],
+  "yardMargin": 24,
+  "landscape": [
+    {
+      "id": 130,
+      "type": "doubleArch",
+      "label": "Rose Arbor",
+      "width": 4,
+      "length": 5,
+      "qty": 1,
+      "x": 11,
+      "y": 13.5,
+      "height": 8
+    },
+    {
+      "id": 131,
+      "type": "bed",
+      "label": "Flower Border L",
+      "width": 4,
+      "length": 3,
+      "qty": 1,
+      "x": 5,
+      "y": 15
+    },
+    {
+      "id": 132,
+      "type": "bed",
+      "label": "Flower Border R",
+      "width": 4,
+      "length": 3,
+      "qty": 1,
+      "x": 17,
+      "y": 15
+    },
+    {
+      "id": 133,
+      "type": "path",
+      "label": "Path to Arbor",
+      "width": 3,
+      "length": 8,
+      "qty": 1,
+      "x": 11.5,
+      "y": 18.5
+    },
+    {
+      "id": 134,
+      "type": "path",
+      "label": "Path to Greenhouse",
+      "width": 8,
+      "length": 3,
+      "qty": 1,
+      "x": -6,
+      "y": 9
+    },
+    {
+      "id": 135,
+      "type": "path",
+      "label": "Path to Studio",
+      "width": 6,
+      "length": 3,
+      "qty": 1,
+      "x": 26,
+      "y": 9
+    },
+    {
+      "id": 140,
+      "type": "tree",
+      "label": "Oak Canopy",
+      "width": 9,
+      "length": 9,
+      "qty": 1,
+      "x": -11,
+      "y": -9
+    },
+    {
+      "id": 141,
+      "type": "tree",
+      "label": "Yard Tree",
+      "width": 8,
+      "length": 8,
+      "qty": 1,
+      "x": 34,
+      "y": -6
+    },
+    {
+      "id": 142,
+      "type": "tree",
+      "label": "Forest Edge",
+      "width": 6,
+      "length": 6,
+      "qty": 1,
+      "x": 2,
+      "y": -10
+    },
+    {
+      "id": 143,
+      "type": "tree",
+      "label": "Forest Edge",
+      "width": 6,
+      "length": 6,
+      "qty": 1,
+      "x": 14,
+      "y": -10
+    },
+    {
+      "id": 144,
+      "type": "tree",
+      "label": "Forest Edge",
+      "width": 6,
+      "length": 6,
+      "qty": 1,
+      "x": 24,
+      "y": -10
+    },
+    {
+      "id": 145,
+      "type": "tree",
+      "label": "Studio Tree",
+      "width": 6,
+      "length": 6,
+      "qty": 1,
+      "x": 31,
+      "y": -3
+    }
+  ],
+  "prices": {},
+  "gardenSite": {
+    "usdaZone": 7,
+    "sunHours": 8
+  },
+  "irrigation": {
+    "enabled": true,
+    "method": "drip",
+    "zones": 3,
+    "rowSpacingIn": 12,
+    "emitterSpacingIn": 12,
+    "emitterGph": 0.5,
+    "minutesPerDay": 35,
+    "daysPerWeek": 4
+  },
+  "renderQuality3d": "cinematic",
+  "ambiance3d": "golden",
+  "savedAt": "2026-09-01T12:00:00Z"
+}
